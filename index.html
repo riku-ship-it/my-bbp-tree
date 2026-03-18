@@ -1,99 +1,127 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBP Knowledge Tree - Editor</title>
-  <script src="https://cdn.jsdelivr.net/npm/mind-elixir/dist/MindElixir.js"></script>
-  <style>
-    body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    #map { height: 100%; width: 100%; background-color: #f8f9fa; }
-    
-    /* 工具欄樣式 */
-    .menu {
-      position: fixed; top: 20px; right: 20px;
-      display: flex; gap: 10px; z-index: 100;
-    }
-    .btn {
-      background: white; border: 1px solid #d1d5db; padding: 8px 16px;
-      border-radius: 6px; cursor: pointer; font-size: 14px; color: #374151;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s;
-    }
-    .btn:hover { background: #f3f4f6; border-color: #9ca3af; }
-    .btn-primary { background: #2563eb; color: white; border: none; }
-    .btn-primary:hover { background: #1d4ed8; }
-
-    /* 隱藏不必要的浮動廣告或標誌 */
-    .mind-elixir-logo { display: none !important; }
-  </style>
-</head>
-<body>
-
-<div class="menu">
-  <button class="btn" onclick="exportData()">💾 複製資料 (手動存檔)</button>
-  <button class="btn btn-primary" onclick="window.print()">🖨️ 匯出 PDF</button>
-</div>
-
-<div id="map"></div>
-
-<script>
-  // 初始數據結構
-  let initialData = {
-    nodeData: {
-      id: 'root',
-      topic: '我的知識起源 (BBP)',
-      root: true,
-      children: [
-        {
-          id: 'child1',
-          topic: '程式開發',
-          children: [
-            { id: 'gc1', topic: 'Frontend (React)' },
-            { id: 'gc2', topic: 'Backend (Node.js)' }
-          ]
-        },
-        {
-          id: 'child2',
-          topic: '數位行銷',
-          children: []
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBP Knowledge Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .dot-bg {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
         }
-      ]
-    }
-  };
+        .node {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .node:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 overflow-hidden" x-data="skillTree()">
 
-  // 初始化編輯器
-  const mind = new MindElixir({
-    el: '#map',
-    direction: MindElixir.SIDE, // 向右生長，保持整潔
-    data: initialData,
-    draggable: true, 
-    contextMenu: true, // 右鍵選單
-    toolBar: true, 
-    nodeMenu: true, 
-    keypress: true, // 支援快捷鍵 Tab/Enter
-    locale: 'zh_TW'
-  });
+    <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50 px-6 py-3 flex justify-between items-center">
+        <h1 class="text-sm font-semibold text-gray-700 tracking-tight">BBP SKILL TREE / <span class="text-gray-400">Knowledge Map</span></h1>
+        <div class="flex gap-3">
+            <button @click="addNode" class="text-xs bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">新增根節點</button>
+            <button @click="saveToGithub" class="text-xs border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100 transition">儲存變更</button>
+        </div>
+    </nav>
 
-  mind.init();
+    <main class="w-screen h-screen dot-bg relative cursor-grab active:cursor-grabbing" 
+          @mousedown="startPan" @mousemove="onPan" @mouseup="stopPan" @wheel="onZoom">
+        
+        <div :style="`transform: translate(${camX}px, ${camY}px) scale(${zoom});`" class="origin-center transition-transform duration-75">
+            
+            <svg class="absolute top-0 left-0 w-[5000px] h-[5000px] pointer-events-none" style="transform: translate(-2500px, -2500px)">
+                <template x-for="link in links">
+                    <path :d="generatePath(link)" stroke="#d1d5db" stroke-width="1.5" fill="none" />
+                </template>
+            </svg>
 
-  // 匯出資料功能
-  function exportData() {
-    const data = mind.getAllData();
-    const dataString = JSON.stringify(data, null, 2);
-    
-    // 這裡彈出一個視窗讓用戶複製，未來可以改成自動 Commit 到 GitHub
-    const blob = new Blob([dataString], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    
-    console.log("當前技能樹數據：", data);
-    alert("數據已生成在控制台 (F12)。\n目前的版本建議你手動將這段 JSON 存入你的 GitHub 檔案中。");
-  }
+            <template x-for="(node, index) in nodes" :key="node.id">
+                <div class="absolute node bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex items-center group"
+                     :style="`left: ${node.x}px; top: ${node.y}px; min-width: 120px;`"
+                     @mousedown.stop>
+                    
+                    <input type="text" v-model="node.label" 
+                           class="w-full px-3 py-2 text-sm text-gray-700 outline-none bg-transparent"
+                           @keyup.enter="$el.blur()">
+                    
+                    <div class="hidden group-hover:flex absolute -right-10 gap-1">
+                        <button @click="addChild(node)" class="w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center shadow-lg">+</button>
+                        <button @click="deleteNode(index)" class="w-6 h-6 bg-red-400 text-white rounded-full text-xs flex items-center justify-center shadow-lg">×</button>
+                    </div>
+                </div>
+            </template>
 
-  // 快捷鍵提示：
-  // Enter -> 新增兄弟節點
-  // Tab -> 新增子節點
-  // Double Click -> 編輯文字
-</script>
+        </div>
+    </main>
 
+    <div class="fixed bottom-6 right-6 text-[10px] text-gray-400 uppercase tracking-widest bg-white/50 p-2 rounded">
+        Scroll to Zoom • Drag to Pan • Double Click to Edit
+    </div>
+
+    <script>
+        function skillTree() {
+            return {
+                nodes: [
+                    { id: 1, label: '我的知識體系', x: window.innerWidth / 2 - 60, y: window.innerHeight / 2 },
+                ],
+                links: [],
+                camX: 0, camY: 0, zoom: 1,
+                isPanning: false,
+                lastMouseX: 0, lastMouseY: 0,
+
+                addNode() {
+                    const id = Date.now();
+                    this.nodes.push({ id, label: '新知識點', x: -this.camX + 100, y: -this.camY + 100 });
+                },
+
+                addChild(parent) {
+                    const id = Date.now();
+                    const newNode = { id, label: '分支技能', x: parent.x + 200, y: parent.y + Math.random() * 50 - 25 };
+                    this.nodes.push(newNode);
+                    this.links.push({ source: parent.id, target: id });
+                },
+
+                deleteNode(index) {
+                    const id = this.nodes[index].id;
+                    this.nodes.splice(index, 1);
+                    this.links = this.links.filter(l => l.source !== id && l.target !== id);
+                },
+
+                generatePath(link) {
+                    const s = this.nodes.find(n => n.id === link.source);
+                    const t = this.nodes.find(n => n.id === link.target);
+                    if (!s || !t) return '';
+                    // 繪製貝茲曲線
+                    const cp1x = s.x + 100;
+                    const cp2x = t.x - 50;
+                    return `M ${s.x + 120} ${s.y + 20} C ${cp1x} ${s.y + 20}, ${cp2x} ${t.y + 20}, ${t.x} ${t.y + 20}`;
+                },
+
+                startPan(e) { this.isPanning = true; this.lastMouseX = e.clientX; this.lastMouseY = e.clientY; },
+                onPan(e) {
+                    if (!this.isPanning) return;
+                    this.camX += e.clientX - this.lastMouseX;
+                    this.camY += e.clientY - this.lastMouseY;
+                    this.lastMouseX = e.clientX; this.lastMouseY = e.clientY;
+                },
+                stopPan() { this.isPanning = false; },
+                onZoom(e) {
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    this.zoom = Math.min(Math.max(0.5, this.zoom * delta), 2);
+                },
+                saveToGithub() {
+                    console.log("Nodes:", JSON.stringify(this.nodes));
+                    console.log("Links:", JSON.stringify(this.links));
+                    alert("目前資料已輸出至瀏覽器 Console，請複製後存檔。");
+                }
+            }
+        }
+    </script>
 </body>
 </html>
