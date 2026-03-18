@@ -1,773 +1,153 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BBP 知識技能樹</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBP Knowledge Skill Tree</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --gold: #ffcc00;
+            --blue: #00d4ff;
+            --locked: #4a4a4a;
+            --bg-dark: #0a0a0c;
+        }
+        body, html { margin: 0; padding: 0; background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        /* 遊戲背景裝飾 */
+        #app { display: flex; height: 100vh; background: radial-gradient(circle, #1a1a2e 0%, #0a0a0c 100%); }
 
-  :root {
-    --bg: #0a0f1a;
-    --bg2: #0f1825;
-    --surface: #141e2e;
-    --surface2: #1a2538;
-    --border: rgba(100,180,255,0.12);
-    --glow: rgba(80,160,255,0.15);
-    --text: #c8d8f0;
-    --text-muted: #5a7a9a;
-    --accent-green: #3dd68c;
-    --accent-blue: #4da8ff;
-    --accent-amber: #ffc147;
-    --accent-coral: #ff7a6e;
-    --accent-purple: #b07fff;
-    --trunk: #4da8ff;
-  }
+        /* 左側編輯面板 - 可收合 */
+        #sidebar {
+            width: 320px; background: rgba(20, 20, 25, 0.95);
+            border-right: 2px solid #333; padding: 20px;
+            transition: transform 0.3s; z-index: 100; overflow-y: auto;
+        }
+        .sidebar-hidden { transform: translateX(-320px); position: absolute; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 技能樹主畫布 */
+        #canvas { flex-grow: 1; display: flex; justify-content: center; align-items: center; cursor: grab; }
+        #canvas:active { cursor: grabbing; }
 
-  body {
-    font-family: 'Noto Sans TC', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow: hidden;
-  }
+        /* 節點編輯樣式 */
+        .skill-card {
+            background: #222; border-left: 4px solid var(--blue);
+            margin-bottom: 15px; padding: 10px; border-radius: 4px;
+        }
+        input, select { width: 100%; background: #111; color: #eee; border: 1px solid #444; padding: 8px; margin: 5px 0; }
+        
+        button {
+            width: 100%; padding: 10px; margin-top: 10px;
+            background: linear-gradient(to bottom, #444, #222);
+            color: var(--gold); border: 1px solid var(--gold);
+            font-weight: bold; cursor: pointer; text-transform: uppercase;
+        }
+        button:hover { background: var(--gold); color: black; }
 
-  /* ── Header ───────────────────────────────── */
-  header {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 24px;
-    background: rgba(10,15,26,0.9);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-  .logo {
-    font-family: 'Space Mono', monospace;
-    font-size: 18px; font-weight: 700;
-    color: var(--accent-blue);
-    letter-spacing: 2px;
-  }
-  .logo span { color: var(--accent-green); }
-  .header-stats {
-    display: flex; gap: 20px;
-    font-size: 12px; color: var(--text-muted);
-    font-family: 'Space Mono', monospace;
-  }
-  .stat-val { color: var(--accent-blue); font-weight: 700; }
-  .header-btns { display: flex; gap: 8px; }
-  .btn {
-    padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--text); cursor: pointer;
-    font-size: 12px; font-family: inherit; transition: all 0.2s;
-  }
-  .btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(77,168,255,0.08); }
-  .btn.primary { background: rgba(77,168,255,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
-  .btn.primary:hover { background: rgba(77,168,255,0.25); }
-
-  /* ── Canvas ───────────────────────────────── */
-  #canvas-wrap {
-    position: fixed; inset: 58px 0 0 0;
-    overflow: hidden;
-  }
-  #tree-canvas {
-    width: 100%; height: 100%;
-    cursor: grab;
-  }
-  #tree-canvas:active { cursor: grabbing; }
-
-  /* ── Node tooltip ─────────────────────────── */
-  #tooltip {
-    position: fixed;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    max-width: 280px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 200;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-  #tooltip.show { opacity: 1; }
-  .tt-date { font-size: 11px; color: var(--text-muted); font-family: 'Space Mono', monospace; margin-bottom: 6px; }
-  .tt-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
-  .tt-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
-  .tt-tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; margin-right: 4px; }
-  .tt-link { font-size: 11px; color: var(--accent-blue); margin-top: 8px; display: block; text-decoration: none; word-break: break-all; }
-
-  /* ── Side Panel ───────────────────────────── */
-  #panel {
-    position: fixed; top: 58px; right: 0; bottom: 0;
-    width: 340px;
-    background: var(--bg2);
-    border-left: 1px solid var(--border);
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-    z-index: 150;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
-  #panel.open { transform: translateX(0); }
-  .panel-header {
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .panel-title { font-size: 14px; font-weight: 500; color: var(--accent-blue); letter-spacing: 1px; }
-  .close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; }
-  .close-btn:hover { color: var(--text); }
-  .panel-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
-  .panel-body::-webkit-scrollbar { width: 4px; }
-  .panel-body::-webkit-scrollbar-track { background: transparent; }
-  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  /* Form */
-  .field { margin-bottom: 16px; }
-  .field label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
-  .field input, .field select, .field textarea {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 9px 12px;
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent-blue); }
-  .field textarea { resize: vertical; min-height: 72px; }
-  .field select option { background: var(--surface2); }
-
-  /* Category colors */
-  .cat-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 99px; font-size: 11px;
-    border: 1px solid currentColor; margin: 2px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .cat-chip.selected { opacity: 1; }
-  .cat-chip:not(.selected) { opacity: 0.4; }
-  .cat-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-  /* Import area */
-  .import-area {
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.7;
-  }
-  .import-area textarea {
-    width: 100%; background: none; border: none; color: var(--text);
-    font-family: 'Space Mono', monospace; font-size: 11px; resize: vertical;
-    min-height: 100px; outline: none; margin-top: 8px;
-  }
-
-  /* Legend */
-  #legend {
-    position: fixed; bottom: 24px; left: 24px;
-    background: rgba(20,30,46,0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 11px;
-    color: var(--text-muted);
-    z-index: 90;
-  }
-  .legend-title { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; margin-bottom: 8px; color: var(--text-muted); }
-  .legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
-  /* Zoom controls */
-  #zoom-ctrl {
-    position: fixed; bottom: 24px; right: 24px;
-    display: flex; gap: 4px; z-index: 90;
-  }
-  .zoom-btn {
-    width: 36px; height: 36px; border-radius: 8px;
-    border: 1px solid var(--border);
-    background: rgba(20,30,46,0.85);
-    backdrop-filter: blur(8px);
-    color: var(--text); cursor: pointer; font-size: 18px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .zoom-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
-
-  /* Panel tabs */
-  .tabs { display: flex; border-bottom: 1px solid var(--border); margin: 0 -24px; padding: 0 24px; }
-  .tab {
-    flex: 1; padding: 10px 0; text-align: center; font-size: 12px;
-    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all 0.2s; margin-bottom: -1px;
-  }
-  .tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
-  .tab-content { display: none; padding-top: 16px; }
-  .tab-content.active { display: block; }
-
-  /* Pulse animation for new nodes */
-  @keyframes pulse-ring {
-    0% { r: 0; opacity: 1; }
-    100% { r: 30; opacity: 0; }
-  }
-  .pulse { animation: pulse-ring 1.5s ease-out; }
-
-  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-  .help-text { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
-
-  .node-count-badge {
-    background: rgba(77,168,255,0.12);
-    border: 1px solid rgba(77,168,255,0.2);
-    border-radius: 99px;
-    padding: 2px 8px;
-    font-size: 11px;
-    color: var(--accent-blue);
-    margin-left: 8px;
-    font-family: 'Space Mono', monospace;
-  }
-</style>
+        /* 懸浮控制按鈕 */
+        .toggle-btn {
+            position: fixed; left: 10px; top: 10px; z-index: 101;
+            width: 40px; height: 40px; background: var(--gold); border: none; color: black;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <div class="logo">BBP<span>.tree</span></div>
-  <div class="header-stats">
-    <div>技能節點 <span class="stat-val" id="stat-nodes">0</span></div>
-    <div>分支數 <span class="stat-val" id="stat-branches">0</span></div>
-    <div>最近更新 <span class="stat-val" id="stat-last">—</span></div>
-  </div>
-  <div class="header-btns">
-    <button class="btn" onclick="resetView()">⊹ 重置視角</button>
-    <button class="btn primary" onclick="openPanel('add')">＋ 新增技能</button>
-  </div>
-</header>
-
-<!-- Canvas -->
-<div id="canvas-wrap">
-  <canvas id="tree-canvas"></canvas>
-</div>
-
-<!-- Tooltip -->
-<div id="tooltip">
-  <div class="tt-date" id="tt-date"></div>
-  <div class="tt-title" id="tt-title"></div>
-  <div class="tt-desc" id="tt-desc"></div>
-  <div id="tt-tags"></div>
-  <a class="tt-link" id="tt-link" href="#" target="_blank"></a>
-</div>
-
-<!-- Side Panel -->
-<div id="panel">
-  <div class="panel-header">
-    <div class="panel-title" id="panel-title">新增技能節點</div>
-    <button class="close-btn" onclick="closePanel()">✕</button>
-  </div>
-  <div class="panel-body">
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('add')">手動新增</div>
-      <div class="tab" onclick="switchTab('import')">批次匯入</div>
-      <div class="tab" onclick="switchTab('manage')">管理節點</div>
-    </div>
-
-    <!-- Add Tab -->
-    <div class="tab-content active" id="tab-add">
-      <div class="field">
-        <label>日期</label>
-        <input type="date" id="f-date" />
-      </div>
-      <div class="field">
-        <label>文件名稱 / 技能名</label>
-        <input type="text" id="f-title" placeholder="例：知識庫01 介紹與教學" />
-      </div>
-      <div class="field">
-        <label>說明（問題或目的）</label>
-        <textarea id="f-desc" placeholder="例：客戶尚未有知識庫相關的介紹與說明"></textarea>
-      </div>
-      <div class="field">
-        <label>文件連結（選填）</label>
-        <input type="url" id="f-link" placeholder="https://docs.google.com/..." />
-      </div>
-      <div class="field">
-        <label>分類 / 分支</label>
-        <div id="cat-selector">
-          <div class="cat-chip selected" style="color:#3dd68c" data-cat="知識庫" onclick="selectCat(this)"><span class="cat-dot"></span>知識庫</div>
-          <div class="cat-chip selected" style="color:#4da8ff" data-cat="培訓" onclick="selectCat(this)"><span class="cat-dot"></span>培訓</div>
-          <div class="cat-chip selected" style="color:#ffc147" data-cat="系統更新" onclick="selectCat(this)"><span class="cat-dot"></span>系統更新</div>
-          <div class="cat-chip selected" style="color:#ff7a6e" data-cat="職務說明" onclick="selectCat(this)"><span class="cat-dot"></span>職務說明</div>
-          <div class="cat-chip selected" style="color:#b07fff" data-cat="顧問溝通" onclick="selectCat(this)"><span class="cat-dot"></span>顧問溝通</div>
-          <div class="cat-chip selected" style="color:#5fd4d4" data-cat="其他" onclick="selectCat(this)"><span class="cat-dot"></span>其他</div>
+<div id="app">
+    <button class="toggle-btn" @click="showSidebar = !showSidebar">☰</button>
+    
+    <div id="sidebar" :class="{ 'sidebar-hidden': !showSidebar }">
+        <h2 style="color: var(--gold); text-align: center; letter-spacing: 2px;">SKILL TREE</h2>
+        <hr border="1" color="#333">
+        
+        <div v-for="(node, index) in skills" :key="node.id" class="skill-card">
+            <input v-model="node.label" placeholder="技能名稱 (例如: Python基礎)">
+            <select v-model="node.parent">
+                <option value="">-- 無前置技能 --</option>
+                <option v-for="s in skills" v-show="s.id !== node.id" :value="s.id">{{ s.label }}</option>
+            </select>
+            <select v-model="node.status">
+                <option value="mastered">✨ 已精通 (Gold)</option>
+                <option value="active">🔥 修練中 (Blue)</option>
+                <option value="locked">🔒 鎖定中 (Gray)</option>
+            </select>
+            <button @click="removeSkill(index)" style="border-color: #ff4444; color: #ff4444; padding: 2px;">移除</button>
         </div>
-      </div>
-      <div class="field">
-        <label>行動 / 結果（選填）</label>
-        <input type="text" id="f-action" placeholder="例：新增至Test Tw 資料夾中" />
-      </div>
-      <div style="margin-top: 8px;">
-        <button class="btn primary" style="width:100%;padding:10px" onclick="addNode()">種下這顆種子 🌱</button>
-      </div>
+
+        <button @click="addSkill">+ 學習新技能</button>
+        <button @click="updateChart" style="background: var(--gold); color: black; margin-top: 20px;">⚡ 更新地圖</button>
+        
+        <div style="margin-top: 20px; font-size: 12px; color: #666;">
+            貼心提醒：修改完後請點擊「更新地圖」。若要存檔，需將 JSON 內容存回 GitHub。
+        </div>
     </div>
 
-    <!-- Import Tab -->
-    <div class="tab-content" id="tab-import">
-      <p class="help-text">貼上從 Google 試算表複製的資料（Tab 分隔），格式：</p>
-      <p class="help-text" style="font-family:'Space Mono',monospace;margin:8px 0;font-size:10px;color:var(--accent-blue)">日期 [Tab] 說明 [Tab] 問題 [Tab] 行動</p>
-      <div class="import-area">
-        <textarea id="import-csv" placeholder="12/5	更新資訊	上架影片	任務模組切換新增位置&#10;12/10	未來更新資訊會在BBP平台	讓大家習慣開啟BBP確認更新資訊	在原本群組發送訊息"></textarea>
-      </div>
-      <div class="field" style="margin-top:12px">
-        <label>自動分類規則（關鍵字偵測）</label>
-        <select id="import-cat">
-          <option value="auto">自動偵測</option>
-          <option value="知識庫">知識庫</option>
-          <option value="培訓">培訓</option>
-          <option value="系統更新">系統更新</option>
-          <option value="其他">其他</option>
-        </select>
-      </div>
-      <button class="btn primary" style="width:100%;padding:10px;margin-top:4px" onclick="importCSV()">批次種下 🌿</button>
-      <hr class="divider">
-      <p class="help-text">已預載你試算表中的資料，可直接在左側技能樹查看</p>
+    <div id="canvas" id="zoom-container">
+        <div class="mermaid" id="mermaid-chart">
+            {{ chartCode }}
+        </div>
     </div>
-
-    <!-- Manage Tab -->
-    <div class="tab-content" id="tab-manage">
-      <div id="node-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Legend -->
-<div id="legend">
-  <div class="legend-title">分支圖例</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#3dd68c"></div>知識庫</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#4da8ff"></div>培訓</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#ffc147"></div>系統更新</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#ff7a6e"></div>職務說明</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#b07fff"></div>顧問溝通</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#5fd4d4"></div>其他</div>
-</div>
-
-<!-- Zoom -->
-<div id="zoom-ctrl">
-  <button class="zoom-btn" onclick="zoom(1.2)">＋</button>
-  <button class="zoom-btn" onclick="zoom(1/1.2)">－</button>
 </div>
 
 <script>
-// ── Data ──────────────────────────────────────
-const CAT_COLOR = {
-  '知識庫':  '#3dd68c',
-  '培訓':    '#4da8ff',
-  '系統更新':'#ffc147',
-  '職務說明':'#ff7a6e',
-  '顧問溝通':'#b07fff',
-  '其他':    '#5fd4d4',
-};
+    const { createApp } = Vue;
+    createApp({
+        data() {
+            return {
+                showSidebar: true,
+                skills: [
+                    { id: 'root', label: '我的BBP起源', parent: '', status: 'mastered' },
+                    { id: 's1', label: 'GitHub實作', parent: 'root', status: 'active' },
+                    { id: 's2', label: '前端開發', parent: 'root', status: 'locked' }
+                ],
+                chartCode: ''
+            }
+        },
+        methods: {
+            addSkill() {
+                const id = 's' + Date.now();
+                this.skills.push({ id, label: '新技能', parent: 'root', status: 'locked' });
+            },
+            removeSkill(index) {
+                this.skills.splice(index, 1);
+            },
+            updateChart() {
+                let code = "graph TD\n";
+                // 遊戲風格配色
+                code += "classDef mastered fill:#f1c40f,stroke:#fff,stroke-width:2px,color:#000;\n";
+                code += "classDef active fill:#3498db,stroke:#fff,stroke-width:2px,color:#fff;\n";
+                code += "classDef locked fill:#2c3e50,stroke:#7f8c8d,color:#95a5a6,stroke-dasharray: 5 5;\n";
 
-function detectCat(text) {
-  if (/知識庫|knowledge/i.test(text)) return '知識庫';
-  if (/培訓|教學|training|影片/i.test(text)) return '培訓';
-  if (/更新|update|BBP平台|版本/i.test(text)) return '系統更新';
-  if (/職務|說明書|job/i.test(text)) return '職務說明';
-  if (/顧問|簡報|consultant/i.test(text)) return '顧問溝通';
-  return '其他';
-}
+                this.skills.forEach(s => {
+                    // 使用 HTML 標籤讓節點變圓角矩形
+                    const label = `"${s.label}"`;
+                    if (s.parent) {
+                        code += `  ${s.parent} --> ${s.id}(${label})\n`;
+                    } else {
+                        code += `  ${s.id}(${label})\n`;
+                    }
+                    code += `  class ${s.id} ${s.status};\n`;
+                });
 
-// Preloaded from the spreadsheet screenshot
-let nodes = [
-  { id:1, date:'12/5',  title:'更新資訊',              cat:'系統更新', desc:'上架影片',                     action:'任務模組切換新增位置', link:'' },
-  { id:2, date:'12/10', title:'未來更新資訊會在BBP平台', cat:'系統更新', desc:'讓大家習慣開啟BBP確認更新資訊', action:'在原本群組發送訊息，Google Chat只發重要即時的訊息', link:'' },
-  { id:3, date:'12/12', title:'附件 / 計算年資',         cat:'其他',    desc:'建立任務給同事',               action:'', link:'' },
-  { id:4, date:'12/22', title:'職務說明書建立在BBP',     cat:'職務說明', desc:'',                           action:'', link:'' },
-  { id:5, date:'1/2',   title:'顧問培訓簡報',           cat:'顧問溝通', desc:'顧問尚未了解BBP介紹要做什麼事', action:'舉辦培訓', link:'' },
-  { id:6, date:'1/5',   title:'培訓影片共九隻',          cat:'培訓',    desc:'顧問還不知道實際操作的細節',    action:'初階-進階操作影片（還需要補齊）', link:'' },
-  { id:7, date:'1/21',  title:'知識庫01 介紹與教學（客戶用）', cat:'知識庫', desc:'客戶知識庫尚未有知識庫相關的介紹與說明', action:'新增至Test Tw 資料夾中', link:'' },
-  { id:8, date:'1/21',  title:'知識庫02 介紹與教學（客戶用）', cat:'知識庫', desc:'客戶知識庫尚未有知識庫相關的介紹與說明', action:'新增至Test Tw 資料夾中', link:'' },
-  { id:9, date:'1/21',  title:'知識庫01 介紹與教學（內部用）', cat:'知識庫', desc:'知識庫02 文件內容更新', action:'內部用的', link:'' },
-  { id:10, date:'3/16', title:'BBP教學手冊初稿完成（文字、圖片）Word版', cat:'培訓', desc:'', action:'', link:'https://docs.google.com/document/d/18g7LxJbrMdU7hiY-lsUMGF0nGZy683wGFxI-8h4Wcvc/edit?usp=sharing' },
-  { id:11, date:'3/16', title:'BBP教學手冊電子版',       cat:'培訓',    desc:'', action:'', link:'https://riku-ship-it.github.io/bbp-manual.io/' },
-];
-let nextId = 12;
-
-// ── Canvas Setup ──────────────────────────────
-const canvas = document.getElementById('tree-canvas');
-const ctx = canvas.getContext('2d');
-let W, H, cx, cy;
-let scale = 1, offX = 0, offY = 0;
-let dragging = false, lastX, lastY;
-let hoveredNode = null;
-let animFrame = 0;
-
-function resize() {
-  W = canvas.width  = canvas.offsetWidth;
-  H = canvas.height = canvas.offsetHeight;
-  cx = W/2; cy = H/2;
-}
-window.addEventListener('resize', () => { resize(); draw(); });
-resize();
-
-// ── Layout ────────────────────────────────────
-function layout() {
-  const cats = [...new Set(nodes.map(n=>n.cat))];
-  const branchAngles = {};
-  cats.forEach((c,i) => { branchAngles[c] = (i/cats.length)*Math.PI*2 - Math.PI/2; });
-
-  const byBranch = {};
-  nodes.forEach(n => {
-    if(!byBranch[n.cat]) byBranch[n.cat] = [];
-    byBranch[n.cat].push(n);
-  });
-
-  nodes.forEach(n => {
-    const arr = byBranch[n.cat];
-    const idx = arr.indexOf(n);
-    const total = arr.length;
-    const base = branchAngles[n.cat];
-    const spread = Math.min(0.4, 0.8/total);
-    const angle = base + (idx - (total-1)/2) * spread;
-    const minR = 130, step = 68;
-    const r = minR + idx * step;
-    n.x = Math.cos(angle) * r;
-    n.y = Math.sin(angle) * r;
-    n.angle = angle;
-    n.r = r;
-  });
-}
-
-// ── Draw ──────────────────────────────────────
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-  ctx.save();
-  ctx.translate(cx + offX, cy + offY);
-  ctx.scale(scale, scale);
-
-  drawGrid();
-  drawConnectors();
-  drawTrunk();
-  drawNodes();
-
-  ctx.restore();
-  animFrame++;
-  requestAnimationFrame(draw);
-}
-
-function drawGrid() {
-  ctx.strokeStyle = 'rgba(100,180,255,0.04)';
-  ctx.lineWidth = 1;
-  const size = 60;
-  for(let x=-2000;x<2000;x+=size) { ctx.beginPath(); ctx.moveTo(x,-2000); ctx.lineTo(x,2000); ctx.stroke(); }
-  for(let y=-2000;y<2000;y+=size) { ctx.beginPath(); ctx.moveTo(-2000,y); ctx.lineTo(2000,y); ctx.stroke(); }
-}
-
-function drawTrunk() {
-  // Glowing center
-  const t = animFrame * 0.02;
-  const pulse = 22 + Math.sin(t) * 4;
-  const grd = ctx.createRadialGradient(0,0,0,0,0,pulse*2);
-  grd.addColorStop(0,'rgba(77,168,255,0.9)');
-  grd.addColorStop(0.4,'rgba(77,168,255,0.3)');
-  grd.addColorStop(1,'rgba(77,168,255,0)');
-  ctx.beginPath();
-  ctx.arc(0,0,pulse*2,0,Math.PI*2);
-  ctx.fillStyle = grd;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(0,0,pulse,0,Math.PI*2);
-  ctx.fillStyle = '#0a0f1a';
-  ctx.fill();
-  ctx.strokeStyle = '#4da8ff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.fillStyle = '#4da8ff';
-  ctx.font = '700 11px Space Mono, monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('BBP', 0, 0);
-}
-
-function drawConnectors() {
-  const cats = [...new Set(nodes.map(n=>n.cat))];
-  const byBranch = {};
-  nodes.forEach(n => { if(!byBranch[n.cat]) byBranch[n.cat]=[]; byBranch[n.cat].push(n); });
-
-  cats.forEach(cat => {
-    const color = CAT_COLOR[cat] || '#5fd4d4';
-    const arr = byBranch[cat];
-    if(!arr || !arr.length) return;
-
-    arr.forEach((n,i) => {
-      const prev = i===0 ? {x:0,y:0} : arr[i-1];
-      const cp1x = prev.x + (n.x - prev.x) * 0.4;
-      const cp1y = prev.y + (n.y - prev.y) * 0.1;
-      const cp2x = prev.x + (n.x - prev.x) * 0.6;
-      const cp2y = prev.y + (n.y - prev.y) * 0.9;
-
-      // Animated dash
-      const t = (animFrame * 0.008 + i * 0.3) % 1;
-      ctx.save();
-      ctx.setLineDash([8, 14]);
-      ctx.lineDashOffset = -animFrame * 0.4;
-      ctx.beginPath();
-      ctx.moveTo(prev.x, prev.y);
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, n.x, n.y);
-      ctx.strokeStyle = color + '30';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-
-      // Solid branch line
-      ctx.beginPath();
-      ctx.moveTo(prev.x, prev.y);
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, n.x, n.y);
-      ctx.strokeStyle = color + '55';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
-  });
-}
-
-function drawNodes() {
-  nodes.forEach(n => {
-    const color = CAT_COLOR[n.cat] || '#5fd4d4';
-    const isHov = hoveredNode === n;
-    const r = isHov ? 18 : 14;
-
-    // Glow
-    if(isHov) {
-      const grd = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*2.5);
-      grd.addColorStop(0, color+'60');
-      grd.addColorStop(1, 'transparent');
-      ctx.beginPath(); ctx.arc(n.x,n.y,r*2.5,0,Math.PI*2);
-      ctx.fillStyle = grd; ctx.fill();
-    }
-
-    // Orbit ring
-    ctx.beginPath(); ctx.arc(n.x,n.y,r+4,0,Math.PI*2);
-    ctx.strokeStyle = color + (isHov?'80':'30');
-    ctx.lineWidth = 1; ctx.stroke();
-
-    // Node body
-    ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2);
-    ctx.fillStyle = '#0a0f1a'; ctx.fill();
-    ctx.strokeStyle = color + (isHov?'ff':'aa');
-    ctx.lineWidth = isHov ? 2 : 1.5; ctx.stroke();
-
-    // Inner dot
-    ctx.beginPath(); ctx.arc(n.x,n.y,r*0.35,0,Math.PI*2);
-    ctx.fillStyle = color + (isHov?'ff':'88'); ctx.fill();
-
-    // Label
-    const labelX = n.x + Math.cos(n.angle) * (r + 14);
-    const labelY = n.y + Math.sin(n.angle) * (r + 14);
-    ctx.fillStyle = isHov ? '#c8d8f0' : '#6a8aaa';
-    ctx.font = (isHov?'500 ':'')+'11px Noto Sans TC, sans-serif';
-    ctx.textAlign = Math.cos(n.angle) > 0 ? 'left' : Math.cos(n.angle) < -0.1 ? 'right' : 'center';
-    ctx.textBaseline = 'middle';
-    const label = n.title.length > 14 ? n.title.slice(0,14)+'…' : n.title;
-    ctx.fillText(label, labelX, labelY);
-
-    // Date badge
-    if(isHov) {
-      ctx.fillStyle = color+'30';
-      ctx.font = '10px Space Mono, monospace';
-      ctx.textAlign = Math.cos(n.angle) > 0 ? 'left' : Math.cos(n.angle) < -0.1 ? 'right' : 'center';
-      ctx.fillStyle = color + 'aa';
-      ctx.fillText(n.date, labelX, labelY + 14);
-    }
-
-    // Link indicator
-    if(n.link) {
-      ctx.beginPath(); ctx.arc(n.x+r*0.7, n.y-r*0.7, 4, 0, Math.PI*2);
-      ctx.fillStyle = '#4da8ff'; ctx.fill();
-    }
-  });
-}
-
-// ── Mouse ─────────────────────────────────────
-function toWorld(ex, ey) {
-  return { x:(ex - cx - offX)/scale, y:(ey - cy - offY)/scale };
-}
-
-canvas.addEventListener('mousemove', e => {
-  const r = canvas.getBoundingClientRect();
-  const wx = e.clientX - r.left, wy = e.clientY - r.top;
-  const w = toWorld(wx, wy);
-  const prev = hoveredNode;
-
-  hoveredNode = null;
-  for(const n of nodes) {
-    const d = Math.hypot(n.x - w.x, n.y - w.y);
-    if(d < 22) { hoveredNode = n; break; }
-  }
-
-  if(hoveredNode) {
-    canvas.style.cursor = 'pointer';
-    showTooltip(hoveredNode, e.clientX, e.clientY);
-  } else {
-    canvas.style.cursor = dragging ? 'grabbing' : 'grab';
-    hideTooltip();
-  }
-
-  if(dragging) {
-    offX += e.clientX - lastX;
-    offY += e.clientY - lastY;
-    lastX = e.clientX; lastY = e.clientY;
-  }
-});
-
-canvas.addEventListener('mousedown', e => {
-  if(!hoveredNode) { dragging=true; lastX=e.clientX; lastY=e.clientY; }
-});
-canvas.addEventListener('mouseup', () => dragging = false);
-canvas.addEventListener('mouseleave', () => { dragging=false; hideTooltip(); });
-
-canvas.addEventListener('click', e => {
-  if(hoveredNode && hoveredNode.link) window.open(hoveredNode.link,'_blank');
-});
-
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.1 : 0.9;
-  scale = Math.max(0.3, Math.min(3, scale * factor));
-}, {passive:false});
-
-function zoom(f) { scale = Math.max(0.3, Math.min(3, scale * f)); }
-
-function resetView() { scale=1; offX=0; offY=0; }
-
-// ── Tooltip ───────────────────────────────────
-function showTooltip(n, mx, my) {
-  const tt = document.getElementById('tooltip');
-  document.getElementById('tt-date').textContent = n.date;
-  document.getElementById('tt-title').textContent = n.title;
-  document.getElementById('tt-desc').textContent = [n.desc, n.action].filter(Boolean).join(' → ') || '（無說明）';
-  const tagsEl = document.getElementById('tt-tags');
-  const col = CAT_COLOR[n.cat]||'#5fd4d4';
-  tagsEl.innerHTML = `<span class="tt-tag" style="background:${col}20;color:${col};border-color:${col}40">${n.cat}</span>`;
-  const linkEl = document.getElementById('tt-link');
-  if(n.link) { linkEl.href=n.link; linkEl.textContent='🔗 開啟文件'; linkEl.style.display='block'; }
-  else linkEl.style.display='none';
-
-  let tx = mx+18, ty = my-20;
-  if(tx+290 > window.innerWidth) tx = mx-300;
-  if(ty+160 > window.innerHeight) ty = my-160;
-  tt.style.left = tx+'px'; tt.style.top = ty+'px';
-  tt.classList.add('show');
-}
-function hideTooltip() { document.getElementById('tooltip').classList.remove('show'); }
-
-// ── Panel ─────────────────────────────────────
-let activeTab = 'add';
-function openPanel(tab) {
-  switchTab(tab||'add');
-  document.getElementById('panel').classList.add('open');
-  if(tab==='manage') renderNodeList();
-}
-function closePanel() { document.getElementById('panel').classList.remove('open'); }
-
-function switchTab(name) {
-  activeTab = name;
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['add','import','manage'][i]===name);
-  });
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-}
-
-// ── Add Node ──────────────────────────────────
-let selectedCat = '系統更新';
-function selectCat(el) {
-  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedCat = el.dataset.cat;
-}
-
-function addNode() {
-  const date = document.getElementById('f-date').value || '—';
-  const title = document.getElementById('f-title').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-  const link = document.getElementById('f-link').value.trim();
-  const action = document.getElementById('f-action').value.trim();
-  if(!title) { alert('請輸入文件名稱'); return; }
-
-  nodes.push({ id: nextId++, date, title, cat: selectedCat, desc, action, link });
-  layout();
-  updateStats();
-  ['f-title','f-desc','f-link','f-action'].forEach(id=>document.getElementById(id).value='');
-  closePanel();
-}
-
-// ── Import ────────────────────────────────────
-function importCSV() {
-  const raw = document.getElementById('import-csv').value.trim();
-  const catMode = document.getElementById('import-cat').value;
-  if(!raw) return;
-  const rows = raw.split('\n').filter(Boolean);
-  rows.forEach(row => {
-    const cols = row.split('\t');
-    const date = cols[0]?.trim()||'—';
-    const title = cols[1]?.trim()||'未命名';
-    const desc = cols[2]?.trim()||'';
-    const action = cols[3]?.trim()||'';
-    const cat = catMode==='auto' ? detectCat(title+' '+desc) : catMode;
-    nodes.push({ id: nextId++, date, title, cat, desc, action, link:'' });
-  });
-  layout(); updateStats();
-  document.getElementById('import-csv').value = '';
-  closePanel();
-}
-
-// ── Node List ─────────────────────────────────
-function renderNodeList() {
-  const el = document.getElementById('node-list');
-  if(!nodes.length) { el.innerHTML='<p class="help-text">尚無節點</p>'; return; }
-  el.innerHTML = nodes.slice().reverse().map(n=>`
-    <div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--surface)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--text-muted)">${n.date}</div>
-          <div style="font-size:13px;font-weight:500;margin:4px 0">${n.title}</div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:${CAT_COLOR[n.cat]||'#5fd4d4'}20;color:${CAT_COLOR[n.cat]||'#5fd4d4'}">${n.cat}</span>
-        </div>
-        <button onclick="deleteNode(${n.id})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px" title="刪除">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function deleteNode(id) {
-  nodes = nodes.filter(n=>n.id!==id);
-  layout(); updateStats(); renderNodeList();
-}
-
-// ── Stats ─────────────────────────────────────
-function updateStats() {
-  document.getElementById('stat-nodes').textContent = nodes.length;
-  document.getElementById('stat-branches').textContent = new Set(nodes.map(n=>n.cat)).size;
-  const dates = nodes.map(n=>n.date).filter(d=>d!=='—');
-  document.getElementById('stat-last').textContent = dates[dates.length-1]||'—';
-}
-
-// ── Today's date default ──────────────────────
-document.getElementById('f-date').valueAsDate = new Date();
-
-// ── Init ──────────────────────────────────────
-layout();
-updateStats();
-draw();
+                const element = document.getElementById('mermaid-chart');
+                element.removeAttribute('data-processed');
+                element.innerHTML = code;
+                mermaid.render('graphDiv', code).then(res => {
+                    element.innerHTML = res.svg;
+                });
+            }
+        },
+        mounted() {
+            mermaid.initialize({ 
+                startOnLoad: false, 
+                theme: 'dark',
+                flowchart: { curve: 'basis', htmlLabels: true }
+            });
+            this.updateChart();
+        }
+    }).mount('#app');
 </script>
+
 </body>
 </html>
