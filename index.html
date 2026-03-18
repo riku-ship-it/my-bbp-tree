@@ -3,125 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BBP Knowledge Flow</title>
+    <title>BBP Knowledge Flow - Dark Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        :root { --line-color: #f59e0b; /* 金色 */ }
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; font-family: -apple-system, sans-serif; background-color: #0f172a; }
+        
+        /* 網點背景 */
         .dot-bg {
-            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-image: radial-gradient(#334155 1px, transparent 1px);
             background-size: 20px 20px;
         }
+
+        /* 節點樣式 - 黑底白字 */
         .node {
-            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: move;
+            transition: transform 0.1s ease-out;
+            user-select: none;
         }
-        .node:focus-within {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
+        .node:active { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+
+        /* SVG 連線層 */
+        svg { position: absolute; pointer-events: none; z-index: 10; }
+        .link { fill: none; stroke: var(--line-color); stroke-width: 1.5; }
     </style>
 </head>
-<body class="bg-gray-50 overflow-hidden" x-data="skillTree()">
+<body class="dot-bg">
 
-    <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50 px-6 py-3 flex justify-between items-center">
-        <h1 class="text-sm font-semibold text-gray-700 tracking-tight">BBP SKILL TREE / <span class="text-gray-400">Knowledge Map</span></h1>
-        <div class="flex gap-3">
-            <button @click="addNode" class="text-xs bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">新增根節點</button>
-            <button @click="saveToGithub" class="text-xs border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100 transition">儲存變更</button>
+    <nav class="fixed top-0 w-full bg-slate-900/95 backdrop-blur-md border-b border-slate-800 z-50 px-6 py-3 flex justify-between items-center">
+        <h1 class="text-sm font-semibold text-slate-100 tracking-tight">BBP KNOWLEDGE FLOW / <span class="text-slate-500">Dark Edition</span></h1>
+        <div class="flex gap-2">
+            <button onclick="addRootNode()" class="text-xs border border-slate-700 text-slate-300 px-4 py-1.5 rounded-full hover:bg-slate-800 hover:text-white transition">新增根技能</button>
+            <button onclick="saveToGithub()" class="text-xs bg-slate-100 text-slate-900 px-4 py-1.5 rounded-full hover:bg-white transition font-medium">💾 儲存 (Copy)</button>
         </div>
     </nav>
 
-    <main class="w-screen h-screen dot-bg relative cursor-grab active:cursor-grabbing" 
-          @mousedown="startPan" @mousemove="onPan" @mouseup="stopPan" @wheel="onZoom">
-        
-        <div :style="`transform: translate(${camX}px, ${camY}px) scale(${zoom});`" class="origin-center transition-transform duration-75">
-            
-            <svg class="absolute top-0 left-0 w-[5000px] h-[5000px] pointer-events-none" style="transform: translate(-2500px, -2500px)">
-                <template x-for="link in links">
-                    <path :d="generatePath(link)" stroke="#d1d5db" stroke-width="1.5" fill="none" />
-                </template>
-            </svg>
-
-            <template x-for="(node, index) in nodes" :key="node.id">
-                <div class="absolute node bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex items-center group"
-                     :style="`left: ${node.x}px; top: ${node.y}px; min-width: 120px;`"
-                     @mousedown.stop>
-                    
-                    <input type="text" v-model="node.label" 
-                           class="w-full px-3 py-2 text-sm text-gray-700 outline-none bg-transparent"
-                           @keyup.enter="$el.blur()">
-                    
-                    <div class="hidden group-hover:flex absolute -right-10 gap-1">
-                        <button @click="addChild(node)" class="w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center shadow-lg">+</button>
-                        <button @click="deleteNode(index)" class="w-6 h-6 bg-red-400 text-white rounded-full text-xs flex items-center justify-center shadow-lg">×</button>
-                    </div>
-                </div>
-            </template>
-
-        </div>
+    <main id="map" class="w-screen h-screen relative">
+        <svg id="links-layer" class="w-full h-full"></svg>
+        <div id="nodes-layer" class="w-full h-full relative z-20"></div>
     </main>
 
-    <div class="fixed bottom-6 right-6 text-[10px] text-gray-400 uppercase tracking-widest bg-white/50 p-2 rounded">
-        Scroll to Zoom • Drag to Pan • Double Click to Edit
+    <div class="fixed bottom-6 right-6 text-[10px] text-slate-600 uppercase tracking-widest bg-slate-900/50 p-2 rounded">
+        Drag to Move • Double Click to Edit or Color • Shift + Click Node to Add Child
     </div>
 
     <script>
-        function skillTree() {
-            return {
-                nodes: [
-                    { id: 1, label: '我的知識體系', x: window.innerWidth / 2 - 60, y: window.innerHeight / 2 },
-                ],
-                links: [],
-                camX: 0, camY: 0, zoom: 1,
-                isPanning: false,
-                lastMouseX: 0, lastMouseY: 0,
+        // 核心數據 (可自由擴展)
+        let nodes = [
+            { id: 1, label: '我的BBP', x: window.innerWidth / 2, y: window.innerHeight / 2, color: '#111827' },
+        ];
+        let links = [];
 
-                addNode() {
-                    const id = Date.now();
-                    this.nodes.push({ id, label: '新知識點', x: -this.camX + 100, y: -this.camY + 100 });
-                },
+        const nodesLayer = d3.select("#nodes-layer");
+        const linksLayer = d3.select("#links-layer");
 
-                addChild(parent) {
-                    const id = Date.now();
-                    const newNode = { id, label: '分支技能', x: parent.x + 200, y: parent.y + Math.random() * 50 - 25 };
-                    this.nodes.push(newNode);
-                    this.links.push({ source: parent.id, target: id });
-                },
+        // 初始化畫布
+        function renderMap() {
+            // 渲染連線 (貝茲曲線)
+            const diagonal = (d) => {
+                const s = nodes.find(n => n.id === d.source);
+                const t = nodes.find(n => n.id === d.target);
+                if (!s || !t) return '';
+                const cp = (s.y + t.y) / 2; // 控制點
+                return `M ${s.x} ${s.y} C ${s.x} ${cp}, ${t.x} ${cp}, ${t.x} ${t.y}`;
+            };
 
-                deleteNode(index) {
-                    const id = this.nodes[index].id;
-                    this.nodes.splice(index, 1);
-                    this.links = this.links.filter(l => l.source !== id && l.target !== id);
-                },
+            linksLayer.selectAll("path").remove();
+            linksLayer.selectAll("path")
+                .data(links)
+                .join("path")
+                .attr("class", "link")
+                .attr("d", diagonal);
 
-                generatePath(link) {
-                    const s = this.nodes.find(n => n.id === link.source);
-                    const t = this.nodes.find(n => n.id === link.target);
-                    if (!s || !t) return '';
-                    // 繪製貝茲曲線
-                    const cp1x = s.x + 100;
-                    const cp2x = t.x - 50;
-                    return `M ${s.x + 120} ${s.y + 20} C ${cp1x} ${s.y + 20}, ${cp2x} ${t.y + 20}, ${t.x} ${t.y + 20}`;
-                },
+            // 渲染節點
+            const nodesSelection = nodesLayer.selectAll(".node")
+                .data(nodes, d => d.id)
+                .join("div")
+                .attr("class", d => `node absolute bg-slate-900 border border-slate-700 text-slate-100 px-4 py-2.5 rounded-md shadow-lg flex items-center gap-3`)
+                .style("left", d => `${d.x}px`)
+                .style("top", d => `${d.y}px`)
+                .style("background-color", d => d.color || '#111827') // 自定義顏色
+                .attr("contenteditable", "true") // 雙擊直接改文字
+                .on("dblclick", handleDblClick)
+                .call(d3.drag() // 加入拖移邏輯
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended)
+                )
+                .on("keyup", (event, d) => d.label = event.target.innerText) // 即時更新數據
+                .html(d => `<div class="font-medium text-sm whitespace-nowrap">${d.label}</div>`);
 
-                startPan(e) { this.isPanning = true; this.lastMouseX = e.clientX; this.lastMouseY = e.clientY; },
-                onPan(e) {
-                    if (!this.isPanning) return;
-                    this.camX += e.clientX - this.lastMouseX;
-                    this.camY += e.clientY - this.lastMouseY;
-                    this.lastMouseX = e.clientX; this.lastMouseY = e.clientY;
-                },
-                stopPan() { this.isPanning = false; },
-                onZoom(e) {
-                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                    this.zoom = Math.min(Math.max(0.5, this.zoom * delta), 2);
-                },
-                saveToGithub() {
-                    console.log("Nodes:", JSON.stringify(this.nodes));
-                    console.log("Links:", JSON.stringify(this.links));
-                    alert("目前資料已輸出至瀏覽器 Console，請複製後存檔。");
+        }
+
+        // 拖移邏輯
+        function dragstarted(event, d) { d3.select(this).raise().classed("active", true); }
+        function dragged(event, d) {
+            d.x = event.x;
+            d.y = event.y;
+            d3.select(this)
+              .style("left", `${d.x}px`)
+              .style("top", `${d.y}px`);
+            renderMap(); // 拖動時重新渲染連線
+        }
+        function dragended(event, d) { d3.select(this).classed("active", false); }
+
+        // 其他功能
+        function addRootNode() {
+            const id = Date.now();
+            nodes.push({ id, label: '新技能', x: 100, y: 100, color: '#111827' });
+            renderMap();
+        }
+
+        function handleDblClick(event, d) {
+            if (event.ctrlKey) { // 這裡演示自定義顏色，未來可以結合色彩選擇器
+                const newColor = prompt("輸入 HEX 顏色代碼 (例如 #1d4ed8):", d.color);
+                if (newColor) {
+                    d.color = newColor;
+                    renderMap();
                 }
             }
         }
+
+        function saveToGithub() {
+            console.log("Nodes & Links:", JSON.stringify({nodes, links}));
+            alert("目前資料已輸出至控制台，請複製後手動存回 GitHub。\n（下個階段將對接 GitHub API）");
+        }
+
+        // 初始渲染
+        window.addEventListener('resize', renderMap);
+        renderMap();
     </script>
+
 </body>
 </html>
