@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>BBP 知識技能樹系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root { --bg: #0f172a; --text: #f8fafc; --primary: #38bdf8; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; }
+        #sidebar { width: 350px; background: #1e293b; padding: 20px; overflow-y: auto; border-right: 1px solid #334155; }
+        #canvas { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 20px; }
+        .node-edit { background: #334155; padding: 10px; margin-bottom: 10px; border-radius: 8px; font-size: 14px; }
+        input, select { width: 100%; margin: 5px 0; background: #0f172a; color: white; border: 1px solid #475569; padding: 5px; }
+        button { cursor: pointer; background: var(--primary); border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+        .export-area { margin-top: 20px; border-top: 1px solid #475569; pt: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="sidebar">
+        <h2>⚔️ 技能樹編輯器</h2>
+        <div v-for="(node, index) in skills" :key="node.id" class="node-edit">
+            <strong>ID: {{ node.id }}</strong>
+            <input v-model="node.label" placeholder="技能名稱">
+            <select v-model="node.parent">
+                <option value="">無前置技能 (根節點)</option>
+                <option v-for="s in skills" v-show="s.id !== node.id" :value="s.id">{{ s.label }}</option>
+            </select>
+            <select v-model="node.status">
+                <option value="locked">🔒 鎖定</option>
+                <option value="active">🔥 修練中</option>
+                <option value="mastered">✨ 精通</option>
+            </select>
+            <button @click="removeSkill(index)" style="background: #ef4444;">刪除</button>
+        </div>
+        <button @click="addSkill">+ 新增技能節點</button>
+
+        <div class="export-area">
+            <button @click="updateChart" style="background: #10b981; width: 100%;">⚡ 更新視覺圖表</button>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 10px;">更新後，將代碼存入 GitHub 即可完成 BBP 更新。</p>
+        </div>
+    </div>
+
+    <div id="canvas">
+        <div class="mermaid" id="mermaid-chart">
+            {{ chartCode }}
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+    createApp({
+        data() {
+            return {
+                skills: [
+                    { id: 'A', label: 'BBP 基礎', parent: '', status: 'mastered' },
+                    { id: 'B', label: 'GitHub 操作', parent: 'A', status: 'active' }
+                ],
+                chartCode: ''
+            }
+        },
+        methods: {
+            addSkill() {
+                const newId = String.fromCharCode(65 + this.skills.length);
+                this.skills.push({ id: newId, label: '新技能', parent: '', status: 'locked' });
+            },
+            removeSkill(index) {
+                this.skills.splice(index, 1);
+            },
+            updateChart() {
+                let code = "graph TD\n";
+                // 定義樣式
+                code += "classDef mastered fill:#10b981,stroke:#fff,color:#fff;\n";
+                code += "classDef active fill:#f59e0b,stroke:#fff,color:#fff;\n";
+                code += "classDef locked fill:#475569,stroke:#94a3b8,color:#94a3b8;\n";
+
+                this.skills.forEach(s => {
+                    if (s.parent) {
+                        code += `  ${s.parent} --> ${s.id}[${s.label}]\n`;
+                    } else {
+                        code += `  ${s.id}[${s.label}]\n`;
+                    }
+                    code += `  class ${s.id} ${s.status};\n`;
+                });
+
+                const element = document.getElementById('mermaid-chart');
+                element.removeAttribute('data-processed');
+                element.innerHTML = code;
+                mermaid.render('graphDiv', code).then(res => {
+                    element.innerHTML = res.svg;
+                });
+            }
+        },
+        mounted() {
+            mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+            this.updateChart();
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
