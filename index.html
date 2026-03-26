@@ -5,419 +5,427 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>客戶旅程圖</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --bg:#F5F4F0;--surface:#FFF;--surface2:#F0EEE9;
-    --border:#E0DDD6;--border-s:#C8C5BC;
-    --text:#1A1916;--text2:#6B6860;--text3:#9B9890;
-    --font:'IBM Plex Sans TC',sans-serif;--mono:'IBM Plex Mono',monospace;--r:6px;
-  }
-  body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
-  /* header */
-  .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:12px}
-  .hdr-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-  .hdr-title{font-size:15px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
-  .hdr-sub{font-size:11px;color:var(--text3);white-space:nowrap}
-  .hdr-r{display:flex;gap:8px;flex-shrink:0}
-  .btn{font-family:var(--font);font-size:12px;font-weight:500;padding:6px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
-  .btn:hover{border-color:var(--border-s);color:var(--text);background:var(--surface2)}
-  .btn-p{background:var(--text);color:#fff;border-color:var(--text)}
-  .btn-p:hover{background:#3A3835;border-color:#3A3835;color:#fff}
-  /* layout */
-  .main{display:flex;height:calc(100vh - 52px)}
-  /* sidebar */
-  .sb{width:208px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
-  .sb-inner{padding:14px 11px;flex:1}
-  .sb-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
-  .nav-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:var(--r);cursor:pointer;transition:all .1s;margin-bottom:2px;color:var(--text2);font-size:12px}
-  .nav-item:hover{background:var(--surface2);color:var(--text)}
-  .nav-item.active{background:var(--text);color:#fff}
-  .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .nav-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .nav-cnt{font-family:var(--mono);font-size:10px;opacity:.55}
-  .add-btn{margin:3px 11px 11px;width:calc(100% - 22px);padding:7px;border:1px dashed var(--border-s);background:transparent;border-radius:var(--r);font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font);transition:all .12s;text-align:center}
-  .add-btn:hover{color:var(--text);border-color:var(--text);background:var(--surface2)}
-  .sb-legend{padding:11px;border-top:1px solid var(--border)}
-  .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:5px}
-  .leg-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-  /* canvas */
-  .canvas{flex:1;overflow:auto;padding:18px 22px}
-  /* timeline */
-  .tl{display:flex;align-items:flex-start;margin-bottom:18px;padding:0 2px;position:relative}
-  .tl-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;cursor:pointer}
-  .tl-item:not(:last-child)::after{content:'';position:absolute;top:5px;left:calc(50% + 7px);right:calc(-50% + 7px);height:2px;background:var(--border)}
-  .tl-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px currentColor;z-index:1}
-  .tl-name{font-size:10px;color:var(--text3);margin-top:4px;text-align:center;max-width:70px;line-height:1.3}
-  .tl-prod{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:1px;opacity:.7}
-  /* phase */
-  .phase{margin-bottom:13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);overflow:hidden;transition:box-shadow .15s}
-  .phase:hover{box-shadow:0 2px 10px rgba(0,0,0,.06)}
-  .phase.collapsed .phase-body{display:none}
-  .ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none}
-  .ph:hover{background:#E8E6E0}
-  .ph-bar{width:4px;height:22px;border-radius:2px;flex-shrink:0}
-  .ph-info{flex:1;min-width:0}
-  .ph-row{display:flex;align-items:center;gap:7px}
-  .ph-name{font-size:14px;font-weight:600;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);cursor:pointer;min-width:50px}
-  .ph-name:focus{background:var(--surface);padding:1px 5px;border-radius:4px;outline:1px solid var(--border-s);cursor:text}
-  .ph-prod{font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:3px;font-weight:500;border:1px solid;cursor:pointer;outline:none;background:transparent;min-width:30px}
-  .ph-prod:focus{outline:1px solid var(--border-s)}
-  .ph-cnt{font-size:10px;font-family:var(--mono);color:var(--text3)}
-  .ph-acts{display:flex;gap:2px}
-  .ib{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:13px;transition:all .1s}
-  .ib:hover{background:var(--surface);color:var(--text)}
-  .ib.d:hover{background:#FAE0D6;color:#B02010}
-  .ph-arr{font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0}
-  .phase.collapsed .ph-arr{transform:rotate(-90deg)}
-  /* body */
-  .phase-body{padding:11px}
-  .nodes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:9px}
-  .add-node{border:1px dashed var(--border-s);border-radius:var(--r);padding:10px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;background:transparent;font-family:var(--font);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:5px;min-height:76px}
-  .add-node:hover{border-color:var(--text);color:var(--text);background:var(--surface2)}
-  /* node card */
-  .nc{border:1px solid var(--border);border-top-width:3px;border-radius:var(--r);background:var(--surface);overflow:hidden;transition:box-shadow .12s}
-  .nc:hover{box-shadow:0 1px 6px rgba(0,0,0,.08)}
-  .nc-hdr{padding:7px 9px 5px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:7px}
-  .nc-num{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;padding-top:2px}
-  .nc-name{font-size:13px;font-weight:600;flex:1;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);resize:none;line-height:1.4;min-height:18px;width:100%}
-  .nc-acts{display:flex;gap:2px;opacity:0;transition:opacity .1s;flex-shrink:0}
-  .nc:hover .nc-acts{opacity:1}
-  /* fields */
-  .nc-fields{padding:7px 9px;display:flex;flex-direction:column}
-  .fg{padding:5px 0;border-bottom:1px solid var(--border)}
-  .fg:last-child{border-bottom:none}
-  .fl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
-  .fv{font-size:12px;color:var(--text);outline:none;border:1px solid transparent;background:transparent;font-family:var(--font);padding:3px 4px;border-radius:4px;width:100%;resize:none;min-height:26px;line-height:1.4;transition:border-color .1s,background .1s}
-  .fv:focus{border-color:var(--border-s);background:var(--surface2);outline:none}
-  .fv::placeholder{color:var(--text3)}
-  /* handoff */
-  .hf-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px 0;border-bottom:1px solid var(--border)}
-  .hf-col{display:flex;flex-direction:column;gap:2px}
-  .hf-col:first-child{border-right:1px solid var(--border);padding-right:5px}
-  .ow-sel{font-size:11px;font-weight:500;font-family:var(--font);border:1px solid var(--border);border-radius:4px;padding:3px 4px;cursor:pointer;outline:none;width:100%;background:var(--surface2);color:var(--text);border-left-width:3px}
-  .ow-sel:focus{border-color:var(--border-s)}
-  /* checklist */
-  .cl{display:flex;flex-direction:column;gap:4px}
-  .cl-item{display:flex;align-items:flex-start;gap:5px;font-size:12px}
-  .cl-item input[type=checkbox]{margin-top:2px;accent-color:var(--text);flex-shrink:0;cursor:pointer}
-  .cl-text{flex:1;outline:none;border:none;background:transparent;font-family:var(--font);font-size:12px;color:var(--text);resize:none;min-height:16px;line-height:1.4}
-  .cl-text:focus{outline:none}
-  .cl-text.done{text-decoration:line-through;color:var(--text3)}
-  .cl-del{opacity:0;font-size:11px;color:var(--text3);cursor:pointer;flex-shrink:0;line-height:1.6;border:none;background:transparent;font-family:var(--font)}
-  .cl-item:hover .cl-del{opacity:1}
-  .cl-add{font-size:11px;color:var(--text3);cursor:pointer;border:none;background:transparent;font-family:var(--font);padding:2px 0;text-align:left;transition:color .1s}
-  .cl-add:hover{color:var(--text)}
-  /* pills */
-  .risk-sel{font-size:10px;font-weight:600;font-family:var(--font);border:1px solid transparent;border-radius:20px;padding:2px 8px;cursor:pointer;outline:none}
-  .dec-sel{font-size:10px;font-weight:600;font-family:var(--font);border:1px solid var(--border);border-radius:3px;padding:2px 7px;cursor:pointer;outline:none;background:var(--surface2);color:var(--text2)}
-  .rd-row{display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
-  /* modal */
-  .mo{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;z-index:200}
-  .mo.open{display:flex}
-  .mo-box{background:var(--surface);border-radius:10px;padding:22px;width:400px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.12)}
-  .mo-box h3{font-size:15px;font-weight:600;margin-bottom:14px}
-  .mo-f{margin-bottom:13px}
-  .mo-lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
-  .mo-inp{width:100%;font-family:var(--font);font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--text);outline:none;transition:border-color .1s}
-  .mo-inp:focus{border-color:var(--border-s)}
-  .mo-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
-  .cp{display:flex;gap:7px;flex-wrap:wrap}
-  .co{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
-  .co:hover{transform:scale(1.18)}
-  .co.sel{border-color:var(--text)}
-  /* scrollbar */
-  ::-webkit-scrollbar{width:5px;height:5px}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-  ::-webkit-scrollbar-thumb:hover{background:var(--border-s)}
-  /* toast */
-  .toast{position:fixed;bottom:18px;right:18px;background:var(--text);color:#fff;font-size:12px;padding:9px 15px;border-radius:6px;opacity:0;transition:opacity .2s;z-index:300;pointer-events:none}
-  .toast.show{opacity:1}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F6F5F0;--surface:#FFF;--s2:#EFEDE7;--border:#E2DFD8;--border2:#C5C1B8;
+  --text:#18170F;--t2:#6A6860;--t3:#9A9890;
+  --font:'IBM Plex Sans TC',sans-serif;--mono:'IBM Plex Mono',monospace;--r:6px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+
+/* header */
+.hd{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.hd-title{font-size:15px;font-weight:600;letter-spacing:-.02em;}
+.hd-title em{font-style:normal;font-weight:300;color:var(--t2);font-size:13px;margin-left:6px;}
+.hd-r{display:flex;gap:8px;align-items:center;}
+.badge{font-family:var(--mono);font-size:10px;padding:2px 7px;background:var(--s2);border:1px solid var(--border);border-radius:3px;color:var(--t2);}
+.btn{font-family:var(--font);font-size:12px;font-weight:500;padding:5px 13px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--t2);cursor:pointer;transition:all .12s;}
+.btn:hover{border-color:var(--border2);color:var(--text);background:var(--s2);}
+.btn-p{background:var(--text);color:#fff;border-color:var(--text);}
+.btn-p:hover{background:#3A3830;border-color:#3A3830;color:#fff;}
+
+/* layout */
+.layout{display:flex;height:calc(100vh - 50px);}
+
+/* sidebar */
+.sb{width:200px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sb-sec{padding:14px 12px 6px;}
+.sb-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:var(--r);cursor:pointer;color:var(--t2);font-size:12px;margin-bottom:2px;transition:all .1s;}
+.nav-item:hover{background:var(--s2);color:var(--text);}
+.nav-item.active{background:var(--text);color:#fff;}
+.nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.nav-tag{margin-left:auto;font-family:var(--mono);font-size:10px;opacity:.6;white-space:nowrap;}
+.add-ph{margin:4px 12px 12px;width:calc(100% - 24px);padding:7px;border:1px dashed var(--border2);background:transparent;border-radius:var(--r);font-size:12px;color:var(--t3);cursor:pointer;font-family:var(--font);transition:all .12s;text-align:center;}
+.add-ph:hover{color:var(--text);border-color:var(--text);background:var(--s2);}
+.sb-leg{padding:12px;border-top:1px solid var(--border);margin-top:auto;}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t2);margin-bottom:5px;}
+.leg-sw{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.manage-btn{margin:8px 0 4px;width:100%;padding:6px;border:1px solid var(--border);background:var(--s2);border-radius:var(--r);font-size:11px;color:var(--t2);cursor:pointer;font-family:var(--font);transition:all .12s;text-align:center;}
+.manage-btn:hover{border-color:var(--border2);color:var(--text);}
+
+/* canvas */
+.canvas{flex:1;overflow:auto;padding:0;display:flex;flex-direction:column;}
+
+/* ── Timeline — bigger & clearer ── */
+.tl-wrap{background:var(--surface);border-bottom:2px solid var(--border);padding:22px 32px 18px;flex-shrink:0;}
+.tl{display:flex;align-items:flex-start;position:relative;}
+.tl::before{content:'';position:absolute;top:17px;left:17px;right:17px;height:4px;background:var(--border);border-radius:2px;z-index:0;}
+.tl-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;cursor:pointer;gap:0;}
+.tl-dot{width:34px;height:34px;border-radius:50%;border:4px solid var(--surface);box-shadow:0 0 0 2px #ccc;flex-shrink:0;transition:transform .15s,box-shadow .15s;}
+.tl-step:hover .tl-dot{transform:scale(1.1);box-shadow:0 0 0 3px #999;}
+.tl-name{font-size:13px;font-weight:600;color:var(--text);margin-top:9px;text-align:center;max-width:100px;line-height:1.35;}
+.tl-product{font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px;text-align:center;}
+
+/* phases */
+.phases-area{padding:20px;flex:1;}
+.phase{margin-bottom:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden;}
+.phase.collapsed .phase-body{display:none;}
+.phase-hd{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--s2);cursor:pointer;user-select:none;}
+.phase-hd:hover{background:#E8E5DE;}
+.phase-bar{width:5px;height:22px;border-radius:3px;flex-shrink:0;}
+.ph-name-inp{font-size:14px;font-weight:600;flex:1;min-width:0;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);cursor:pointer;}
+.ph-name-inp:focus{background:var(--surface);padding:2px 6px;border-radius:4px;outline:1px solid var(--border2);cursor:text;}
+.ph-tag-inp{font-size:11px;font-family:var(--mono);color:var(--t3);background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:4px;outline:none;width:90px;flex-shrink:0;}
+.ph-tag-inp:focus{border-color:var(--border2);}
+.ph-acts{display:flex;gap:3px;}
+.chev{width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:11px;transition:transform .2s;flex-shrink:0;}
+.phase.collapsed .chev{transform:rotate(-90deg);}
+
+/* nodes */
+.phase-body{padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;}
+.nc{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);overflow:hidden;border-top-width:3px;transition:box-shadow .12s;}
+.nc:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.nc-hd{padding:8px 10px 7px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:7px;}
+.nc-num{font-family:var(--mono);font-size:10px;color:var(--t3);flex-shrink:0;padding-top:2px;}
+.nc-name{font-size:13px;font-weight:600;flex:1;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);resize:none;line-height:1.4;min-height:18px;}
+.nc-acts{display:flex;gap:2px;opacity:0;transition:opacity .1s;}
+.nc:hover .nc-acts{opacity:1;}
+.nc-body{padding:9px 10px;display:flex;flex-direction:column;gap:7px;}
+
+/* fields */
+.f{display:flex;flex-direction:column;gap:2px;}
+.f-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);}
+.f-val{font-size:12px;color:var(--text);outline:none;border:1px solid transparent;background:transparent;font-family:var(--font);padding:3px 5px;border-radius:4px;width:100%;resize:none;min-height:26px;line-height:1.45;transition:border-color .1s,background .1s;}
+.f-val:focus{border-color:var(--border2);background:var(--s2);outline:none;}
+.f-val::placeholder{color:var(--t3);}
+
+/* owner cols */
+.ow-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ow-col{display:flex;flex-direction:column;gap:3px;}
+.ow-sub{font-size:10px;color:var(--t3);}
+.ow-sel{font-size:11px;font-weight:500;font-family:var(--font);border:1px solid var(--border);border-radius:4px;padding:4px 6px;cursor:pointer;outline:none;width:100%;transition:all .1s;}
+.role-inp{font-size:11px;font-family:var(--font);border:1px solid transparent;border-radius:4px;padding:3px 5px;width:100%;background:transparent;color:var(--text);outline:none;transition:border-color .1s,background .1s;}
+.role-inp:focus{border-color:var(--border2);background:var(--s2);}
+.role-inp::placeholder{color:var(--t3);}
+
+/* handoff */
+.hb{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;}
+.hb-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);}
+
+/* checklist */
+.cl{display:flex;flex-direction:column;gap:4px;}
+.cl-item{display:flex;align-items:flex-start;gap:6px;}
+.cl-item input[type=checkbox]{margin-top:3px;accent-color:var(--text);flex-shrink:0;cursor:pointer;}
+.cl-ta{flex:1;outline:none;border:none;background:transparent;font-family:var(--font);font-size:12px;color:var(--text);resize:none;min-height:16px;line-height:1.4;}
+.cl-ta.done{text-decoration:line-through;color:var(--t3);}
+.cl-del{opacity:0;font-size:12px;color:var(--t3);cursor:pointer;flex-shrink:0;border:none;background:transparent;font-family:var(--font);padding:0;line-height:1.4;}
+.cl-item:hover .cl-del{opacity:1;}
+.cl-add{font-size:11px;color:var(--t3);cursor:pointer;border:none;background:transparent;font-family:var(--font);padding:1px 0;text-align:left;transition:color .1s;}
+.cl-add:hover{color:var(--text);}
+
+/* risk */
+.risk-sel{font-size:10px;font-weight:600;font-family:var(--font);border:1px solid transparent;border-radius:20px;padding:2px 9px;cursor:pointer;outline:none;}
+.div{height:1px;background:var(--border);margin:1px 0;}
+
+/* add node */
+.add-node{border:1px dashed var(--border2);border-radius:var(--r);text-align:center;font-size:12px;color:var(--t3);cursor:pointer;background:transparent;font-family:var(--font);transition:all .12s;display:flex;align-items:center;justify-content:center;min-height:80px;}
+.add-node:hover{border-color:var(--text);color:var(--text);background:var(--s2);}
+
+/* icon btns */
+.ib{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:13px;transition:all .1s;}
+.ib:hover{background:var(--s2);color:var(--text);}
+.ib.del:hover{background:#F5DDD3;color:#B02010;}
+
+/* modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.32);display:none;align-items:center;justify-content:center;z-index:200;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:10px;padding:22px;width:400px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.14);max-height:80vh;overflow-y:auto;}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:14px;}
+.m-f{margin-bottom:11px;}
+.m-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-bottom:4px;}
+.m-inp{width:100%;font-family:var(--font);font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--s2);color:var(--text);outline:none;}
+.m-inp:focus{border-color:var(--border2);}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.c-opt{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;}
+.c-opt:hover{transform:scale(1.15);}
+.c-opt.sel{border-color:var(--text);}
+.m-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.ow-edit-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.ow-color-inp{width:28px;height:28px;padding:0;border:none;background:none;cursor:pointer;border-radius:4px;}
+
+.toast{position:fixed;bottom:18px;right:18px;background:var(--text);color:#fff;font-size:12px;padding:9px 14px;border-radius:6px;opacity:0;transition:opacity .2s;z-index:300;pointer-events:none;}
+.toast.show{opacity:1;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 </style>
 </head>
 <body>
-<div class="hdr">
-  <div class="hdr-l">
-    <div class="hdr-title">客戶旅程圖</div>
-    <div class="hdr-sub" id="saved-badge">草稿</div>
-  </div>
-  <div class="hdr-r">
+
+<div class="hd">
+  <div class="hd-title">客戶旅程圖 <em>Customer Journey Map</em></div>
+  <div class="hd-r">
+    <div class="badge" id="badge">草稿</div>
     <button class="btn" onclick="exportJSON()">匯出 JSON</button>
-    <button class="btn" onclick="document.getElementById('imp').click()">匯入</button>
+    <button class="btn" onclick="importTrigger()">匯入</button>
     <button class="btn btn-p" onclick="saveLocal()">儲存</button>
   </div>
 </div>
-<div class="main">
+
+<div class="layout">
   <div class="sb">
-    <div class="sb-inner">
+    <div class="sb-sec">
       <div class="sb-lbl">旅程階段</div>
-      <div id="phase-nav"></div>
-      <button class="add-btn" onclick="openAddPhase()">+ 新增階段</button>
+      <div id="sb-nav"></div>
+      <button class="add-ph" onclick="openAddPhase()">+ 新增階段</button>
     </div>
-    <div class="sb-legend">
-      <div class="sb-lbl" style="margin-bottom:7px">負責方</div>
-      <div id="owner-leg"></div>
-      <button class="add-btn" style="margin:5px 0 0;width:100%" onclick="openOwnerModal()">管理負責方</button>
+    <div class="sb-leg">
+      <div class="sb-lbl">負責方</div>
+      <div id="leg-list"></div>
+      <button class="manage-btn" onclick="openManageOwners()">管理負責方</button>
     </div>
   </div>
+
   <div class="canvas">
-    <div id="tl-area"></div>
-    <div id="phases-area"></div>
+    <div class="tl-wrap"><div class="tl" id="tl"></div></div>
+    <div class="phases-area" id="phases-area"></div>
   </div>
 </div>
 
-<!-- Phase modal -->
-<div class="mo" id="ph-modal">
-  <div class="mo-box">
-    <h3 id="ph-modal-title">新增旅程階段</h3>
-    <div class="mo-f"><div class="mo-lbl">階段名稱</div><input class="mo-inp" id="ph-name" placeholder="例：免費研習班" /></div>
-    <div class="mo-f"><div class="mo-lbl">產品代號（選填）</div><input class="mo-inp" id="ph-prod" placeholder="例：SBBG、OB/BM" /></div>
-    <div class="mo-f"><div class="mo-lbl">標示顏色</div><div class="cp" id="ph-colors"></div></div>
-    <div class="mo-acts">
-      <button class="btn" onclick="closePHModal()">取消</button>
-      <button class="btn btn-p" id="ph-confirm" onclick="confirmPhase()">新增</button>
+<!-- Add Phase Modal -->
+<div class="overlay" id="modal-phase">
+  <div class="modal">
+    <h3>新增旅程階段</h3>
+    <div class="m-f"><div class="m-lbl">階段名稱</div><input class="m-inp" id="m-name" placeholder="例：免費研習班"></div>
+    <div class="m-f"><div class="m-lbl">產品代號（選填）</div><input class="m-inp" id="m-product" placeholder="例：SBBG、MBA / BOP"></div>
+    <div class="m-f"><div class="m-lbl">顏色</div><div class="color-row" id="color-row"></div></div>
+    <div class="m-acts">
+      <button class="btn" onclick="closeModal('modal-phase')">取消</button>
+      <button class="btn btn-p" onclick="confirmAddPhase()">新增</button>
     </div>
   </div>
 </div>
 
-<!-- Owner modal -->
-<div class="mo" id="ow-modal">
-  <div class="mo-box" style="width:350px">
+<!-- Manage Owners Modal -->
+<div class="overlay" id="modal-owners">
+  <div class="modal" style="width:420px">
     <h3>管理負責方</h3>
-    <div id="ow-list" style="margin-bottom:12px"></div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-      <input class="mo-inp" id="ow-new-name" placeholder="新負責方名稱" style="flex:1" />
-      <div class="cp" id="ow-cp" style="flex-shrink:0"></div>
-    </div>
-    <div class="mo-acts">
-      <button class="btn" onclick="closeOwnerModal()">關閉</button>
-      <button class="btn btn-p" onclick="addOwner()">新增</button>
-    </div>
+    <div id="owners-editor"></div>
+    <div style="margin-top:12px"><button class="btn" onclick="addOwner()">+ 新增負責方</button></div>
+    <div class="m-acts"><button class="btn btn-p" onclick="closeModal('modal-owners');render()">完成</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<input type="file" id="imp" accept=".json" style="display:none" onchange="handleImport(event)">
+<input type="file" id="file-input" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-const PC=['#5B9FD4','#9B6FD4','#7BBFD4','#D4A45B','#D46B5B','#6BBFA0','#A0B06B','#D46BAA','#B06B6B','#6B8FD4'];
-const OC=['#5B9FD4','#9B6FD4','#6BBFA0','#D4A45B','#D46B5B','#7BBFD4','#A0B06B','#D46BAA'];
-const RISKS=[{v:'none',l:'—',bg:'#F0EEE9',c:'#9B9890',b:'#C8C5BC'},{v:'low',l:'低風險',bg:'#D4EDE1',c:'#0D5C3A',b:'#6BBFA0'},{v:'medium',l:'中風險',bg:'#F8EDD6',c:'#6B3D0B',b:'#D4A45B'},{v:'high',l:'高風險',bg:'#FAE0D6',c:'#6B1A0D',b:'#D46B5B'}];
-const DECS=[{v:'none',l:'—'},{v:'convert',l:'✓ 轉換節點'},{v:'upsell',l:'↑ 升級節點'},{v:'retain',l:'♻ 留存節點'},{v:'dropout',l:'⚠ 流失風險'}];
-let mColor=PC[0], owColor=OC[0], editPhId=null, data=null;
+const DEFAULT_OWNERS=[
+  {v:'mkt',  l:'行銷 / 廣告', bg:'#F0E8FC',b:'#9B68D0',t:'#360A60'},
+  {v:'sales',l:'業務',         bg:'#D3EDE0',b:'#5BB894',t:'#0A4D30'},
+  {v:'ops',  l:'活動營運',     bg:'#FDF0D3',b:'#D0A855',t:'#604510'},
+  {v:'tchr', l:'講師',         bg:'#D8F4DC',b:'#4CAF70',t:'#0A3D1A'},
+  {v:'cs',   l:'客服 / 售後',  bg:'#FCE0D8',b:'#D4735A',t:'#5C1A08'},
+  {v:'you',  l:'你（產品側）', bg:'#D3E5F5',b:'#5594D0',t:'#0A3560'},
+  {v:'dis',  l:'爭議 / 待定',  bg:'#F8DDD3',b:'#D06855',t:'#60180A'},
+];
+const RISKS=[
+  {v:'none',l:'—',      bg:'#EDEAE3',c:'#9A9890',b:'#C5C1B8'},
+  {v:'low', l:'低風險', bg:'#D3EDE0',c:'#0A4D30',b:'#5BB894'},
+  {v:'mid', l:'中風險', bg:'#F5EDD3',c:'#604510',b:'#D0A855'},
+  {v:'high',l:'高風險', bg:'#F5DDD3',c:'#60180A',b:'#D06855'},
+];
+const PHASE_COLORS=['#5BB894','#5594D0','#9B68D0','#D0A855','#D06855','#6BB8C8','#90B060','#C86BAA','#6878D0','#A86060'];
+let pickColor=PHASE_COLORS[0];
+let data={};
 
-function uid(){return Math.random().toString(36).slice(2,9)}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000)}
-function ag(e){e.style.height='auto';e.style.height=e.scrollHeight+'px'}
-function getOwner(id){return data.owners.find(o=>o.id===id)||{name:'未分配',color:'#C8C5BC'}}
-function applyRisk(el,r){el.style.background=r.bg;el.style.color=r.c;el.style.borderColor=r.b}
+const uid=()=>Math.random().toString(36).slice(2,8);
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const getOwner=v=>(data.owners||DEFAULT_OWNERS).find(o=>o.v===v)||(data.owners||DEFAULT_OWNERS).at(-1)||DEFAULT_OWNERS.at(-1);
+const getRisk=v=>RISKS.find(r=>r.v===v)||RISKS[0];
+const ag=el=>{el.style.height='auto';el.style.height=el.scrollHeight+'px';};
+const mkDiv=cls=>{const d=document.createElement('div');d.className=cls;return d;};
+const showToast=msg=>{const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);};
 
 function defaultData(){
-  const owners=[
-    {id:'mkt',name:'行銷／廣告',color:'#9B6FD4'},
-    {id:'sales',name:'業務',color:'#5B9FD4'},
-    {id:'ops',name:'活動營運',color:'#D4A45B'},
-    {id:'trainer',name:'講師',color:'#6BBFA0'},
-    {id:'service',name:'客服／售後',color:'#D46B5B'},
-    {id:'you',name:'你（產品側）',color:'#7BBFD4'},
-    {id:'disputed',name:'爭議 / 待定',color:'#C8C5BC'},
-  ];
-  return {title:'客戶旅程圖',owners,phases:[
-    {id:uid(),name:'探索與接觸',color:'#9B6FD4',product:'',collapsed:false,nodes:[
-      {id:uid(),name:'廣告曝光',customerAction:'在社群、搜尋引擎或口碑推薦看到資訊',ownerId:'mkt',handoffOwnerId:'mkt',handoffNote:'點擊廣告後引導至報名頁',product:'',items:[{id:uid(),text:'投放廣告素材（社群 / Google）',done:false},{id:uid(),text:'落地頁 / 報名頁設計',done:false},{id:uid(),text:'追蹤碼設置（GA / Pixel）',done:false}],timeline:'持續',risk:'none',decision:'none',notes:''},
-      {id:uid(),name:'主動搜尋',customerAction:'Google 搜尋、看官網或 YouTube 頻道',ownerId:'mkt',handoffOwnerId:'mkt',handoffNote:'官網引導至 SBBG 報名入口',product:'',items:[{id:uid(),text:'SEO / 關鍵字優化',done:false},{id:uid(),text:'YouTube 頻道內容維護',done:false},{id:uid(),text:'官網資訊更新',done:false}],timeline:'持續',risk:'none',decision:'none',notes:''},
+  const p=()=>uid();
+  return{title:'客戶旅程圖',owners:JSON.parse(JSON.stringify(DEFAULT_OWNERS)),phases:[
+    {id:p(),name:'探索與接觸',color:'#5BB894',product:'',collapsed:false,nodes:[
+      {id:p(),name:'廣告曝光',customerAction:'在社群、搜尋引擎或口碑推薦看到資訊',ownerMain:'mkt',ownerMainRole:'行銷 / 廣告',ownerSub:'',ownerSubRole:'',product:'',items:[{id:p(),text:'投放廣告素材（社群 / Google）',done:false},{id:p(),text:'落地頁 / 報名頁設計',done:false},{id:p(),text:'追蹤碼設置（GA / Pixel）',done:false}],handoffOwner:'mkt',handoffRole:'行銷 / 廣告',handoffAction:'點擊廣告後引導至報名頁',risk:'none',notes:''},
+      {id:p(),name:'主動搜尋',customerAction:'Google 搜尋、看官網或 YouTube 頻道',ownerMain:'mkt',ownerMainRole:'行銷 / 廣告',ownerSub:'',ownerSubRole:'',product:'',items:[{id:p(),text:'SEO / 關鍵字優化',done:false},{id:p(),text:'YouTube 頻道內容維護',done:false},{id:p(),text:'官網資訊更新',done:false}],handoffOwner:'mkt',handoffRole:'行銷 / 廣告',handoffAction:'官網引導至 SBBG 報名入口',risk:'none',notes:''},
     ]},
-    {id:uid(),name:'免費研習班',color:'#5B9FD4',product:'SBBG',collapsed:false,nodes:[
-      {id:uid(),name:'報名 SBBG',customerAction:'填寫報名表、選擇場次（台北 / 台中）',ownerId:'ops',handoffOwnerId:'sales',handoffNote:'報名名單整理後移交業務，業務需在活動前確認聯繫',product:'SBBG 報名系統',items:[{id:uid(),text:'報名表單設計與測試',done:false},{id:uid(),text:'場次管理（台北 / 台中）',done:false},{id:uid(),text:'報名確認信自動發送',done:false},{id:uid(),text:'報名名單整理至 CRM',done:false}],timeline:'活動前 1–2 週',risk:'low',decision:'none',notes:'免費入場，門檻低，但需確保報名者為目標客群（企業主 / 主管）'},
-      {id:uid(),name:'出席研習班',customerAction:'參加免費研習課程，了解組織架構或商業模式概念',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'課程結束後，業務需在 24 小時內跟進',product:'SBBG 課程',items:[{id:uid(),text:'場地確認與佈置',done:false},{id:uid(),text:'講師簡報與教材準備',done:false},{id:uid(),text:'現場簽到機制',done:false},{id:uid(),text:'課後問卷發放',done:false}],timeline:'研習當日',risk:'medium',decision:'none',notes:'實際出席率通常低於報名率，需設計提醒機制（前一天 + 當日早上）'},
-      {id:uid(),name:'課後跟進',customerAction:'接收業務聯繫、了解 OB / BM 研習班',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'確認意願後，進入 OB / BM 購買流程',product:'',items:[{id:uid(),text:'課後 24h 內電話 / Line 聯繫',done:false},{id:uid(),text:'傳送 OB / BM 課程說明',done:false},{id:uid(),text:'記錄意願程度至 CRM',done:false},{id:uid(),text:'安排個別諮詢（有需要時）',done:false}],timeline:'研習後 1–3 天',risk:'high',decision:'convert',notes:'⚠ 關鍵轉換節點：是否願意付費報名 OB / BM'},
+    {id:p(),name:'免費研習班',color:'#5594D0',product:'SBBG',collapsed:false,nodes:[
+      {id:p(),name:'看到 SBBG 宣傳',customerAction:'看到免費研習班廣告或介紹，產生興趣',ownerMain:'mkt',ownerMainRole:'行銷 / 廣告',ownerSub:'',ownerSubRole:'',product:'SBBG 宣傳素材',items:[{id:p(),text:'SBBG 宣傳文案與素材',done:false},{id:p(),text:'報名頁面設計',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'有意願者點擊報名，交接行政處理報名資料',risk:'none',notes:''},
+      {id:p(),name:'報名 SBBG',customerAction:'填寫免費研習班報名表',ownerMain:'ops',ownerMainRole:'活動營運',ownerSub:'sales',ownerSubRole:'業務',product:'SBBG 報名頁面',items:[{id:p(),text:'確認報名資料完整',done:false},{id:p(),text:'寄送報到提醒信',done:false},{id:p(),text:'建立學員名單',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'開課前，交接活動執行準備場地與名單',risk:'low',notes:''},
+      {id:p(),name:'參加 SBBG',customerAction:'出席免費研習班，接觸課程內容與講師',ownerMain:'tchr',ownerMainRole:'講師',ownerSub:'ops',ownerSubRole:'活動營運',product:'SBBG 課程',items:[{id:p(),text:'場地佈置與設備確認',done:false},{id:p(),text:'學員報到確認',done:false},{id:p(),text:'課程執行',done:false},{id:p(),text:'現場收集反饋',done:false}],handoffOwner:'sales',handoffRole:'業務',handoffAction:'課程結束後，業務現場或後續跟進意願',risk:'mid',notes:'⚠ 最關鍵的轉化節點，課程品質直接影響後續報名率'},
+      {id:p(),name:'課後跟進',customerAction:'收到業務聯繫，評估是否報名 OB / BM',ownerMain:'sales',ownerMainRole:'業務',ownerSub:'',ownerSubRole:'',product:'OB / BM 說明資料',items:[{id:p(),text:'整理有意願名單',done:false},{id:p(),text:'一對一電話 / LINE 跟進',done:false},{id:p(),text:'提供課程說明',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'確認報名意願後，交接行政處理付款',risk:'high',notes:'⚠ 目前的交接爭議點——跟進責任應清楚歸屬業務'},
     ]},
-    {id:uid(),name:'研習班課程',color:'#9B6FD4',product:'OB / BM',collapsed:false,nodes:[
-      {id:uid(),name:'選擇與購買課程',customerAction:'選擇 OB（組織架構）或 BM（商業模式）或兩場都報',ownerId:'sales',handoffOwnerId:'ops',handoffNote:'付款完成後移交營運確認場次、報到與教材',product:'OB 課程 / BM 課程',items:[{id:uid(),text:'課程說明與費用確認',done:false},{id:uid(),text:'付款收款流程',done:false},{id:uid(),text:'開立發票 / 收據',done:false},{id:uid(),text:'場次確認通知',done:false}],timeline:'跟進後 1–2 週內',risk:'medium',decision:'none',notes:'OB 共 3 天 / BM 共 2 天，可選一或兩場'},
-      {id:uid(),name:'上課（OB）',customerAction:'出席 3 天組織架構研習班，完成課堂任務',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'第三天課後，業務評估是否適合推薦 MBA 或 BOP',product:'OB 課程',items:[{id:uid(),text:'教材與工具包準備',done:false},{id:uid(),text:'第二天晚上企業主餐敘安排',done:false},{id:uid(),text:'課堂作業與演練',done:false},{id:uid(),text:'出席紀錄',done:false}],timeline:'3 天（9:30–18:00，第二天至 21:00）',risk:'low',decision:'none',notes:'第二天為 9:30–21:00，含企業主餐敘，需特別規劃場地與流程'},
-      {id:uid(),name:'上課（BM）',customerAction:'出席 2 天商業模式研習班，完成課堂任務',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'第二天課後，業務評估是否適合推薦 MBA 或 BOP',product:'BM 課程',items:[{id:uid(),text:'教材與工具包準備',done:false},{id:uid(),text:'課堂作業與演練',done:false},{id:uid(),text:'出席紀錄',done:false}],timeline:'2 天（9:30–18:00）',risk:'low',decision:'none',notes:''},
-      {id:uid(),name:'課後評估與推薦',customerAction:'接受業務個別諮詢，評估長期課程需求',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'依客戶身份推薦：主管團隊 → MBA；企業主 → BOP',product:'',items:[{id:uid(),text:'個別諮詢安排',done:false},{id:uid(),text:'企業現況評估',done:false},{id:uid(),text:'MBA vs BOP 適合度判斷',done:false},{id:uid(),text:'提案書準備',done:false}],timeline:'課程結束後 1 週內',risk:'high',decision:'upsell',notes:'⚠ 關鍵升級節點：決定是否進入長期課程（MBA 或 BOP）'},
+    {id:p(),name:'研習班課程',color:'#9B68D0',product:'OB / BM',collapsed:false,nodes:[
+      {id:p(),name:'選課與報名',customerAction:'決定報名 OB、BM 或兩者，完成付款',ownerMain:'ops',ownerMainRole:'活動營運',ownerSub:'sales',ownerSubRole:'業務',product:'OB / BM 報名頁',items:[{id:p(),text:'確認選課（OB / BM / 兩者）',done:false},{id:p(),text:'收款確認',done:false},{id:p(),text:'寄送報到資訊',done:false},{id:p(),text:'建立學員檔案',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'報名完成，交接活動執行準備開課',risk:'low',notes:'OB 共 3 天、BM 共 2 天，可選一或全選'},
+      {id:p(),name:'上課：組織架構班（OB）',customerAction:'參加 3 天組織架構研習班',ownerMain:'tchr',ownerMainRole:'講師',ownerSub:'ops',ownerSubRole:'活動營運',product:'OB 課程（3天）',items:[{id:p(),text:'場地佈置與設備確認',done:false},{id:p(),text:'學員名牌與資料夾',done:false},{id:p(),text:'餐點安排（含第 2 天晚餐）',done:false},{id:p(),text:'課程執行',done:false},{id:p(),text:'課後問卷',done:false}],handoffOwner:'sales',handoffRole:'業務',handoffAction:'課程中或結束後，業務介紹 MBA / BOP',risk:'low',notes:'第二天晚上舉辦企業主餐敘'},
+      {id:p(),name:'上課：商業模式班（BM）',customerAction:'參加 2 天商業模式研習班',ownerMain:'tchr',ownerMainRole:'講師',ownerSub:'ops',ownerSubRole:'活動營運',product:'BM 課程（2天）',items:[{id:p(),text:'場地佈置與設備確認',done:false},{id:p(),text:'學員資料準備',done:false},{id:p(),text:'課程執行',done:false},{id:p(),text:'課後問卷',done:false}],handoffOwner:'sales',handoffRole:'業務',handoffAction:'課程結束後，業務跟進長期課程意願',risk:'low',notes:''},
+      {id:p(),name:'課後業務跟進',customerAction:'考慮是否升級至長期課程 MBA / BOP',ownerMain:'sales',ownerMainRole:'業務',ownerSub:'',ownerSubRole:'',product:'MBA / BOP 課程說明',items:[{id:p(),text:'整理升級意願名單',done:false},{id:p(),text:'一對一說明',done:false},{id:p(),text:'回答疑問',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'確認意願後交行政處理合約',risk:'mid',notes:''},
     ]},
-    {id:uid(),name:'長期課程',color:'#D4A45B',product:'MBA / BOP',collapsed:false,nodes:[
-      {id:uid(),name:'簽約 MBA（主管團隊計劃）',customerAction:'（主管團隊）確認參與、簽訂合約',ownerId:'sales',handoffOwnerId:'trainer',handoffNote:'合約簽訂後移交講師 / 課程組安排時程',product:'MBA 主管團隊計劃',items:[{id:uid(),text:'課程合約準備',done:false},{id:uid(),text:'費用與付款條件確認',done:false},{id:uid(),text:'參與人員名單確認',done:false},{id:uid(),text:'課程時程規劃',done:false}],timeline:'評估後 2–4 週',risk:'medium',decision:'none',notes:''},
-      {id:uid(),name:'簽約 BOP（企業主計劃）',customerAction:'（企業主）確認參與、簽訂合約',ownerId:'sales',handoffOwnerId:'trainer',handoffNote:'合約簽訂後移交講師 / 課程組安排時程，並做企業客製化訪談',product:'BOP 企業主計劃',items:[{id:uid(),text:'課程合約準備',done:false},{id:uid(),text:'費用與付款條件確認',done:false},{id:uid(),text:'企業基本資料收集',done:false},{id:uid(),text:'客製化需求訪談',done:false}],timeline:'評估後 2–4 週',risk:'medium',decision:'none',notes:''},
-      {id:uid(),name:'執行長期課程',customerAction:'按時程參與課程、完成作業、實際在企業導入所學',ownerId:'trainer',handoffOwnerId:'service',handoffNote:'課程全部結束後，移交售後服務 / BOC 社群',product:'MBA 或 BOP 課程',items:[{id:uid(),text:'課程時程管理',done:false},{id:uid(),text:'到課率追蹤',done:false},{id:uid(),text:'作業批改與回饋',done:false},{id:uid(),text:'中期滿意度確認',done:false},{id:uid(),text:'課程完成認證 / 結業',done:false}],timeline:'依課程計劃（數月）',risk:'medium',decision:'retain',notes:'需持續確認學員進度，避免中途流失'},
+    {id:p(),name:'長期課程',color:'#D0A855',product:'MBA / BOP',collapsed:false,nodes:[
+      {id:p(),name:'課程說明與合約',customerAction:'了解 MBA / BOP 內容與費用，簽署合約',ownerMain:'sales',ownerMainRole:'業務',ownerSub:'ops',ownerSubRole:'活動營運',product:'MBA / BOP 課程簡章',items:[{id:p(),text:'課程說明資料準備',done:false},{id:p(),text:'一對一說明會',done:false},{id:p(),text:'合約準備與簽署',done:false},{id:p(),text:'收款確認',done:false}],handoffOwner:'tchr',handoffRole:'講師',handoffAction:'行政完成後，交接課程執行方',risk:'mid',notes:'MBA 主管團隊計畫 vs BOP 企業主計畫，定位不同'},
+      {id:p(),name:'長期課程執行',customerAction:'持續參與課程，落實學習成果',ownerMain:'tchr',ownerMainRole:'講師',ownerSub:'you',ownerSubRole:'課程設計',product:'MBA / BOP 課程',items:[{id:p(),text:'課程內容規劃',done:false},{id:p(),text:'每次上課執行',done:false},{id:p(),text:'學員進度追蹤',done:false},{id:p(),text:'作業批改與回饋',done:false}],handoffOwner:'dis',handoffRole:'待確認',handoffAction:'⚠ 課程結束後的後續服務由誰負責？此為目前主要交接爭議',risk:'high',notes:'⚠ 服務執行責任最需要釐清的節點'},
     ]},
-    {id:uid(),name:'售後社群',color:'#6BBFA0',product:'BOC',collapsed:false,nodes:[
-      {id:uid(),name:'加入 BOC 社群',customerAction:'完課後加入企業主社群，與同學交流',ownerId:'service',handoffOwnerId:'service',handoffNote:'社群內持續維護，識別再購買或轉介機會',product:'BOC 社群',items:[{id:uid(),text:'BOC 社群入群流程',done:false},{id:uid(),text:'社群規範說明',done:false},{id:uid(),text:'歡迎訊息與介紹',done:false}],timeline:'完課後',risk:'none',decision:'retain',notes:''},
-      {id:uid(),name:'BOC 定期活動',customerAction:'參加定期聚會、論壇或主題討論',ownerId:'ops',handoffOwnerId:'sales',handoffNote:'活動中識別對新產品有興趣的客戶，轉交業務跟進',product:'BOC 活動',items:[{id:uid(),text:'定期活動規劃（月 / 季）',done:false},{id:uid(),text:'活動邀請與報名',done:false},{id:uid(),text:'場地與流程安排',done:false},{id:uid(),text:'講師 / 嘉賓邀請',done:false}],timeline:'定期舉辦',risk:'low',decision:'none',notes:''},
-      {id:uid(),name:'新產品介紹',customerAction:'了解並評估新課程或服務',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'有興趣者重啟旅程，回到對應購買節點',product:'新產品 / 新課程',items:[{id:uid(),text:'新產品發布規劃',done:false},{id:uid(),text:'既有客戶優惠方案',done:false},{id:uid(),text:'個別諮詢安排',done:false}],timeline:'新產品推出時',risk:'low',decision:'upsell',notes:'老客戶再購是重要收入來源，需有系統性維護機制'},
+    {id:p(),name:'售後社群',color:'#D06855',product:'BOC',collapsed:false,nodes:[
+      {id:p(),name:'加入 BOC 社群',customerAction:'完成課程後，加入企業主社群',ownerMain:'cs',ownerMainRole:'客服 / 售後',ownerSub:'ops',ownerSubRole:'活動營運',product:'BOC 社群平台',items:[{id:p(),text:'社群邀請與加入',done:false},{id:p(),text:'成員資料建檔',done:false}],handoffOwner:'dis',handoffRole:'待確認',handoffAction:'⚠ 定期活動的主辦責任需釐清',risk:'none',notes:''},
+      {id:p(),name:'BOC 定期活動',customerAction:'參加企業主聚會、分享會',ownerMain:'cs',ownerMainRole:'客服 / 售後',ownerSub:'you',ownerSubRole:'內容設計',product:'BOC 活動',items:[{id:p(),text:'活動場地與時間安排',done:false},{id:p(),text:'內容或講師準備',done:false},{id:p(),text:'學員出席確認',done:false},{id:p(),text:'活動後紀錄',done:false}],handoffOwner:'sales',handoffRole:'業務',handoffAction:'活動中若有新課程意願，轉交業務跟進',risk:'none',notes:''},
+      {id:p(),name:'新課程 / 產品介紹',customerAction:'了解新課程或服務，評估是否加購',ownerMain:'sales',ownerMainRole:'業務',ownerSub:'you',ownerSubRole:'課程設計',product:'新課程 / 新服務',items:[{id:p(),text:'新課程說明資料',done:false},{id:p(),text:'舊學員優惠方案',done:false},{id:p(),text:'跟進意願',done:false}],handoffOwner:'ops',handoffRole:'活動營運',handoffAction:'確認意願後交行政處理報名',risk:'none',notes:''},
     ]},
   ]};
 }
 
-// ─── Render ─────────────────────────────────────────────────────────────────
-function render(){renderLegend();renderNav();renderTL();renderPhases()}
+// ── render ──
+function render(){renderLegend();renderSb();renderTl();renderPhases();}
 
 function renderLegend(){
-  const el=document.getElementById('owner-leg');
-  el.innerHTML=data.owners.map(o=>`<div class="leg-item"><div class="leg-sw" style="background:${o.color}"></div><span style="flex:1;font-size:11px">${esc(o.name)}</span></div>`).join('');
+  const el=document.getElementById('leg-list');el.innerHTML='';
+  (data.owners||DEFAULT_OWNERS).forEach(o=>{
+    const row=document.createElement('div');row.className='leg-item';
+    row.innerHTML=`<div class="leg-sw" style="background:${o.b}"></div><span>${o.l}</span>`;
+    el.appendChild(row);
+  });
 }
-function renderNav(){
-  const nav=document.getElementById('phase-nav');nav.innerHTML='';
-  data.phases.forEach(p=>{
+
+function renderSb(){
+  const nav=document.getElementById('sb-nav');nav.innerHTML='';
+  data.phases.forEach(ph=>{
     const el=document.createElement('div');el.className='nav-item';
-    el.onclick=()=>{document.getElementById('ph-'+p.id)?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active')};
-    el.innerHTML=`<div class="nav-dot" style="background:${p.color}"></div><span class="nav-lbl">${esc(p.name)}${p.product?' · '+esc(p.product):''}</span><span class="nav-cnt">${p.nodes.length}</span>`;
+    el.innerHTML=`<div class="nav-dot" style="background:${ph.color}"></div><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ph.name}</span>${ph.product?`<span class="nav-tag">${ph.product}</span>`:''}`;
+    el.onclick=()=>{document.getElementById('ph-'+ph.id)?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active');};
     nav.appendChild(el);
   });
 }
-function renderTL(){
-  const a=document.getElementById('tl-area');
-  if(!data.phases.length){a.innerHTML='';return}
-  a.innerHTML=`<div class="tl">${data.phases.map(p=>`<div class="tl-item" onclick="document.getElementById('ph-${p.id}')?.scrollIntoView({behavior:'smooth'})"><div class="tl-dot" style="background:${p.color};color:${p.color}"></div><div class="tl-name">${esc(p.name)}</div>${p.product?`<div class="tl-prod">${esc(p.product)}</div>`:''}</div>`).join('')}</div>`;
+
+function renderTl(){
+  const tl=document.getElementById('tl');tl.innerHTML='';
+  data.phases.forEach(ph=>{
+    const step=document.createElement('div');step.className='tl-step';
+    step.innerHTML=`<div class="tl-dot" style="background:${ph.color};box-shadow:0 0 0 2px ${ph.color}55"></div><div class="tl-name">${ph.name}</div>${ph.product?`<div class="tl-product">${ph.product}</div>`:''}`;
+    step.onclick=()=>document.getElementById('ph-'+ph.id)?.scrollIntoView({behavior:'smooth',block:'start'});
+    tl.appendChild(step);
+  });
 }
+
 function renderPhases(){
-  const a=document.getElementById('phases-area');a.innerHTML='';
-  if(!data.phases.length){a.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)"><p style="font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px">還沒有旅程階段</p><p style="font-size:13px">點擊左側「新增階段」開始</p></div>';return}
-  data.phases.forEach(p=>a.appendChild(buildPhase(p)));
+  const area=document.getElementById('phases-area');area.innerHTML='';
+  if(!data.phases.length){area.innerHTML='<div style="text-align:center;padding:40px;color:var(--t3)">尚無階段，點左側「新增階段」開始</div>';return;}
+  data.phases.forEach(ph=>area.appendChild(buildPhase(ph)));
 }
 
-function buildPhase(phase){
-  const block=document.createElement('div');
-  block.className='phase'+(phase.collapsed?' collapsed':'');
-  block.id='ph-'+phase.id;
-  // header
-  const ph=document.createElement('div');ph.className='ph';
-  ph.innerHTML=`
-    <div class="ph-bar" style="background:${phase.color}"></div>
-    <div class="ph-info">
-      <div class="ph-row">
-        <input class="ph-name" value="${esc(phase.name)}" placeholder="階段名稱" onclick="event.stopPropagation()" onchange="updatePhase('${phase.id}','name',this.value)"/>
-        <input class="ph-prod" value="${esc(phase.product||'')}" placeholder="產品代號" style="color:${phase.color};border-color:${phase.color};background:${phase.color}18" onclick="event.stopPropagation()" onchange="updatePhase('${phase.id}','product',this.value)"/>
-      </div>
-      <span class="ph-cnt">${phase.nodes.length} 個節點</span>
-    </div>
-    <div class="ph-acts" onclick="event.stopPropagation()">
-      <button class="ib" onclick="openEditPhase('${phase.id}')" title="編輯">✎</button>
-      <button class="ib" onclick="movePhase('${phase.id}',-1)" title="上移">↑</button>
-      <button class="ib" onclick="movePhase('${phase.id}',1)" title="下移">↓</button>
-      <button class="ib d" onclick="delPhase('${phase.id}')" title="刪除">✕</button>
-    </div>
-    <div class="ph-arr">▾</div>`;
-  ph.addEventListener('click',e=>{if(['INPUT','BUTTON','SELECT'].includes(e.target.tagName))return;phase.collapsed=!phase.collapsed;block.classList.toggle('collapsed',phase.collapsed);autoSave()});
-  block.appendChild(ph);
-  // body
+function buildPhase(ph){
+  const block=document.createElement('div');block.className='phase'+(ph.collapsed?' collapsed':'');block.id='ph-'+ph.id;
+  const hd=document.createElement('div');hd.className='phase-hd';
+  hd.innerHTML=`<div class="phase-bar" style="background:${ph.color}"></div><input class="ph-name-inp" value="${esc(ph.name)}" placeholder="階段名稱" onclick="event.stopPropagation()" onchange="mutPh('${ph.id}','name',this.value)"><input class="ph-tag-inp" value="${esc(ph.product)}" placeholder="產品代號" onclick="event.stopPropagation()" onchange="mutPh('${ph.id}','product',this.value)"><div class="ph-acts" onclick="event.stopPropagation()"><button class="ib" onclick="movePh('${ph.id}',-1)">↑</button><button class="ib" onclick="movePh('${ph.id}',1)">↓</button><button class="ib del" onclick="delPh('${ph.id}')">✕</button></div><div class="chev">▾</div>`;
+  hd.addEventListener('click',e=>{if(['INPUT','BUTTON'].includes(e.target.tagName))return;ph.collapsed=!ph.collapsed;block.classList.toggle('collapsed',ph.collapsed);autoSave();});
+  block.appendChild(hd);
   const body=document.createElement('div');body.className='phase-body';
-  const grid=document.createElement('div');grid.className='nodes-grid';
-  phase.nodes.forEach((n,i)=>grid.appendChild(buildNode(phase,n,i)));
-  const ab=document.createElement('button');ab.className='add-node';ab.innerHTML='+ 新增節點';ab.onclick=()=>addNode(phase.id);
-  grid.appendChild(ab);body.appendChild(grid);block.appendChild(body);
-  return block;
+  ph.nodes.forEach((n,i)=>body.appendChild(buildNode(ph,n,i)));
+  const ab=document.createElement('button');ab.className='add-node';ab.textContent='+ 新增節點';ab.onclick=()=>addNode(ph.id);
+  body.appendChild(ab);block.appendChild(body);return block;
 }
 
-function buildNode(phase,node,ni){
-  const owner=getOwner(node.ownerId);
-  const hOwner=getOwner(node.handoffOwnerId);
-  const risk=RISKS.find(r=>r.v===node.risk)||RISKS[0];
-  const dec=DECS.find(d=>d.v===node.decision)||DECS[0];
-  const card=document.createElement('div');
-  card.className='nc';card.id='nd-'+node.id;card.style.borderTopColor=owner.color;
-  // header
-  const hdr=document.createElement('div');hdr.className='nc-hdr';
-  hdr.innerHTML=`<span class="nc-num">${String(ni+1).padStart(2,'0')}</span>`;
-  const nta=document.createElement('textarea');nta.className='nc-name';nta.value=node.name;nta.placeholder='節點名稱';nta.rows=1;
-  nta.oninput=function(){ag(this);updateNode(phase.id,node.id,'name',this.value)};
-  hdr.appendChild(nta);setTimeout(()=>ag(nta),0);
-  const acts=document.createElement('div');acts.className='nc-acts';
-  acts.innerHTML=`<button class="ib" onclick="mvNode('${phase.id}','${node.id}',-1)" title="上移">↑</button><button class="ib" onclick="mvNode('${phase.id}','${node.id}',1)" title="下移">↓</button><button class="ib d" onclick="delNode('${phase.id}','${node.id}')" title="刪除">✕</button>`;
-  hdr.appendChild(acts);card.appendChild(hdr);
-  // fields
-  const fields=document.createElement('div');fields.className='nc-fields';
-  fields.appendChild(mkFG('客戶行動',node.customerAction,'此節點客戶需要做什麼？',v=>updateNode(phase.id,node.id,'customerAction',v)));
-  // handoff row
-  const hfr=document.createElement('div');hfr.className='hf-row';
-  hfr.appendChild(mkOwnerCol('本節點負責方',node.ownerId,owner,phase.id,node.id,'ownerId',card));
-  hfr.appendChild(mkOwnerCol('銜接下節點負責方',node.handoffOwnerId,hOwner,phase.id,node.id,'handoffOwnerId',null));
-  fields.appendChild(hfr);
-  fields.appendChild(mkFG('銜接說明（交接條件）',node.handoffNote,'交接給下一節點時，需完成什麼才能移交？',v=>updateNode(phase.id,node.id,'handoffNote',v)));
-  fields.appendChild(mkFG('使用產品 / 工具',node.product,'本節點使用的產品或工具名稱',v=>updateNode(phase.id,node.id,'product',v)));
-  fields.appendChild(mkFG('時間點 / 里程碑',node.timeline,'例：活動前 1 週、課後 3 天內',v=>updateNode(phase.id,node.id,'timeline',v)));
+function buildNode(ph,n,idx){
+  const ow=getOwner(n.ownerMain);
+  const card=document.createElement('div');card.className='nc';card.id='nc-'+n.id;card.style.borderTopColor=ow.b;
+  const hdr=document.createElement('div');hdr.className='nc-hd';
+  hdr.innerHTML=`<span class="nc-num">${String(idx+1).padStart(2,'0')}</span><textarea class="nc-name" rows="1" placeholder="節點名稱" oninput="ag(this);mutN('${ph.id}','${n.id}','name',this.value)">${esc(n.name)}</textarea><div class="nc-acts"><button class="ib" onclick="moveN('${ph.id}','${n.id}',-1)">↑</button><button class="ib" onclick="moveN('${ph.id}','${n.id}',1)">↓</button><button class="ib del" onclick="delN('${ph.id}','${n.id}')">✕</button></div>`;
+  card.appendChild(hdr);
+  const body=document.createElement('div');body.className='nc-body';
+  body.appendChild(buildTa('客戶行動',n.customerAction,v=>mutN(ph.id,n.id,'customerAction',v),'這個節點客戶要做什麼？'));
+  // owner
+  const owF=document.createElement('div');owF.className='f';owF.innerHTML='<div class="f-lbl">負責人</div>';
+  const owG=document.createElement('div');owG.className='ow-grid';
+  owG.appendChild(buildOwCol('本節點負責方',n.ownerMain,n.ownerMainRole,v=>{mutN(ph.id,n.id,'ownerMain',v);card.style.borderTopColor=getOwner(v).b;},v=>mutN(ph.id,n.id,'ownerMainRole',v)));
+  owG.appendChild(buildOwCol('銜接下節點負責方',n.ownerSub,n.ownerSubRole,v=>mutN(ph.id,n.id,'ownerSub',v),v=>mutN(ph.id,n.id,'ownerSubRole',v)));
+  owF.appendChild(owG);body.appendChild(owF);
+  // handoff
+  const hb=document.createElement('div');hb.className='hb';hb.innerHTML='<div class="hb-lbl">銜接說明（交接條件）</div>';
+  const hta=document.createElement('textarea');hta.className='f-val';hta.value=n.handoffAction||'';hta.placeholder='什麼條件下交接？交接哪些資訊？';hta.rows=1;hta.oninput=function(){ag(this);mutN(ph.id,n.id,'handoffAction',this.value);};hb.appendChild(hta);setTimeout(()=>ag(hta),0);body.appendChild(hb);
+  body.appendChild(mkDiv('div'));
+  body.appendChild(buildTa('使用產品 / 工具',n.product,v=>mutN(ph.id,n.id,'product',v),'本節點使用的產品或工具'));
+  body.appendChild(mkDiv('div'));
   // checklist
-  const clg=document.createElement('div');clg.className='fg';clg.innerHTML='<div class="fl">導入項目清單</div>';
-  const cl=document.createElement('div');cl.className='cl';cl.id='cl-'+node.id;
-  node.items.forEach(it=>cl.appendChild(mkCLItem(phase.id,node.id,it)));
-  const cla=document.createElement('button');cla.className='cl-add';cla.textContent='+ 新增項目';cla.onclick=()=>addCLItem(phase.id,node.id);
-  cl.appendChild(cla);clg.appendChild(cl);fields.appendChild(clg);
-  // risk + decision
-  const rdr=document.createElement('div');rdr.className='rd-row';
-  const rs=document.createElement('select');rs.className='risk-sel';applyRisk(rs,risk);
-  RISKS.forEach(r=>{const o=document.createElement('option');o.value=r.v;o.textContent=r.l;if(r.v===node.risk)o.selected=true;rs.appendChild(o)});
-  rs.onchange=function(){updateNode(phase.id,node.id,'risk',this.value);applyRisk(this,RISKS.find(r=>r.v===this.value))};
-  const ds=document.createElement('select');ds.className='dec-sel';
-  DECS.forEach(d=>{const o=document.createElement('option');o.value=d.v;o.textContent=d.l;if(d.v===node.decision)o.selected=true;ds.appendChild(o)});
-  ds.onchange=function(){updateNode(phase.id,node.id,'decision',this.value)};
-  rdr.appendChild(rs);rdr.appendChild(ds);fields.appendChild(rdr);
-  fields.appendChild(mkFG('備註 / 注意事項',node.notes,'補充說明...',v=>updateNode(phase.id,node.id,'notes',v)));
-  card.appendChild(fields);return card;
+  const clf=document.createElement('div');clf.className='f';clf.innerHTML='<div class="f-lbl">導入項目清單</div>';
+  const cl=document.createElement('div');cl.className='cl';cl.id='cl-'+n.id;
+  n.items.forEach(it=>cl.appendChild(buildClItem(ph.id,n.id,it)));
+  const ca=document.createElement('button');ca.className='cl-add';ca.textContent='+ 新增項目';ca.onclick=()=>addItem(ph.id,n.id);cl.appendChild(ca);clf.appendChild(cl);body.appendChild(clf);
+  body.appendChild(mkDiv('div'));
+  // risk
+  const rkF=document.createElement('div');rkF.className='f';rkF.innerHTML='<div class="f-lbl">風險標示</div>';
+  const rk=getRisk(n.risk);const rkSel=document.createElement('select');rkSel.className='risk-sel';applyRisk(rkSel,rk);
+  RISKS.forEach(r=>{const o=document.createElement('option');o.value=r.v;o.textContent=r.l;if(r.v===n.risk)o.selected=true;rkSel.appendChild(o);});
+  rkSel.onchange=function(){mutN(ph.id,n.id,'risk',this.value);applyRisk(this,getRisk(this.value));};rkF.appendChild(rkSel);body.appendChild(rkF);
+  body.appendChild(buildTa('備註 / 注意事項',n.notes,v=>mutN(ph.id,n.id,'notes',v),'補充說明、爭議點…'));
+  card.appendChild(body);return card;
 }
 
-function mkFG(label,val,ph,cb){
-  const g=document.createElement('div');g.className='fg';g.innerHTML=`<div class="fl">${label}</div>`;
-  const ta=document.createElement('textarea');ta.className='fv';ta.value=val||'';ta.placeholder=ph||'';ta.rows=1;
-  ta.oninput=function(){ag(this);cb(this.value)};g.appendChild(ta);setTimeout(()=>ag(ta),0);return g;
+function applyRisk(el,r){el.style.background=r.bg;el.style.color=r.c;el.style.borderColor=r.b;}
+
+function buildOwCol(label,owVal,roleVal,onOwner,onRole){
+  const col=document.createElement('div');col.className='ow-col';col.innerHTML=`<div class="ow-sub">${label}</div>`;
+  const ow=getOwner(owVal);
+  const sel=document.createElement('select');sel.className='ow-sel';sel.style.background=ow.bg;sel.style.borderColor=ow.b;sel.style.color=ow.t;
+  (data.owners||DEFAULT_OWNERS).forEach(o=>{const opt=document.createElement('option');opt.value=o.v;opt.textContent=o.l;if(o.v===owVal)opt.selected=true;sel.appendChild(opt);});
+  sel.onchange=function(){const o2=getOwner(this.value);this.style.background=o2.bg;this.style.borderColor=o2.b;this.style.color=o2.t;onOwner(this.value);};
+  const ri=document.createElement('input');ri.className='role-inp';ri.value=roleVal||'';ri.placeholder='職稱 / 姓名';ri.oninput=function(){onRole(this.value);};
+  col.appendChild(sel);col.appendChild(ri);return col;
 }
-function mkOwnerCol(label,ownerId,owner,phId,ndId,field,card){
-  const col=document.createElement('div');col.className='hf-col';col.innerHTML=`<div class="fl">${label}</div>`;
-  const sel=document.createElement('select');sel.className='ow-sel';sel.style.borderLeftColor=owner.color;
-  data.owners.forEach(o=>{const opt=document.createElement('option');opt.value=o.id;opt.textContent=o.name;if(o.id===ownerId)opt.selected=true;sel.appendChild(opt)});
-  sel.onchange=function(){updateNode(phId,ndId,field,this.value);const o2=getOwner(this.value);this.style.borderLeftColor=o2.color;if(card&&field==='ownerId')card.style.borderTopColor=o2.color};
-  col.appendChild(sel);return col;
+
+function buildTa(label,val,onChange,placeholder){
+  const row=document.createElement('div');row.className='f';row.innerHTML=`<div class="f-lbl">${label}</div>`;
+  const ta=document.createElement('textarea');ta.className='f-val';ta.value=val||'';ta.placeholder=placeholder||'';ta.rows=1;ta.oninput=function(){ag(this);onChange(this.value);};
+  row.appendChild(ta);setTimeout(()=>ag(ta),0);return row;
 }
-function mkCLItem(phId,ndId,item){
+
+function buildClItem(pid,nid,item){
   const row=document.createElement('div');row.className='cl-item';row.id='cli-'+item.id;
   const cb=document.createElement('input');cb.type='checkbox';cb.checked=item.done;
-  cb.onchange=function(){updateCLItem(phId,ndId,item.id,'done',this.checked);ta.classList.toggle('done',this.checked)};
-  const ta=document.createElement('textarea');ta.className='cl-text'+(item.done?' done':'');ta.value=item.text;ta.rows=1;ta.placeholder='項目內容...';
-  ta.oninput=function(){ag(this);updateCLItem(phId,ndId,item.id,'text',this.value)};setTimeout(()=>ag(ta),0);
-  const del=document.createElement('button');del.className='cl-del';del.textContent='✕';del.onclick=()=>delCLItem(phId,ndId,item.id);
+  const ta=document.createElement('textarea');ta.className='cl-ta'+(item.done?' done':'');ta.value=item.text;ta.rows=1;ta.placeholder='項目內容…';ta.oninput=function(){ag(this);mutItem(pid,nid,item.id,'text',this.value);};setTimeout(()=>ag(ta),0);
+  cb.onchange=function(){mutItem(pid,nid,item.id,'done',this.checked);ta.classList.toggle('done',this.checked);};
+  const del=document.createElement('button');del.className='cl-del';del.textContent='✕';del.onclick=()=>{delItem(pid,nid,item.id);document.getElementById('cli-'+item.id)?.remove();};
   row.appendChild(cb);row.appendChild(ta);row.appendChild(del);return row;
 }
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
-function updatePhase(id,k,v){const p=data.phases.find(p=>p.id===id);if(!p)return;p[k]=v;autoSave();if(['name','product','color'].includes(k)){renderNav();renderTL()}}
-function updateNode(phId,ndId,k,v){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;n[k]=v;autoSave()}
-function updateCLItem(phId,ndId,itId,k,v){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;const it=n.items.find(i=>i.id===itId);if(!it)return;it[k]=v;autoSave()}
-function addNode(phId){const p=data.phases.find(p=>p.id===phId);if(!p)return;p.nodes.push({id:uid(),name:'',customerAction:'',ownerId:'disputed',handoffOwnerId:'disputed',handoffNote:'',product:'',items:[],timeline:'',risk:'none',decision:'none',notes:''});render();autoSave();setTimeout(()=>document.getElementById('ph-'+phId)?.scrollIntoView({behavior:'smooth',block:'end'}),80)}
-function delNode(phId,ndId){const p=data.phases.find(p=>p.id===phId);if(!p)return;if(!confirm('確定要刪除這個節點？'))return;p.nodes=p.nodes.filter(n=>n.id!==ndId);render();autoSave()}
-function mvNode(phId,ndId,dir){const p=data.phases.find(p=>p.id===phId);if(!p)return;const i=p.nodes.findIndex(n=>n.id===ndId);const j=i+dir;if(j<0||j>=p.nodes.length)return;[p.nodes[i],p.nodes[j]]=[p.nodes[j],p.nodes[i]];render();autoSave()}
-function delPhase(id){if(!confirm('確定要刪除這個階段？'))return;data.phases=data.phases.filter(p=>p.id!==id);render();autoSave()}
-function movePhase(id,dir){const i=data.phases.findIndex(p=>p.id===id);const j=i+dir;if(j<0||j>=data.phases.length)return;[data.phases[i],data.phases[j]]=[data.phases[j],data.phases[i]];render();autoSave()}
-function addCLItem(phId,ndId){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;const it={id:uid(),text:'',done:false};n.items.push(it);const cl=document.getElementById('cl-'+ndId);if(cl){const ab=cl.querySelector('.cl-add');cl.insertBefore(mkCLItem(phId,ndId,it),ab)}autoSave()}
-function delCLItem(phId,ndId,itId){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;n.items=n.items.filter(i=>i.id!==itId);document.getElementById('cli-'+itId)?.remove();autoSave()}
+// mutations
+function mutPh(id,k,v){const ph=data.phases.find(p=>p.id===id);if(ph){ph[k]=v;autoSave();if(k==='name'||k==='product'){renderSb();renderTl();}}}
+function mutN(pid,nid,k,v){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;const n=ph.nodes.find(n=>n.id===nid);if(n){n[k]=v;autoSave();}}
+function mutItem(pid,nid,iid,k,v){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;const n=ph.nodes.find(n=>n.id===nid);if(!n)return;const it=n.items.find(i=>i.id===iid);if(it){it[k]=v;autoSave();}}
+function addNode(pid){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;ph.nodes.push({id:uid(),name:'',customerAction:'',ownerMain:(data.owners[0]||{}).v||'mkt',ownerMainRole:'',ownerSub:'',ownerSubRole:'',product:'',items:[],handoffOwner:'',handoffRole:'',handoffAction:'',risk:'none',notes:''});render();autoSave();setTimeout(()=>document.getElementById('ph-'+pid)?.scrollIntoView({behavior:'smooth',block:'end'}),80);}
+function delN(pid,nid){if(!confirm('刪除此節點？'))return;const ph=data.phases.find(p=>p.id===pid);if(ph){ph.nodes=ph.nodes.filter(n=>n.id!==nid);render();autoSave();}}
+function moveN(pid,nid,dir){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;const i=ph.nodes.findIndex(n=>n.id===nid);const j=i+dir;if(j<0||j>=ph.nodes.length)return;[ph.nodes[i],ph.nodes[j]]=[ph.nodes[j],ph.nodes[i]];render();autoSave();}
+function addItem(pid,nid){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;const n=ph.nodes.find(n=>n.id===nid);if(!n)return;const it={id:uid(),text:'',done:false};n.items.push(it);const cl=document.getElementById('cl-'+nid);if(cl){const el=buildClItem(pid,nid,it);cl.insertBefore(el,cl.lastElementChild);setTimeout(()=>ag(el.querySelector('textarea')),0);}autoSave();}
+function delItem(pid,nid,iid){const ph=data.phases.find(p=>p.id===pid);if(!ph)return;const n=ph.nodes.find(n=>n.id===nid);if(!n)return;n.items=n.items.filter(i=>i.id!==iid);autoSave();}
+function movePh(id,dir){const i=data.phases.findIndex(p=>p.id===id);const j=i+dir;if(j<0||j>=data.phases.length)return;[data.phases[i],data.phases[j]]=[data.phases[j],data.phases[i]];render();autoSave();}
+function delPh(id){if(!confirm('刪除此階段及所有節點？'))return;data.phases=data.phases.filter(p=>p.id!==id);render();autoSave();}
 
-// ─── Phase modal ─────────────────────────────────────────────────────────────
-function openAddPhase(){editPhId=null;document.getElementById('ph-modal-title').textContent='新增旅程階段';document.getElementById('ph-confirm').textContent='新增';document.getElementById('ph-name').value='';document.getElementById('ph-prod').value='';mColor=PC[data.phases.length%PC.length];renderCP();document.getElementById('ph-modal').classList.add('open');setTimeout(()=>document.getElementById('ph-name').focus(),50)}
-function openEditPhase(id){const p=data.phases.find(p=>p.id===id);if(!p)return;editPhId=id;document.getElementById('ph-modal-title').textContent='編輯階段';document.getElementById('ph-confirm').textContent='儲存';document.getElementById('ph-name').value=p.name;document.getElementById('ph-prod').value=p.product||'';mColor=p.color;renderCP();document.getElementById('ph-modal').classList.add('open');setTimeout(()=>document.getElementById('ph-name').focus(),50)}
-function confirmPhase(){const name=document.getElementById('ph-name').value.trim()||'新階段';const prod=document.getElementById('ph-prod').value.trim();if(editPhId){const p=data.phases.find(p=>p.id===editPhId);if(p){p.name=name;p.product=prod;p.color=mColor}}else{data.phases.push({id:uid(),name,color:mColor,product:prod,collapsed:false,nodes:[]})}closePHModal();render();autoSave()}
-function closePHModal(){document.getElementById('ph-modal').classList.remove('open')}
-function renderCP(){const cp=document.getElementById('ph-colors');cp.innerHTML='';PC.forEach(c=>{const el=document.createElement('div');el.className='co'+(c===mColor?' sel':'');el.style.background=c;el.onclick=()=>{mColor=c;document.querySelectorAll('#ph-colors .co').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')};cp.appendChild(el)})}
-document.getElementById('ph-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePHModal()});
-document.getElementById('ph-modal').addEventListener('keydown',e=>{if(e.key==='Enter')confirmPhase();if(e.key==='Escape')closePHModal()});
+// add phase modal
+function openAddPhase(){pickColor=PHASE_COLORS[data.phases.length%PHASE_COLORS.length];document.getElementById('m-name').value='';document.getElementById('m-product').value='';renderColorRow();document.getElementById('modal-phase').classList.add('open');setTimeout(()=>document.getElementById('m-name').focus(),50);}
+function confirmAddPhase(){const name=document.getElementById('m-name').value.trim()||'新階段';const product=document.getElementById('m-product').value.trim();data.phases.push({id:uid(),name,color:pickColor,product,collapsed:false,nodes:[]});closeModal('modal-phase');render();autoSave();}
+function renderColorRow(){const row=document.getElementById('color-row');row.innerHTML='';PHASE_COLORS.forEach(c=>{const el=document.createElement('div');el.className='c-opt'+(c===pickColor?' sel':'');el.style.background=c;el.onclick=()=>{pickColor=c;document.querySelectorAll('.c-opt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');};row.appendChild(el);});}
 
-// ─── Owner modal ─────────────────────────────────────────────────────────────
-function openOwnerModal(){renderOwnerList();renderOwnerCP();document.getElementById('ow-modal').classList.add('open')}
-function closeOwnerModal(){document.getElementById('ow-modal').classList.remove('open');render()}
-function renderOwnerList(){const el=document.getElementById('ow-list');el.innerHTML=data.owners.map(o=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:12px;height:12px;border-radius:50%;background:${o.color};flex-shrink:0"></div><span style="flex:1;font-size:13px">${esc(o.name)}</span><button class="ib d" onclick="delOwner('${o.id}')">✕</button></div>`).join('')}
-function addOwner(){const name=document.getElementById('ow-new-name').value.trim();if(!name)return;data.owners.push({id:uid(),name,color:owColor});document.getElementById('ow-new-name').value='';renderOwnerList();autoSave()}
-function delOwner(id){if(data.owners.length<=1){toast('至少保留一個負責方');return}data.owners=data.owners.filter(o=>o.id!==id);renderOwnerList();autoSave()}
-function renderOwnerCP(){const cp=document.getElementById('ow-cp');cp.innerHTML='';OC.forEach(c=>{const el=document.createElement('div');el.className='co'+(c===owColor?' sel':'');el.style.background=c;el.style.width='18px';el.style.height='18px';el.onclick=()=>{owColor=c;document.querySelectorAll('#ow-cp .co').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')};cp.appendChild(el)})}
-document.getElementById('ow-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeOwnerModal()});
+// manage owners modal
+function openManageOwners(){renderOwnersEditor();document.getElementById('modal-owners').classList.add('open');}
+function renderOwnersEditor(){
+  const el=document.getElementById('owners-editor');el.innerHTML='';
+  (data.owners||DEFAULT_OWNERS).forEach((o,i)=>{
+    const row=document.createElement('div');row.className='ow-edit-row';
+    const swatch=document.createElement('div');swatch.style.cssText=`width:12px;height:12px;border-radius:3px;background:${o.b};flex-shrink:0`;
+    const nameInp=document.createElement('input');nameInp.className='m-inp';nameInp.style.cssText='flex:1;font-size:12px;padding:4px 6px';nameInp.value=o.l;nameInp.oninput=function(){data.owners[i].l=this.value;autoSave();};
+    const colorInp=document.createElement('input');colorInp.type='color';colorInp.className='ow-color-inp';colorInp.value=o.b;colorInp.oninput=function(){data.owners[i].b=this.value;data.owners[i].bg=this.value+'22';swatch.style.background=this.value;autoSave();};
+    const delBtn=document.createElement('button');delBtn.className='ib del';delBtn.textContent='✕';delBtn.onclick=()=>{data.owners.splice(i,1);renderOwnersEditor();autoSave();};
+    row.appendChild(swatch);row.appendChild(nameInp);row.appendChild(colorInp);row.appendChild(delBtn);el.appendChild(row);
+  });
+}
+function addOwner(){if(!data.owners)data.owners=JSON.parse(JSON.stringify(DEFAULT_OWNERS));data.owners.push({v:'ow'+uid(),l:'新負責方',bg:'#EDEAE3',b:'#A8A49C',t:'#50504A'});renderOwnersEditor();autoSave();}
 
-// ─── Persist ─────────────────────────────────────────────────────────────────
-function autoSave(){try{localStorage.setItem('cjm_v3',JSON.stringify(data));const now=new Date();document.getElementById('saved-badge').textContent=`已儲存 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`}catch(e){}}
-function saveLocal(){autoSave();toast('已儲存')}
-function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='客戶旅程圖.json';a.click();toast('已匯出 JSON')}
-function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.phases){data=d;render();autoSave();toast('匯入成功')}else alert('格式不正確')}catch{alert('無法解析 JSON')}};r.readAsText(f);e.target.value=''}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+document.getElementById('modal-phase').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddPhase();if(e.key==='Escape')closeModal('modal-phase');});
 
-// ─── Init ────────────────────────────────────────────────────────────────────
-try{const s=localStorage.getItem('cjm_v3');data=s?JSON.parse(s):defaultData()}catch{data=defaultData()}
+// persist
+function autoSave(){try{localStorage.setItem('cjm_v5',JSON.stringify(data));const b=document.getElementById('badge');const t=new Date();b.textContent=`已儲存 ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}catch(e){}}
+function saveLocal(){autoSave();showToast('已儲存');}
+function exportJSON(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='客戶旅程圖.json';a.click();showToast('已匯出 JSON');}
+function importTrigger(){document.getElementById('file-input').click();}
+function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.phases){data=d;if(!data.owners)data.owners=JSON.parse(JSON.stringify(DEFAULT_OWNERS));render();autoSave();showToast('匯入成功');}else alert('格式不正確');}catch{alert('無法解析 JSON');}};reader.readAsText(file);e.target.value='';}
+
+// init
+try{const saved=localStorage.getItem('cjm_v5');data=saved?JSON.parse(saved):defaultData();if(!data.owners)data.owners=JSON.parse(JSON.stringify(DEFAULT_OWNERS));}catch{data=defaultData();}
 render();
 </script>
 </body>
