@@ -1,153 +1,424 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BBP Knowledge Skill Tree</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <style>
-        :root {
-            --gold: #ffcc00;
-            --blue: #00d4ff;
-            --locked: #4a4a4a;
-            --bg-dark: #0a0a0c;
-        }
-        body, html { margin: 0; padding: 0; background: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        /* 遊戲背景裝飾 */
-        #app { display: flex; height: 100vh; background: radial-gradient(circle, #1a1a2e 0%, #0a0a0c 100%); }
-
-        /* 左側編輯面板 - 可收合 */
-        #sidebar {
-            width: 320px; background: rgba(20, 20, 25, 0.95);
-            border-right: 2px solid #333; padding: 20px;
-            transition: transform 0.3s; z-index: 100; overflow-y: auto;
-        }
-        .sidebar-hidden { transform: translateX(-320px); position: absolute; }
-
-        /* 技能樹主畫布 */
-        #canvas { flex-grow: 1; display: flex; justify-content: center; align-items: center; cursor: grab; }
-        #canvas:active { cursor: grabbing; }
-
-        /* 節點編輯樣式 */
-        .skill-card {
-            background: #222; border-left: 4px solid var(--blue);
-            margin-bottom: 15px; padding: 10px; border-radius: 4px;
-        }
-        input, select { width: 100%; background: #111; color: #eee; border: 1px solid #444; padding: 8px; margin: 5px 0; }
-        
-        button {
-            width: 100%; padding: 10px; margin-top: 10px;
-            background: linear-gradient(to bottom, #444, #222);
-            color: var(--gold); border: 1px solid var(--gold);
-            font-weight: bold; cursor: pointer; text-transform: uppercase;
-        }
-        button:hover { background: var(--gold); color: black; }
-
-        /* 懸浮控制按鈕 */
-        .toggle-btn {
-            position: fixed; left: 10px; top: 10px; z-index: 101;
-            width: 40px; height: 40px; background: var(--gold); border: none; color: black;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客戶旅程圖</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5F4F0;--surface:#FFF;--surface2:#F0EEE9;
+    --border:#E0DDD6;--border-s:#C8C5BC;
+    --text:#1A1916;--text2:#6B6860;--text3:#9B9890;
+    --font:'IBM Plex Sans TC',sans-serif;--mono:'IBM Plex Mono',monospace;--r:6px;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+  /* header */
+  .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:12px}
+  .hdr-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+  .hdr-title{font-size:15px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+  .hdr-sub{font-size:11px;color:var(--text3);white-space:nowrap}
+  .hdr-r{display:flex;gap:8px;flex-shrink:0}
+  .btn{font-family:var(--font);font-size:12px;font-weight:500;padding:6px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
+  .btn:hover{border-color:var(--border-s);color:var(--text);background:var(--surface2)}
+  .btn-p{background:var(--text);color:#fff;border-color:var(--text)}
+  .btn-p:hover{background:#3A3835;border-color:#3A3835;color:#fff}
+  /* layout */
+  .main{display:flex;height:calc(100vh - 52px)}
+  /* sidebar */
+  .sb{width:208px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .sb-inner{padding:14px 11px;flex:1}
+  .sb-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+  .nav-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:var(--r);cursor:pointer;transition:all .1s;margin-bottom:2px;color:var(--text2);font-size:12px}
+  .nav-item:hover{background:var(--surface2);color:var(--text)}
+  .nav-item.active{background:var(--text);color:#fff}
+  .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .nav-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nav-cnt{font-family:var(--mono);font-size:10px;opacity:.55}
+  .add-btn{margin:3px 11px 11px;width:calc(100% - 22px);padding:7px;border:1px dashed var(--border-s);background:transparent;border-radius:var(--r);font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font);transition:all .12s;text-align:center}
+  .add-btn:hover{color:var(--text);border-color:var(--text);background:var(--surface2)}
+  .sb-legend{padding:11px;border-top:1px solid var(--border)}
+  .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:5px}
+  .leg-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+  /* canvas */
+  .canvas{flex:1;overflow:auto;padding:18px 22px}
+  /* timeline */
+  .tl{display:flex;align-items:flex-start;margin-bottom:18px;padding:0 2px;position:relative}
+  .tl-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;cursor:pointer}
+  .tl-item:not(:last-child)::after{content:'';position:absolute;top:5px;left:calc(50% + 7px);right:calc(-50% + 7px);height:2px;background:var(--border)}
+  .tl-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1.5px currentColor;z-index:1}
+  .tl-name{font-size:10px;color:var(--text3);margin-top:4px;text-align:center;max-width:70px;line-height:1.3}
+  .tl-prod{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:1px;opacity:.7}
+  /* phase */
+  .phase{margin-bottom:13px;border:1px solid var(--border);border-radius:8px;background:var(--surface);overflow:hidden;transition:box-shadow .15s}
+  .phase:hover{box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .phase.collapsed .phase-body{display:none}
+  .ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--surface2);cursor:pointer;user-select:none}
+  .ph:hover{background:#E8E6E0}
+  .ph-bar{width:4px;height:22px;border-radius:2px;flex-shrink:0}
+  .ph-info{flex:1;min-width:0}
+  .ph-row{display:flex;align-items:center;gap:7px}
+  .ph-name{font-size:14px;font-weight:600;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);cursor:pointer;min-width:50px}
+  .ph-name:focus{background:var(--surface);padding:1px 5px;border-radius:4px;outline:1px solid var(--border-s);cursor:text}
+  .ph-prod{font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:3px;font-weight:500;border:1px solid;cursor:pointer;outline:none;background:transparent;min-width:30px}
+  .ph-prod:focus{outline:1px solid var(--border-s)}
+  .ph-cnt{font-size:10px;font-family:var(--mono);color:var(--text3)}
+  .ph-acts{display:flex;gap:2px}
+  .ib{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:13px;transition:all .1s}
+  .ib:hover{background:var(--surface);color:var(--text)}
+  .ib.d:hover{background:#FAE0D6;color:#B02010}
+  .ph-arr{font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+  .phase.collapsed .ph-arr{transform:rotate(-90deg)}
+  /* body */
+  .phase-body{padding:11px}
+  .nodes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:9px}
+  .add-node{border:1px dashed var(--border-s);border-radius:var(--r);padding:10px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;background:transparent;font-family:var(--font);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:5px;min-height:76px}
+  .add-node:hover{border-color:var(--text);color:var(--text);background:var(--surface2)}
+  /* node card */
+  .nc{border:1px solid var(--border);border-top-width:3px;border-radius:var(--r);background:var(--surface);overflow:hidden;transition:box-shadow .12s}
+  .nc:hover{box-shadow:0 1px 6px rgba(0,0,0,.08)}
+  .nc-hdr{padding:7px 9px 5px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:7px}
+  .nc-num{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;padding-top:2px}
+  .nc-name{font-size:13px;font-weight:600;flex:1;outline:none;border:none;background:transparent;font-family:var(--font);color:var(--text);resize:none;line-height:1.4;min-height:18px;width:100%}
+  .nc-acts{display:flex;gap:2px;opacity:0;transition:opacity .1s;flex-shrink:0}
+  .nc:hover .nc-acts{opacity:1}
+  /* fields */
+  .nc-fields{padding:7px 9px;display:flex;flex-direction:column}
+  .fg{padding:5px 0;border-bottom:1px solid var(--border)}
+  .fg:last-child{border-bottom:none}
+  .fl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+  .fv{font-size:12px;color:var(--text);outline:none;border:1px solid transparent;background:transparent;font-family:var(--font);padding:3px 4px;border-radius:4px;width:100%;resize:none;min-height:26px;line-height:1.4;transition:border-color .1s,background .1s}
+  .fv:focus{border-color:var(--border-s);background:var(--surface2);outline:none}
+  .fv::placeholder{color:var(--text3)}
+  /* handoff */
+  .hf-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px 0;border-bottom:1px solid var(--border)}
+  .hf-col{display:flex;flex-direction:column;gap:2px}
+  .hf-col:first-child{border-right:1px solid var(--border);padding-right:5px}
+  .ow-sel{font-size:11px;font-weight:500;font-family:var(--font);border:1px solid var(--border);border-radius:4px;padding:3px 4px;cursor:pointer;outline:none;width:100%;background:var(--surface2);color:var(--text);border-left-width:3px}
+  .ow-sel:focus{border-color:var(--border-s)}
+  /* checklist */
+  .cl{display:flex;flex-direction:column;gap:4px}
+  .cl-item{display:flex;align-items:flex-start;gap:5px;font-size:12px}
+  .cl-item input[type=checkbox]{margin-top:2px;accent-color:var(--text);flex-shrink:0;cursor:pointer}
+  .cl-text{flex:1;outline:none;border:none;background:transparent;font-family:var(--font);font-size:12px;color:var(--text);resize:none;min-height:16px;line-height:1.4}
+  .cl-text:focus{outline:none}
+  .cl-text.done{text-decoration:line-through;color:var(--text3)}
+  .cl-del{opacity:0;font-size:11px;color:var(--text3);cursor:pointer;flex-shrink:0;line-height:1.6;border:none;background:transparent;font-family:var(--font)}
+  .cl-item:hover .cl-del{opacity:1}
+  .cl-add{font-size:11px;color:var(--text3);cursor:pointer;border:none;background:transparent;font-family:var(--font);padding:2px 0;text-align:left;transition:color .1s}
+  .cl-add:hover{color:var(--text)}
+  /* pills */
+  .risk-sel{font-size:10px;font-weight:600;font-family:var(--font);border:1px solid transparent;border-radius:20px;padding:2px 8px;cursor:pointer;outline:none}
+  .dec-sel{font-size:10px;font-weight:600;font-family:var(--font);border:1px solid var(--border);border-radius:3px;padding:2px 7px;cursor:pointer;outline:none;background:var(--surface2);color:var(--text2)}
+  .rd-row{display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+  /* modal */
+  .mo{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;z-index:200}
+  .mo.open{display:flex}
+  .mo-box{background:var(--surface);border-radius:10px;padding:22px;width:400px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+  .mo-box h3{font-size:15px;font-weight:600;margin-bottom:14px}
+  .mo-f{margin-bottom:13px}
+  .mo-lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+  .mo-inp{width:100%;font-family:var(--font);font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--text);outline:none;transition:border-color .1s}
+  .mo-inp:focus{border-color:var(--border-s)}
+  .mo-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+  .cp{display:flex;gap:7px;flex-wrap:wrap}
+  .co{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
+  .co:hover{transform:scale(1.18)}
+  .co.sel{border-color:var(--text)}
+  /* scrollbar */
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--border-s)}
+  /* toast */
+  .toast{position:fixed;bottom:18px;right:18px;background:var(--text);color:#fff;font-size:12px;padding:9px 15px;border-radius:6px;opacity:0;transition:opacity .2s;z-index:300;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
 </head>
 <body>
-
-<div id="app">
-    <button class="toggle-btn" @click="showSidebar = !showSidebar">☰</button>
-    
-    <div id="sidebar" :class="{ 'sidebar-hidden': !showSidebar }">
-        <h2 style="color: var(--gold); text-align: center; letter-spacing: 2px;">SKILL TREE</h2>
-        <hr border="1" color="#333">
-        
-        <div v-for="(node, index) in skills" :key="node.id" class="skill-card">
-            <input v-model="node.label" placeholder="技能名稱 (例如: Python基礎)">
-            <select v-model="node.parent">
-                <option value="">-- 無前置技能 --</option>
-                <option v-for="s in skills" v-show="s.id !== node.id" :value="s.id">{{ s.label }}</option>
-            </select>
-            <select v-model="node.status">
-                <option value="mastered">✨ 已精通 (Gold)</option>
-                <option value="active">🔥 修練中 (Blue)</option>
-                <option value="locked">🔒 鎖定中 (Gray)</option>
-            </select>
-            <button @click="removeSkill(index)" style="border-color: #ff4444; color: #ff4444; padding: 2px;">移除</button>
-        </div>
-
-        <button @click="addSkill">+ 學習新技能</button>
-        <button @click="updateChart" style="background: var(--gold); color: black; margin-top: 20px;">⚡ 更新地圖</button>
-        
-        <div style="margin-top: 20px; font-size: 12px; color: #666;">
-            貼心提醒：修改完後請點擊「更新地圖」。若要存檔，需將 JSON 內容存回 GitHub。
-        </div>
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-title">客戶旅程圖</div>
+    <div class="hdr-sub" id="saved-badge">草稿</div>
+  </div>
+  <div class="hdr-r">
+    <button class="btn" onclick="exportJSON()">匯出 JSON</button>
+    <button class="btn" onclick="document.getElementById('imp').click()">匯入</button>
+    <button class="btn btn-p" onclick="saveLocal()">儲存</button>
+  </div>
+</div>
+<div class="main">
+  <div class="sb">
+    <div class="sb-inner">
+      <div class="sb-lbl">旅程階段</div>
+      <div id="phase-nav"></div>
+      <button class="add-btn" onclick="openAddPhase()">+ 新增階段</button>
     </div>
-
-    <div id="canvas" id="zoom-container">
-        <div class="mermaid" id="mermaid-chart">
-            {{ chartCode }}
-        </div>
+    <div class="sb-legend">
+      <div class="sb-lbl" style="margin-bottom:7px">負責方</div>
+      <div id="owner-leg"></div>
+      <button class="add-btn" style="margin:5px 0 0;width:100%" onclick="openOwnerModal()">管理負責方</button>
     </div>
+  </div>
+  <div class="canvas">
+    <div id="tl-area"></div>
+    <div id="phases-area"></div>
+  </div>
 </div>
 
+<!-- Phase modal -->
+<div class="mo" id="ph-modal">
+  <div class="mo-box">
+    <h3 id="ph-modal-title">新增旅程階段</h3>
+    <div class="mo-f"><div class="mo-lbl">階段名稱</div><input class="mo-inp" id="ph-name" placeholder="例：免費研習班" /></div>
+    <div class="mo-f"><div class="mo-lbl">產品代號（選填）</div><input class="mo-inp" id="ph-prod" placeholder="例：SBBG、OB/BM" /></div>
+    <div class="mo-f"><div class="mo-lbl">標示顏色</div><div class="cp" id="ph-colors"></div></div>
+    <div class="mo-acts">
+      <button class="btn" onclick="closePHModal()">取消</button>
+      <button class="btn btn-p" id="ph-confirm" onclick="confirmPhase()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Owner modal -->
+<div class="mo" id="ow-modal">
+  <div class="mo-box" style="width:350px">
+    <h3>管理負責方</h3>
+    <div id="ow-list" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <input class="mo-inp" id="ow-new-name" placeholder="新負責方名稱" style="flex:1" />
+      <div class="cp" id="ow-cp" style="flex-shrink:0"></div>
+    </div>
+    <div class="mo-acts">
+      <button class="btn" onclick="closeOwnerModal()">關閉</button>
+      <button class="btn btn-p" onclick="addOwner()">新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="imp" accept=".json" style="display:none" onchange="handleImport(event)">
+
 <script>
-    const { createApp } = Vue;
-    createApp({
-        data() {
-            return {
-                showSidebar: true,
-                skills: [
-                    { id: 'root', label: '我的BBP起源', parent: '', status: 'mastered' },
-                    { id: 's1', label: 'GitHub實作', parent: 'root', status: 'active' },
-                    { id: 's2', label: '前端開發', parent: 'root', status: 'locked' }
-                ],
-                chartCode: ''
-            }
-        },
-        methods: {
-            addSkill() {
-                const id = 's' + Date.now();
-                this.skills.push({ id, label: '新技能', parent: 'root', status: 'locked' });
-            },
-            removeSkill(index) {
-                this.skills.splice(index, 1);
-            },
-            updateChart() {
-                let code = "graph TD\n";
-                // 遊戲風格配色
-                code += "classDef mastered fill:#f1c40f,stroke:#fff,stroke-width:2px,color:#000;\n";
-                code += "classDef active fill:#3498db,stroke:#fff,stroke-width:2px,color:#fff;\n";
-                code += "classDef locked fill:#2c3e50,stroke:#7f8c8d,color:#95a5a6,stroke-dasharray: 5 5;\n";
+const PC=['#5B9FD4','#9B6FD4','#7BBFD4','#D4A45B','#D46B5B','#6BBFA0','#A0B06B','#D46BAA','#B06B6B','#6B8FD4'];
+const OC=['#5B9FD4','#9B6FD4','#6BBFA0','#D4A45B','#D46B5B','#7BBFD4','#A0B06B','#D46BAA'];
+const RISKS=[{v:'none',l:'—',bg:'#F0EEE9',c:'#9B9890',b:'#C8C5BC'},{v:'low',l:'低風險',bg:'#D4EDE1',c:'#0D5C3A',b:'#6BBFA0'},{v:'medium',l:'中風險',bg:'#F8EDD6',c:'#6B3D0B',b:'#D4A45B'},{v:'high',l:'高風險',bg:'#FAE0D6',c:'#6B1A0D',b:'#D46B5B'}];
+const DECS=[{v:'none',l:'—'},{v:'convert',l:'✓ 轉換節點'},{v:'upsell',l:'↑ 升級節點'},{v:'retain',l:'♻ 留存節點'},{v:'dropout',l:'⚠ 流失風險'}];
+let mColor=PC[0], owColor=OC[0], editPhId=null, data=null;
 
-                this.skills.forEach(s => {
-                    // 使用 HTML 標籤讓節點變圓角矩形
-                    const label = `"${s.label}"`;
-                    if (s.parent) {
-                        code += `  ${s.parent} --> ${s.id}(${label})\n`;
-                    } else {
-                        code += `  ${s.id}(${label})\n`;
-                    }
-                    code += `  class ${s.id} ${s.status};\n`;
-                });
+function uid(){return Math.random().toString(36).slice(2,9)}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000)}
+function ag(e){e.style.height='auto';e.style.height=e.scrollHeight+'px'}
+function getOwner(id){return data.owners.find(o=>o.id===id)||{name:'未分配',color:'#C8C5BC'}}
+function applyRisk(el,r){el.style.background=r.bg;el.style.color=r.c;el.style.borderColor=r.b}
 
-                const element = document.getElementById('mermaid-chart');
-                element.removeAttribute('data-processed');
-                element.innerHTML = code;
-                mermaid.render('graphDiv', code).then(res => {
-                    element.innerHTML = res.svg;
-                });
-            }
-        },
-        mounted() {
-            mermaid.initialize({ 
-                startOnLoad: false, 
-                theme: 'dark',
-                flowchart: { curve: 'basis', htmlLabels: true }
-            });
-            this.updateChart();
-        }
-    }).mount('#app');
+function defaultData(){
+  const owners=[
+    {id:'mkt',name:'行銷／廣告',color:'#9B6FD4'},
+    {id:'sales',name:'業務',color:'#5B9FD4'},
+    {id:'ops',name:'活動營運',color:'#D4A45B'},
+    {id:'trainer',name:'講師',color:'#6BBFA0'},
+    {id:'service',name:'客服／售後',color:'#D46B5B'},
+    {id:'you',name:'你（產品側）',color:'#7BBFD4'},
+    {id:'disputed',name:'爭議 / 待定',color:'#C8C5BC'},
+  ];
+  return {title:'客戶旅程圖',owners,phases:[
+    {id:uid(),name:'探索與接觸',color:'#9B6FD4',product:'',collapsed:false,nodes:[
+      {id:uid(),name:'廣告曝光',customerAction:'在社群、搜尋引擎或口碑推薦看到資訊',ownerId:'mkt',handoffOwnerId:'mkt',handoffNote:'點擊廣告後引導至報名頁',product:'',items:[{id:uid(),text:'投放廣告素材（社群 / Google）',done:false},{id:uid(),text:'落地頁 / 報名頁設計',done:false},{id:uid(),text:'追蹤碼設置（GA / Pixel）',done:false}],timeline:'持續',risk:'none',decision:'none',notes:''},
+      {id:uid(),name:'主動搜尋',customerAction:'Google 搜尋、看官網或 YouTube 頻道',ownerId:'mkt',handoffOwnerId:'mkt',handoffNote:'官網引導至 SBBG 報名入口',product:'',items:[{id:uid(),text:'SEO / 關鍵字優化',done:false},{id:uid(),text:'YouTube 頻道內容維護',done:false},{id:uid(),text:'官網資訊更新',done:false}],timeline:'持續',risk:'none',decision:'none',notes:''},
+    ]},
+    {id:uid(),name:'免費研習班',color:'#5B9FD4',product:'SBBG',collapsed:false,nodes:[
+      {id:uid(),name:'報名 SBBG',customerAction:'填寫報名表、選擇場次（台北 / 台中）',ownerId:'ops',handoffOwnerId:'sales',handoffNote:'報名名單整理後移交業務，業務需在活動前確認聯繫',product:'SBBG 報名系統',items:[{id:uid(),text:'報名表單設計與測試',done:false},{id:uid(),text:'場次管理（台北 / 台中）',done:false},{id:uid(),text:'報名確認信自動發送',done:false},{id:uid(),text:'報名名單整理至 CRM',done:false}],timeline:'活動前 1–2 週',risk:'low',decision:'none',notes:'免費入場，門檻低，但需確保報名者為目標客群（企業主 / 主管）'},
+      {id:uid(),name:'出席研習班',customerAction:'參加免費研習課程，了解組織架構或商業模式概念',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'課程結束後，業務需在 24 小時內跟進',product:'SBBG 課程',items:[{id:uid(),text:'場地確認與佈置',done:false},{id:uid(),text:'講師簡報與教材準備',done:false},{id:uid(),text:'現場簽到機制',done:false},{id:uid(),text:'課後問卷發放',done:false}],timeline:'研習當日',risk:'medium',decision:'none',notes:'實際出席率通常低於報名率，需設計提醒機制（前一天 + 當日早上）'},
+      {id:uid(),name:'課後跟進',customerAction:'接收業務聯繫、了解 OB / BM 研習班',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'確認意願後，進入 OB / BM 購買流程',product:'',items:[{id:uid(),text:'課後 24h 內電話 / Line 聯繫',done:false},{id:uid(),text:'傳送 OB / BM 課程說明',done:false},{id:uid(),text:'記錄意願程度至 CRM',done:false},{id:uid(),text:'安排個別諮詢（有需要時）',done:false}],timeline:'研習後 1–3 天',risk:'high',decision:'convert',notes:'⚠ 關鍵轉換節點：是否願意付費報名 OB / BM'},
+    ]},
+    {id:uid(),name:'研習班課程',color:'#9B6FD4',product:'OB / BM',collapsed:false,nodes:[
+      {id:uid(),name:'選擇與購買課程',customerAction:'選擇 OB（組織架構）或 BM（商業模式）或兩場都報',ownerId:'sales',handoffOwnerId:'ops',handoffNote:'付款完成後移交營運確認場次、報到與教材',product:'OB 課程 / BM 課程',items:[{id:uid(),text:'課程說明與費用確認',done:false},{id:uid(),text:'付款收款流程',done:false},{id:uid(),text:'開立發票 / 收據',done:false},{id:uid(),text:'場次確認通知',done:false}],timeline:'跟進後 1–2 週內',risk:'medium',decision:'none',notes:'OB 共 3 天 / BM 共 2 天，可選一或兩場'},
+      {id:uid(),name:'上課（OB）',customerAction:'出席 3 天組織架構研習班，完成課堂任務',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'第三天課後，業務評估是否適合推薦 MBA 或 BOP',product:'OB 課程',items:[{id:uid(),text:'教材與工具包準備',done:false},{id:uid(),text:'第二天晚上企業主餐敘安排',done:false},{id:uid(),text:'課堂作業與演練',done:false},{id:uid(),text:'出席紀錄',done:false}],timeline:'3 天（9:30–18:00，第二天至 21:00）',risk:'low',decision:'none',notes:'第二天為 9:30–21:00，含企業主餐敘，需特別規劃場地與流程'},
+      {id:uid(),name:'上課（BM）',customerAction:'出席 2 天商業模式研習班，完成課堂任務',ownerId:'trainer',handoffOwnerId:'sales',handoffNote:'第二天課後，業務評估是否適合推薦 MBA 或 BOP',product:'BM 課程',items:[{id:uid(),text:'教材與工具包準備',done:false},{id:uid(),text:'課堂作業與演練',done:false},{id:uid(),text:'出席紀錄',done:false}],timeline:'2 天（9:30–18:00）',risk:'low',decision:'none',notes:''},
+      {id:uid(),name:'課後評估與推薦',customerAction:'接受業務個別諮詢，評估長期課程需求',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'依客戶身份推薦：主管團隊 → MBA；企業主 → BOP',product:'',items:[{id:uid(),text:'個別諮詢安排',done:false},{id:uid(),text:'企業現況評估',done:false},{id:uid(),text:'MBA vs BOP 適合度判斷',done:false},{id:uid(),text:'提案書準備',done:false}],timeline:'課程結束後 1 週內',risk:'high',decision:'upsell',notes:'⚠ 關鍵升級節點：決定是否進入長期課程（MBA 或 BOP）'},
+    ]},
+    {id:uid(),name:'長期課程',color:'#D4A45B',product:'MBA / BOP',collapsed:false,nodes:[
+      {id:uid(),name:'簽約 MBA（主管團隊計劃）',customerAction:'（主管團隊）確認參與、簽訂合約',ownerId:'sales',handoffOwnerId:'trainer',handoffNote:'合約簽訂後移交講師 / 課程組安排時程',product:'MBA 主管團隊計劃',items:[{id:uid(),text:'課程合約準備',done:false},{id:uid(),text:'費用與付款條件確認',done:false},{id:uid(),text:'參與人員名單確認',done:false},{id:uid(),text:'課程時程規劃',done:false}],timeline:'評估後 2–4 週',risk:'medium',decision:'none',notes:''},
+      {id:uid(),name:'簽約 BOP（企業主計劃）',customerAction:'（企業主）確認參與、簽訂合約',ownerId:'sales',handoffOwnerId:'trainer',handoffNote:'合約簽訂後移交講師 / 課程組安排時程，並做企業客製化訪談',product:'BOP 企業主計劃',items:[{id:uid(),text:'課程合約準備',done:false},{id:uid(),text:'費用與付款條件確認',done:false},{id:uid(),text:'企業基本資料收集',done:false},{id:uid(),text:'客製化需求訪談',done:false}],timeline:'評估後 2–4 週',risk:'medium',decision:'none',notes:''},
+      {id:uid(),name:'執行長期課程',customerAction:'按時程參與課程、完成作業、實際在企業導入所學',ownerId:'trainer',handoffOwnerId:'service',handoffNote:'課程全部結束後，移交售後服務 / BOC 社群',product:'MBA 或 BOP 課程',items:[{id:uid(),text:'課程時程管理',done:false},{id:uid(),text:'到課率追蹤',done:false},{id:uid(),text:'作業批改與回饋',done:false},{id:uid(),text:'中期滿意度確認',done:false},{id:uid(),text:'課程完成認證 / 結業',done:false}],timeline:'依課程計劃（數月）',risk:'medium',decision:'retain',notes:'需持續確認學員進度，避免中途流失'},
+    ]},
+    {id:uid(),name:'售後社群',color:'#6BBFA0',product:'BOC',collapsed:false,nodes:[
+      {id:uid(),name:'加入 BOC 社群',customerAction:'完課後加入企業主社群，與同學交流',ownerId:'service',handoffOwnerId:'service',handoffNote:'社群內持續維護，識別再購買或轉介機會',product:'BOC 社群',items:[{id:uid(),text:'BOC 社群入群流程',done:false},{id:uid(),text:'社群規範說明',done:false},{id:uid(),text:'歡迎訊息與介紹',done:false}],timeline:'完課後',risk:'none',decision:'retain',notes:''},
+      {id:uid(),name:'BOC 定期活動',customerAction:'參加定期聚會、論壇或主題討論',ownerId:'ops',handoffOwnerId:'sales',handoffNote:'活動中識別對新產品有興趣的客戶，轉交業務跟進',product:'BOC 活動',items:[{id:uid(),text:'定期活動規劃（月 / 季）',done:false},{id:uid(),text:'活動邀請與報名',done:false},{id:uid(),text:'場地與流程安排',done:false},{id:uid(),text:'講師 / 嘉賓邀請',done:false}],timeline:'定期舉辦',risk:'low',decision:'none',notes:''},
+      {id:uid(),name:'新產品介紹',customerAction:'了解並評估新課程或服務',ownerId:'sales',handoffOwnerId:'sales',handoffNote:'有興趣者重啟旅程，回到對應購買節點',product:'新產品 / 新課程',items:[{id:uid(),text:'新產品發布規劃',done:false},{id:uid(),text:'既有客戶優惠方案',done:false},{id:uid(),text:'個別諮詢安排',done:false}],timeline:'新產品推出時',risk:'low',decision:'upsell',notes:'老客戶再購是重要收入來源，需有系統性維護機制'},
+    ]},
+  ]};
+}
+
+// ─── Render ─────────────────────────────────────────────────────────────────
+function render(){renderLegend();renderNav();renderTL();renderPhases()}
+
+function renderLegend(){
+  const el=document.getElementById('owner-leg');
+  el.innerHTML=data.owners.map(o=>`<div class="leg-item"><div class="leg-sw" style="background:${o.color}"></div><span style="flex:1;font-size:11px">${esc(o.name)}</span></div>`).join('');
+}
+function renderNav(){
+  const nav=document.getElementById('phase-nav');nav.innerHTML='';
+  data.phases.forEach(p=>{
+    const el=document.createElement('div');el.className='nav-item';
+    el.onclick=()=>{document.getElementById('ph-'+p.id)?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active')};
+    el.innerHTML=`<div class="nav-dot" style="background:${p.color}"></div><span class="nav-lbl">${esc(p.name)}${p.product?' · '+esc(p.product):''}</span><span class="nav-cnt">${p.nodes.length}</span>`;
+    nav.appendChild(el);
+  });
+}
+function renderTL(){
+  const a=document.getElementById('tl-area');
+  if(!data.phases.length){a.innerHTML='';return}
+  a.innerHTML=`<div class="tl">${data.phases.map(p=>`<div class="tl-item" onclick="document.getElementById('ph-${p.id}')?.scrollIntoView({behavior:'smooth'})"><div class="tl-dot" style="background:${p.color};color:${p.color}"></div><div class="tl-name">${esc(p.name)}</div>${p.product?`<div class="tl-prod">${esc(p.product)}</div>`:''}</div>`).join('')}</div>`;
+}
+function renderPhases(){
+  const a=document.getElementById('phases-area');a.innerHTML='';
+  if(!data.phases.length){a.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)"><p style="font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px">還沒有旅程階段</p><p style="font-size:13px">點擊左側「新增階段」開始</p></div>';return}
+  data.phases.forEach(p=>a.appendChild(buildPhase(p)));
+}
+
+function buildPhase(phase){
+  const block=document.createElement('div');
+  block.className='phase'+(phase.collapsed?' collapsed':'');
+  block.id='ph-'+phase.id;
+  // header
+  const ph=document.createElement('div');ph.className='ph';
+  ph.innerHTML=`
+    <div class="ph-bar" style="background:${phase.color}"></div>
+    <div class="ph-info">
+      <div class="ph-row">
+        <input class="ph-name" value="${esc(phase.name)}" placeholder="階段名稱" onclick="event.stopPropagation()" onchange="updatePhase('${phase.id}','name',this.value)"/>
+        <input class="ph-prod" value="${esc(phase.product||'')}" placeholder="產品代號" style="color:${phase.color};border-color:${phase.color};background:${phase.color}18" onclick="event.stopPropagation()" onchange="updatePhase('${phase.id}','product',this.value)"/>
+      </div>
+      <span class="ph-cnt">${phase.nodes.length} 個節點</span>
+    </div>
+    <div class="ph-acts" onclick="event.stopPropagation()">
+      <button class="ib" onclick="openEditPhase('${phase.id}')" title="編輯">✎</button>
+      <button class="ib" onclick="movePhase('${phase.id}',-1)" title="上移">↑</button>
+      <button class="ib" onclick="movePhase('${phase.id}',1)" title="下移">↓</button>
+      <button class="ib d" onclick="delPhase('${phase.id}')" title="刪除">✕</button>
+    </div>
+    <div class="ph-arr">▾</div>`;
+  ph.addEventListener('click',e=>{if(['INPUT','BUTTON','SELECT'].includes(e.target.tagName))return;phase.collapsed=!phase.collapsed;block.classList.toggle('collapsed',phase.collapsed);autoSave()});
+  block.appendChild(ph);
+  // body
+  const body=document.createElement('div');body.className='phase-body';
+  const grid=document.createElement('div');grid.className='nodes-grid';
+  phase.nodes.forEach((n,i)=>grid.appendChild(buildNode(phase,n,i)));
+  const ab=document.createElement('button');ab.className='add-node';ab.innerHTML='+ 新增節點';ab.onclick=()=>addNode(phase.id);
+  grid.appendChild(ab);body.appendChild(grid);block.appendChild(body);
+  return block;
+}
+
+function buildNode(phase,node,ni){
+  const owner=getOwner(node.ownerId);
+  const hOwner=getOwner(node.handoffOwnerId);
+  const risk=RISKS.find(r=>r.v===node.risk)||RISKS[0];
+  const dec=DECS.find(d=>d.v===node.decision)||DECS[0];
+  const card=document.createElement('div');
+  card.className='nc';card.id='nd-'+node.id;card.style.borderTopColor=owner.color;
+  // header
+  const hdr=document.createElement('div');hdr.className='nc-hdr';
+  hdr.innerHTML=`<span class="nc-num">${String(ni+1).padStart(2,'0')}</span>`;
+  const nta=document.createElement('textarea');nta.className='nc-name';nta.value=node.name;nta.placeholder='節點名稱';nta.rows=1;
+  nta.oninput=function(){ag(this);updateNode(phase.id,node.id,'name',this.value)};
+  hdr.appendChild(nta);setTimeout(()=>ag(nta),0);
+  const acts=document.createElement('div');acts.className='nc-acts';
+  acts.innerHTML=`<button class="ib" onclick="mvNode('${phase.id}','${node.id}',-1)" title="上移">↑</button><button class="ib" onclick="mvNode('${phase.id}','${node.id}',1)" title="下移">↓</button><button class="ib d" onclick="delNode('${phase.id}','${node.id}')" title="刪除">✕</button>`;
+  hdr.appendChild(acts);card.appendChild(hdr);
+  // fields
+  const fields=document.createElement('div');fields.className='nc-fields';
+  fields.appendChild(mkFG('客戶行動',node.customerAction,'此節點客戶需要做什麼？',v=>updateNode(phase.id,node.id,'customerAction',v)));
+  // handoff row
+  const hfr=document.createElement('div');hfr.className='hf-row';
+  hfr.appendChild(mkOwnerCol('本節點負責方',node.ownerId,owner,phase.id,node.id,'ownerId',card));
+  hfr.appendChild(mkOwnerCol('銜接下節點負責方',node.handoffOwnerId,hOwner,phase.id,node.id,'handoffOwnerId',null));
+  fields.appendChild(hfr);
+  fields.appendChild(mkFG('銜接說明（交接條件）',node.handoffNote,'交接給下一節點時，需完成什麼才能移交？',v=>updateNode(phase.id,node.id,'handoffNote',v)));
+  fields.appendChild(mkFG('使用產品 / 工具',node.product,'本節點使用的產品或工具名稱',v=>updateNode(phase.id,node.id,'product',v)));
+  fields.appendChild(mkFG('時間點 / 里程碑',node.timeline,'例：活動前 1 週、課後 3 天內',v=>updateNode(phase.id,node.id,'timeline',v)));
+  // checklist
+  const clg=document.createElement('div');clg.className='fg';clg.innerHTML='<div class="fl">導入項目清單</div>';
+  const cl=document.createElement('div');cl.className='cl';cl.id='cl-'+node.id;
+  node.items.forEach(it=>cl.appendChild(mkCLItem(phase.id,node.id,it)));
+  const cla=document.createElement('button');cla.className='cl-add';cla.textContent='+ 新增項目';cla.onclick=()=>addCLItem(phase.id,node.id);
+  cl.appendChild(cla);clg.appendChild(cl);fields.appendChild(clg);
+  // risk + decision
+  const rdr=document.createElement('div');rdr.className='rd-row';
+  const rs=document.createElement('select');rs.className='risk-sel';applyRisk(rs,risk);
+  RISKS.forEach(r=>{const o=document.createElement('option');o.value=r.v;o.textContent=r.l;if(r.v===node.risk)o.selected=true;rs.appendChild(o)});
+  rs.onchange=function(){updateNode(phase.id,node.id,'risk',this.value);applyRisk(this,RISKS.find(r=>r.v===this.value))};
+  const ds=document.createElement('select');ds.className='dec-sel';
+  DECS.forEach(d=>{const o=document.createElement('option');o.value=d.v;o.textContent=d.l;if(d.v===node.decision)o.selected=true;ds.appendChild(o)});
+  ds.onchange=function(){updateNode(phase.id,node.id,'decision',this.value)};
+  rdr.appendChild(rs);rdr.appendChild(ds);fields.appendChild(rdr);
+  fields.appendChild(mkFG('備註 / 注意事項',node.notes,'補充說明...',v=>updateNode(phase.id,node.id,'notes',v)));
+  card.appendChild(fields);return card;
+}
+
+function mkFG(label,val,ph,cb){
+  const g=document.createElement('div');g.className='fg';g.innerHTML=`<div class="fl">${label}</div>`;
+  const ta=document.createElement('textarea');ta.className='fv';ta.value=val||'';ta.placeholder=ph||'';ta.rows=1;
+  ta.oninput=function(){ag(this);cb(this.value)};g.appendChild(ta);setTimeout(()=>ag(ta),0);return g;
+}
+function mkOwnerCol(label,ownerId,owner,phId,ndId,field,card){
+  const col=document.createElement('div');col.className='hf-col';col.innerHTML=`<div class="fl">${label}</div>`;
+  const sel=document.createElement('select');sel.className='ow-sel';sel.style.borderLeftColor=owner.color;
+  data.owners.forEach(o=>{const opt=document.createElement('option');opt.value=o.id;opt.textContent=o.name;if(o.id===ownerId)opt.selected=true;sel.appendChild(opt)});
+  sel.onchange=function(){updateNode(phId,ndId,field,this.value);const o2=getOwner(this.value);this.style.borderLeftColor=o2.color;if(card&&field==='ownerId')card.style.borderTopColor=o2.color};
+  col.appendChild(sel);return col;
+}
+function mkCLItem(phId,ndId,item){
+  const row=document.createElement('div');row.className='cl-item';row.id='cli-'+item.id;
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=item.done;
+  cb.onchange=function(){updateCLItem(phId,ndId,item.id,'done',this.checked);ta.classList.toggle('done',this.checked)};
+  const ta=document.createElement('textarea');ta.className='cl-text'+(item.done?' done':'');ta.value=item.text;ta.rows=1;ta.placeholder='項目內容...';
+  ta.oninput=function(){ag(this);updateCLItem(phId,ndId,item.id,'text',this.value)};setTimeout(()=>ag(ta),0);
+  const del=document.createElement('button');del.className='cl-del';del.textContent='✕';del.onclick=()=>delCLItem(phId,ndId,item.id);
+  row.appendChild(cb);row.appendChild(ta);row.appendChild(del);return row;
+}
+
+// ─── Mutations ──────────────────────────────────────────────────────────────
+function updatePhase(id,k,v){const p=data.phases.find(p=>p.id===id);if(!p)return;p[k]=v;autoSave();if(['name','product','color'].includes(k)){renderNav();renderTL()}}
+function updateNode(phId,ndId,k,v){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;n[k]=v;autoSave()}
+function updateCLItem(phId,ndId,itId,k,v){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;const it=n.items.find(i=>i.id===itId);if(!it)return;it[k]=v;autoSave()}
+function addNode(phId){const p=data.phases.find(p=>p.id===phId);if(!p)return;p.nodes.push({id:uid(),name:'',customerAction:'',ownerId:'disputed',handoffOwnerId:'disputed',handoffNote:'',product:'',items:[],timeline:'',risk:'none',decision:'none',notes:''});render();autoSave();setTimeout(()=>document.getElementById('ph-'+phId)?.scrollIntoView({behavior:'smooth',block:'end'}),80)}
+function delNode(phId,ndId){const p=data.phases.find(p=>p.id===phId);if(!p)return;if(!confirm('確定要刪除這個節點？'))return;p.nodes=p.nodes.filter(n=>n.id!==ndId);render();autoSave()}
+function mvNode(phId,ndId,dir){const p=data.phases.find(p=>p.id===phId);if(!p)return;const i=p.nodes.findIndex(n=>n.id===ndId);const j=i+dir;if(j<0||j>=p.nodes.length)return;[p.nodes[i],p.nodes[j]]=[p.nodes[j],p.nodes[i]];render();autoSave()}
+function delPhase(id){if(!confirm('確定要刪除這個階段？'))return;data.phases=data.phases.filter(p=>p.id!==id);render();autoSave()}
+function movePhase(id,dir){const i=data.phases.findIndex(p=>p.id===id);const j=i+dir;if(j<0||j>=data.phases.length)return;[data.phases[i],data.phases[j]]=[data.phases[j],data.phases[i]];render();autoSave()}
+function addCLItem(phId,ndId){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;const it={id:uid(),text:'',done:false};n.items.push(it);const cl=document.getElementById('cl-'+ndId);if(cl){const ab=cl.querySelector('.cl-add');cl.insertBefore(mkCLItem(phId,ndId,it),ab)}autoSave()}
+function delCLItem(phId,ndId,itId){const p=data.phases.find(p=>p.id===phId);if(!p)return;const n=p.nodes.find(n=>n.id===ndId);if(!n)return;n.items=n.items.filter(i=>i.id!==itId);document.getElementById('cli-'+itId)?.remove();autoSave()}
+
+// ─── Phase modal ─────────────────────────────────────────────────────────────
+function openAddPhase(){editPhId=null;document.getElementById('ph-modal-title').textContent='新增旅程階段';document.getElementById('ph-confirm').textContent='新增';document.getElementById('ph-name').value='';document.getElementById('ph-prod').value='';mColor=PC[data.phases.length%PC.length];renderCP();document.getElementById('ph-modal').classList.add('open');setTimeout(()=>document.getElementById('ph-name').focus(),50)}
+function openEditPhase(id){const p=data.phases.find(p=>p.id===id);if(!p)return;editPhId=id;document.getElementById('ph-modal-title').textContent='編輯階段';document.getElementById('ph-confirm').textContent='儲存';document.getElementById('ph-name').value=p.name;document.getElementById('ph-prod').value=p.product||'';mColor=p.color;renderCP();document.getElementById('ph-modal').classList.add('open');setTimeout(()=>document.getElementById('ph-name').focus(),50)}
+function confirmPhase(){const name=document.getElementById('ph-name').value.trim()||'新階段';const prod=document.getElementById('ph-prod').value.trim();if(editPhId){const p=data.phases.find(p=>p.id===editPhId);if(p){p.name=name;p.product=prod;p.color=mColor}}else{data.phases.push({id:uid(),name,color:mColor,product:prod,collapsed:false,nodes:[]})}closePHModal();render();autoSave()}
+function closePHModal(){document.getElementById('ph-modal').classList.remove('open')}
+function renderCP(){const cp=document.getElementById('ph-colors');cp.innerHTML='';PC.forEach(c=>{const el=document.createElement('div');el.className='co'+(c===mColor?' sel':'');el.style.background=c;el.onclick=()=>{mColor=c;document.querySelectorAll('#ph-colors .co').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')};cp.appendChild(el)})}
+document.getElementById('ph-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePHModal()});
+document.getElementById('ph-modal').addEventListener('keydown',e=>{if(e.key==='Enter')confirmPhase();if(e.key==='Escape')closePHModal()});
+
+// ─── Owner modal ─────────────────────────────────────────────────────────────
+function openOwnerModal(){renderOwnerList();renderOwnerCP();document.getElementById('ow-modal').classList.add('open')}
+function closeOwnerModal(){document.getElementById('ow-modal').classList.remove('open');render()}
+function renderOwnerList(){const el=document.getElementById('ow-list');el.innerHTML=data.owners.map(o=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:12px;height:12px;border-radius:50%;background:${o.color};flex-shrink:0"></div><span style="flex:1;font-size:13px">${esc(o.name)}</span><button class="ib d" onclick="delOwner('${o.id}')">✕</button></div>`).join('')}
+function addOwner(){const name=document.getElementById('ow-new-name').value.trim();if(!name)return;data.owners.push({id:uid(),name,color:owColor});document.getElementById('ow-new-name').value='';renderOwnerList();autoSave()}
+function delOwner(id){if(data.owners.length<=1){toast('至少保留一個負責方');return}data.owners=data.owners.filter(o=>o.id!==id);renderOwnerList();autoSave()}
+function renderOwnerCP(){const cp=document.getElementById('ow-cp');cp.innerHTML='';OC.forEach(c=>{const el=document.createElement('div');el.className='co'+(c===owColor?' sel':'');el.style.background=c;el.style.width='18px';el.style.height='18px';el.onclick=()=>{owColor=c;document.querySelectorAll('#ow-cp .co').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')};cp.appendChild(el)})}
+document.getElementById('ow-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeOwnerModal()});
+
+// ─── Persist ─────────────────────────────────────────────────────────────────
+function autoSave(){try{localStorage.setItem('cjm_v3',JSON.stringify(data));const now=new Date();document.getElementById('saved-badge').textContent=`已儲存 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`}catch(e){}}
+function saveLocal(){autoSave();toast('已儲存')}
+function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='客戶旅程圖.json';a.click();toast('已匯出 JSON')}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.phases){data=d;render();autoSave();toast('匯入成功')}else alert('格式不正確')}catch{alert('無法解析 JSON')}};r.readAsText(f);e.target.value=''}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+try{const s=localStorage.getItem('cjm_v3');data=s?JSON.parse(s):defaultData()}catch{data=defaultData()}
+render();
 </script>
-
 </body>
 </html>
