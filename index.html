@@ -3,879 +3,572 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>客戶旅程圖</title>
+<title>客戶旅程地圖</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* ================================================================
-   全域變數 & Reset
-================================================================ */
-:root {
-  --sidebar-w: 230px;
-  --timeline-h: 68px;
-  --gap: 16px;
-  --radius: 10px;
-  --shadow: 0 2px 10px rgba(0,0,0,0.09);
-  --border: #e0e0e0;
-  --bg: #f4f5f8;
-  --white: #ffffff;
-  --text-dark: #1a1a2e;
-  --text-mid: #555;
-  --text-muted: #9e9e9e;
-  --accent: #3949ab;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', Arial, sans-serif;
-  font-size: 13px;
-  color: var(--text-dark);
-  background: var(--bg);
-  overflow-x: hidden;
-}
-input, textarea, select {
-  font-family: inherit;
-  font-size: inherit;
-}
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE8;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #1A1916;
+    --text-2: #5C5B57;
+    --text-3: #9C9A94;
+    --accent: #2A2927;
+    --blue: #2563EB;
+    --blue-bg: #EFF6FF;
+    --blue-border: #BFDBFE;
+    --blue-text: #1D4ED8;
+    --red: #DC2626;
+    --red-bg: #FEF2F2;
+    --red-border: #FECACA;
+    --red-text: #B91C1C;
+    --amber: #D97706;
+    --amber-bg: #FFFBEB;
+    --amber-border: #FDE68A;
+    --amber-text: #92400E;
+    --green: #059669;
+    --green-bg: #ECFDF5;
+    --transition: 0.18s cubic-bezier(.4,0,.2,1);
+  }
 
-/* ================================================================
-   Loading Overlay
-================================================================ */
-#loading {
-  position: fixed; inset: 0;
-  background: rgba(255,255,255,0.95);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 18px; z-index: 2000;
-  transition: opacity 0.3s;
-}
-#loading.hidden { opacity: 0; pointer-events: none; }
-.spinner {
-  width: 52px; height: 52px;
-  border: 5px solid #e3e6ff;
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.85s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 15px; color: var(--text-mid); font-weight: 500; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ================================================================
-   Top Bar  （包含儲存按鈕 + 狀態訊息）
-================================================================ */
-#topbar {
-  position: fixed;
-  top: 0; right: 0;
-  height: var(--timeline-h);
-  display: flex; align-items: center;
-  padding: 0 20px; gap: 12px;
-  z-index: 300;
-}
-#save-btn {
-  padding: 9px 22px;
-  background: #43a047;
-  color: #fff;
-  border: none; border-radius: 7px;
-  font-size: 14px; font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(67,160,71,0.35);
-  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
-  white-space: nowrap;
-}
-#save-btn:hover { background: #388e3c; box-shadow: 0 4px 10px rgba(67,160,71,0.4); }
-#save-btn:active { transform: scale(0.97); }
-#save-btn:disabled { background: #9e9e9e; box-shadow: none; cursor: not-allowed; }
+  body {
+    font-family: 'Noto Sans TC', 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 32px 80px;
+  }
 
-#status-msg {
-  font-size: 13px; font-weight: 600;
-  padding: 7px 14px; border-radius: 6px;
-  color: #fff;
-  opacity: 0;
-  transition: opacity 0.3s;
-  white-space: nowrap;
-  max-width: 320px;
-}
-#status-msg.show { opacity: 1; }
-#status-msg.success { background: rgba(67,160,71,0.88); }
-#status-msg.error   { background: rgba(229,57,53,0.88); }
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    gap: 24px;
+  }
+  .header-left { flex: 1; }
+  .title-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .title-badge {
+    font-size: 10px; font-weight: 500; letter-spacing: .08em;
+    background: var(--accent); color: #fff;
+    padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+  }
+  h1 {
+    font-size: 26px; font-weight: 700; color: var(--text);
+    outline: none; border-bottom: 1.5px solid transparent;
+    transition: border-color var(--transition);
+    padding-bottom: 2px; border-radius: 2px;
+    cursor: text;
+  }
+  h1:focus { border-bottom-color: var(--accent); }
+  .subtitle {
+    font-size: 13px; color: var(--text-3); margin-top: 6px;
+    outline: none; border-bottom: 1px solid transparent;
+    transition: border-color var(--transition); cursor: text;
+  }
+  .subtitle:focus { border-bottom-color: var(--border-strong); }
+  .header-actions { display: flex; gap: 8px; flex-shrink: 0; margin-top: 4px; }
+  .btn {
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    padding: 7px 14px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-strong); background: var(--surface);
+    color: var(--text-2); transition: all var(--transition);
+  }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn.primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .btn.primary:hover { opacity: .88; }
 
-/* ================================================================
-   Horizontal Timeline  （頂部橫向時間軸）
-================================================================ */
-#timeline {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: var(--timeline-h);
-  background: #1a237e;
-  display: flex; align-items: center;
-  padding: 0 200px 0 calc(var(--sidebar-w) + 16px);
-  overflow-x: auto; overflow-y: hidden;
-  gap: 4px; z-index: 200;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.3) transparent;
-}
-#timeline::-webkit-scrollbar { height: 4px; }
-#timeline::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+  /* ── Emotion curve ── */
+  .emotion-section { margin-bottom: 24px; }
+  .section-label {
+    font-size: 10px; font-weight: 500; letter-spacing: .08em;
+    color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .emotion-chart { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px 8px; }
+  .emotion-svg-wrap { width: 100%; height: 56px; position: relative; }
+  .emotion-svg { width: 100%; height: 100%; overflow: visible; }
+  .stage-names { display: flex; margin-top: 4px; }
+  .stage-name-cell {
+    flex: 1; text-align: center; font-size: 10px;
+    color: var(--text-3); padding: 4px 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
-.tl-item {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer; user-select: none;
-  white-space: nowrap;
-  color: #fff;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.08);
-  transition: background 0.18s, border-color 0.18s;
-  min-width: 110px;
-}
-.tl-item:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.45); }
-.tl-item.active { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.6); }
+  /* ── Journey stages ── */
+  .stages-section { margin-bottom: 24px; }
+  .stages-row { display: flex; gap: 10px; align-items: flex-start; }
 
-.tl-phase   { font-size: 13px; font-weight: 700; line-height: 1.3; }
-.tl-product { font-size: 10.5px; opacity: 0.75; margin-top: 2px; }
+  .stage-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    min-width: 0;
+  }
+  .stage-card:hover { border-color: var(--border-strong); }
+  .stage-card.active {
+    border-color: var(--border-strong);
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  }
 
-.tl-arrow {
-  color: rgba(255,255,255,0.35);
-  font-size: 18px; flex-shrink: 0;
-  line-height: 1;
-}
+  .stage-header {
+    padding: 14px 14px 12px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+  }
+  .stage-color-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+  .stage-top { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+  .stage-num {
+    font-size: 10px; font-weight: 700; color: var(--text-3);
+    letter-spacing: .04em; width: 16px; flex-shrink: 0;
+  }
+  .stage-title-input {
+    flex: 1; font-family: inherit; font-size: 13px; font-weight: 600;
+    color: var(--text); background: none; border: none; outline: none;
+    cursor: pointer; min-width: 0; width: 100%;
+  }
+  .stage-title-input:focus { cursor: text; }
+  .stage-chevron {
+    font-size: 10px; color: var(--text-3);
+    transition: transform var(--transition); flex-shrink: 0;
+  }
+  .stage-card.active .stage-chevron { transform: rotate(180deg); }
+  .stage-summary {
+    font-size: 11px; color: var(--text-3);
+    padding: 0 14px 12px; line-height: 1.5;
+    outline: none; cursor: text;
+  }
+  .stage-summary:focus { color: var(--text-2); }
+  .stage-summary[placeholder]:empty::before {
+    content: attr(placeholder); color: var(--text-3); opacity: .5;
+  }
 
-/* ================================================================
-   Left Sidebar
-================================================================ */
-#sidebar {
-  position: fixed;
-  top: var(--timeline-h); left: 0;
-  width: var(--sidebar-w);
-  height: calc(100vh - var(--timeline-h));
-  background: var(--white);
-  border-right: 1px solid var(--border);
-  overflow-y: auto; overflow-x: hidden;
-  z-index: 150;
-  padding: 14px 0 24px;
-  scrollbar-width: thin;
-}
-.sb-title {
-  padding: 0 16px 10px;
-  font-size: 10px; font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.8px;
-}
-.sb-item {
-  display: flex; align-items: center;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.15s;
-  gap: 10px; border-radius: 0;
-  position: relative;
-}
-.sb-item::before {
-  content: ''; position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px; background: transparent;
-  border-radius: 0 2px 2px 0;
-  transition: background 0.15s;
-}
-.sb-item:hover { background: #f5f6fb; }
-.sb-item.active { background: #eef0fb; }
-.sb-item.active::before { background: var(--accent); }
+  /* Detail panel */
+  .stage-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .28s cubic-bezier(.4,0,.2,1);
+    border-top: 0px solid var(--border);
+  }
+  .stage-card.active .stage-detail {
+    max-height: 600px;
+    border-top-width: 1px;
+  }
+  .detail-inner { padding: 14px; }
 
-.sb-dot {
-  width: 11px; height: 11px;
-  border-radius: 50%; flex-shrink: 0;
-}
-.sb-name {
-  flex: 1; font-size: 13px; font-weight: 500;
-  color: var(--text-dark);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sb-count {
-  flex-shrink: 0;
-  font-size: 11px; color: var(--text-muted);
-  background: #f0f0f0;
-  padding: 2px 8px; border-radius: 10px;
-  font-weight: 600;
-}
+  .detail-group { margin-bottom: 14px; }
+  .detail-group:last-child { margin-bottom: 0; }
+  .detail-group-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .detail-group-label {
+    font-size: 10px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .label-touch { color: var(--blue-text); }
+  .label-pain  { color: var(--red-text); }
+  .label-owner { color: var(--amber-text); }
 
-/* ================================================================
-   Main Content Area
-================================================================ */
-#main {
-  margin-left: var(--sidebar-w);
-  margin-top: var(--timeline-h);
-  padding: 28px 28px 60px;
-  min-height: calc(100vh - var(--timeline-h));
-}
+  .add-chip-btn {
+    font-family: inherit; font-size: 10px; color: var(--text-3);
+    background: none; border: 1px dashed var(--border-strong);
+    border-radius: 20px; padding: 2px 8px; cursor: pointer;
+    transition: all var(--transition);
+  }
+  .add-chip-btn:hover { color: var(--text); border-color: var(--text-3); background: var(--surface2); }
 
-/* ================================================================
-   Phase Block
-================================================================ */
-.phase-block {
-  margin-bottom: 30px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  background: var(--white);
-}
+  .chips-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; padding: 3px 8px; border-radius: 20px;
+    line-height: 1.5;
+  }
+  .chip-touch { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue-text); }
+  .chip-pain  { background: var(--red-bg);  border: 1px solid var(--red-border);  color: var(--red-text); }
+  .chip-owner { background: var(--amber-bg);border: 1px solid var(--amber-border);color: var(--amber-text); }
 
-.phase-hdr {
-  display: flex; align-items: center; flex-wrap: wrap;
-  padding: 14px 20px; gap: 10px;
-  color: #fff;
-}
-.phase-hdr-title {
-  font-size: 17px; font-weight: 800;
-  letter-spacing: 0.3px;
-}
-.phase-hdr-product {
-  font-size: 12px;
-  background: rgba(255,255,255,0.22);
-  padding: 3px 11px; border-radius: 12px;
-  font-weight: 600;
-}
-.phase-hdr-count {
-  margin-left: auto;
-  font-size: 12px; opacity: 0.7;
-}
+  .chip-text {
+    outline: none; min-width: 20px; max-width: 120px;
+    white-space: nowrap; cursor: text;
+  }
+  .chip-del {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(0,0,0,.1); border: none; cursor: pointer;
+    font-size: 9px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; opacity: 0; transition: opacity var(--transition);
+    line-height: 1;
+  }
+  .chip:hover .chip-del { opacity: 1; }
 
-.phase-nodes {
-  display: flex; flex-wrap: wrap;
-  gap: var(--gap); padding: 18px;
-  background: var(--white);
-}
+  /* ── Add stage button ── */
+  .add-stage-wrap { display: flex; align-items: flex-start; padding-top: 14px; }
+  .add-stage-btn {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--surface);
+    border: 1px dashed var(--border-strong); cursor: pointer;
+    font-size: 18px; color: var(--text-3);
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition); flex-shrink: 0;
+  }
+  .add-stage-btn:hover { border-color: var(--text-3); color: var(--text); background: var(--surface2); }
 
-/* ================================================================
-   Node Card
-================================================================ */
-.node-card {
-  flex: 1 1 360px;
-  max-width: calc(50% - var(--gap)/2);
-  background: #fcfcfd;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  padding: 15px 16px 16px;
-  display: flex; flex-direction: column; gap: 11px;
-  transition: box-shadow 0.18s;
-}
-.node-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 10px; opacity: 0;
+    transition: all .25s ease; pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 860px) {
-  .node-card { max-width: 100%; }
-}
-
-/* Card Header */
-.card-hdr {
-  display: flex; align-items: center; gap: 10px;
-  padding-bottom: 11px;
-  border-bottom: 2px solid var(--border);
-}
-.node-idx {
-  width: 30px; height: 30px; flex-shrink: 0;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800; color: #fff;
-}
-.node-idx-input {
-  width: 30px; height: 30px; flex-shrink: 0;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800; color: #fff;
-  text-align: center;
-  border: none; outline: none;
-  cursor: text;
-}
-.node-name-input {
-  flex: 1;
-  font-size: 15px; font-weight: 700;
-  color: var(--text-dark);
-  border: none; background: transparent;
-  outline: none; padding: 2px 4px;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  transition: border-color 0.15s;
-  width: 0; /* flex will grow */
-}
-.node-name-input:focus { border-bottom-color: var(--accent); }
-
-/* Field Group */
-.fgroup { display: flex; flex-direction: column; gap: 6px; }
-.fgroup-title {
-  font-size: 9.5px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--text-muted);
-}
-.frow { display: flex; gap: 8px; }
-.fitem { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.flabel {
-  font-size: 10px; color: var(--text-muted);
-  font-weight: 600; white-space: nowrap;
-}
-.finput {
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 5px;
-  padding: 5px 8px;
-  font-size: 12px; color: var(--text-dark);
-  background: var(--white);
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  resize: none;
-  line-height: 1.45;
-}
-.finput:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2.5px rgba(57,73,171,0.12);
-}
-textarea.finput { min-height: 54px; resize: vertical; }
-
-/* Risk field — highlight */
-.finput.risk {
-  border-color: #ffb300;
-  background: #fffde7;
-}
-.finput.risk:focus {
-  border-color: #f57f17;
-  box-shadow: 0 0 0 2.5px rgba(245,127,23,0.15);
-}
-
-/* Items grid */
-.items-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-/* ================================================================
-   Empty / Error State
-================================================================ */
-.empty-state {
-  text-align: center;
-  padding: 80px 24px;
-  color: var(--text-muted);
-}
-.empty-state h2 { font-size: 22px; margin-bottom: 10px; color: var(--text-mid); }
-.empty-state p  { font-size: 14px; line-height: 1.7; }
-.empty-state code {
-  display: inline-block;
-  background: #eff0fb;
-  padding: 2px 8px; border-radius: 4px;
-  color: var(--accent); font-weight: 700;
-}
-
-/* ================================================================
-   Add-node button inside phase
-================================================================ */
-.add-node-wrap {
-  padding: 12px 18px 18px;
-  background: var(--white);
-}
-.add-node-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 16px;
-  border: 1.5px dashed #bbb;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px; font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-.add-node-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: #eef0fb;
-}
-
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<!-- Loading overlay -->
-<div id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-text">載入旅程資料中…</div>
+<div class="header">
+  <div class="header-left">
+    <div class="title-wrap">
+      <span class="title-badge">Customer Journey</span>
+    </div>
+    <h1 contenteditable="true" spellcheck="false">客戶旅程地圖</h1>
+    <div class="subtitle" contenteditable="true" spellcheck="false">點擊任何欄位可以直接編輯 · 點擊階段卡片展開細節</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="exportJSON()">匯出 JSON</button>
+    <button class="btn primary" onclick="exportHTML()">儲存 HTML</button>
+  </div>
 </div>
 
-<!-- Top-right save bar -->
-<div id="topbar">
-  <div id="status-msg"></div>
-  <button id="save-btn" onclick="handleSave()">💾 儲存</button>
+<!-- Emotion curve -->
+<div class="emotion-section">
+  <div class="section-label">客戶情緒曲線</div>
+  <div class="emotion-chart">
+    <div class="emotion-svg-wrap">
+      <svg class="emotion-svg" id="emotionSvg" viewBox="0 0 600 56" preserveAspectRatio="none">
+        <polyline id="emotionLine" fill="none" stroke="#2A2927" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <g id="emotionDots"></g>
+      </svg>
+    </div>
+    <div class="stage-names" id="stageNames"></div>
+  </div>
 </div>
 
-<!-- Horizontal timeline -->
-<div id="timeline"></div>
+<!-- Stages -->
+<div class="stages-section">
+  <div class="section-label">旅程階段</div>
+  <div style="display:flex; gap:10px; align-items:flex-start;">
+    <div class="stages-row" id="stagesRow"></div>
+    <div class="add-stage-wrap">
+      <button class="add-stage-btn" title="新增階段" onclick="addStage()">+</button>
+    </div>
+  </div>
+</div>
 
-<!-- Left sidebar -->
-<nav id="sidebar">
-  <div class="sb-title">階段導覽</div>
-  <div id="sb-items"></div>
-</nav>
-
-<!-- Main content -->
-<main id="main"></main>
+<div class="toast" id="toast"></div>
 
 <script>
-/* ================================================================
-   ★ 設定區：請將下方 GAS_URL 替換為您的 Web App URL
-      格式範例：https://script.google.com/macros/s/AKfycb.../exec
-================================================================ */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxh7Pu7QNB7gjMQuykWDZ67olythnuvs9hWch_ikAX1aZC1HO95ljgryhBeF8N02cd7mA/exec';
-/* ============================================================== */
+const STAGE_COLORS = ['#6366F1','#2563EB','#0891B2','#059669','#D97706','#DC2626','#9333EA'];
 
-// 欄位 key（順序對應 A→R 欄）
-const KEYS = [
-  'phase','productCode','nodeIndex','nodeName','customerAction',
-  'ownerMain','ownerMainRole','handoffOwner','handoffRole','handoffNote',
-  'product','item1','item2','item3','item4','item5','risk','notes'
-];
-
-// 階段顏色池（依出現順序自動分配）
-const COLORS = [
-  '#3949AB','#E53935','#00897B','#FB8C00',
-  '#8E24AA','#039BE5','#43A047','#6D4C41',
-  '#00ACC1','#F4511E','#5E35B1','#D81B60'
-];
-
-// ── 狀態 ──────────────────────────────────────────────────────
-let phaseOrder  = [];   // 階段出現順序
-let colorMap    = {};   // { phaseName: colorHex }
-let _nodeSerial = 0;    // 用於卡片唯一 id
-
-// ── 工具函式 ──────────────────────────────────────────────────
-
-const esc = s => String(s ?? '')
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-
-function slugId(phase) {
-  return 'phase-blk-' + phase.replace(/\s+/g,'-').replace(/[^\w\u4e00-\u9fff-]/g,'');
-}
-
-function assignColor(phase) {
-  if (!colorMap[phase]) {
-    const idx = Object.keys(colorMap).length;
-    colorMap[phase] = COLORS[idx % COLORS.length];
-  }
-  return colorMap[phase];
-}
-
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-function groupAndSort(nodes) {
-  const groups = {};
-  const order  = [];
-  nodes.forEach(n => {
-    const p = n.phase?.trim() || '（未分類）';
-    if (!groups[p]) { groups[p] = []; order.push(p); }
-    groups[p].push(n);
-  });
-  order.forEach(p => {
-    groups[p].sort((a,b) => (parseFloat(a.nodeIndex)||0) - (parseFloat(b.nodeIndex)||0));
-  });
-  return { groups, order };
-}
-
-// ── Render：Timeline ──────────────────────────────────────────
-
-function renderTimeline(groups, order) {
-  const el = document.getElementById('timeline');
-  el.innerHTML = '';
-  order.forEach((phase, i) => {
-    if (i > 0) {
-      const arr = document.createElement('span');
-      arr.className = 'tl-arrow'; arr.textContent = '›';
-      el.appendChild(arr);
+let data = {
+  title: '客戶旅程地圖',
+  subtitle: '點擊任何欄位可以直接編輯 · 點擊階段卡片展開細節',
+  stages: [
+    {
+      id: 1, title: '認知', color: '#6366F1',
+      summary: '客戶首次接觸品牌或產品',
+      emotion: 3,
+      touch: ['社群廣告', '口碑推薦', '搜尋引擎'],
+      pain: ['不知品牌存在', '資訊太雜亂'],
+      owner: ['行銷']
+    },
+    {
+      id: 2, title: '考慮評估', color: '#2563EB',
+      summary: '主動搜尋並比較不同解決方案',
+      emotion: 5,
+      touch: ['官網', '比較頁面', '試用申請'],
+      pain: ['競品太多難比較', '看不懂功能差異'],
+      owner: ['行銷', '產品']
+    },
+    {
+      id: 3, title: '購買決策', color: '#0891B2',
+      summary: '與業務接觸，評估合約與報價',
+      emotion: 7,
+      touch: ['Demo 會議', '報價單', '合約'],
+      pain: ['流程太長', '決策者難說服'],
+      owner: ['業務']
+    },
+    {
+      id: 4, title: '導入使用', color: '#059669',
+      summary: '開始使用產品，完成初始設定',
+      emotion: 6,
+      touch: ['Welcome email', '教學文件', 'CS 會議'],
+      pain: ['設定太複雜', '缺乏引導'],
+      owner: ['CS', '產品']
+    },
+    {
+      id: 5, title: '留存擴張', color: '#D97706',
+      summary: '持續使用並探索進階功能',
+      emotion: 8,
+      touch: ['定期回顧', '功能更新', 'NPS 調查'],
+      pain: ['使用率低落', '功能用不到'],
+      owner: ['CS', '業務']
     }
-    const prods = [...new Set((groups[phase]||[]).map(n=>n.productCode).filter(Boolean))];
-    const color = assignColor(phase);
-    const item  = document.createElement('div');
-    item.className = 'tl-item';
-    item.dataset.phase = phase;
-    item.style.cssText =
-      `border-color:${hexToRgba(color,0.5)};` +
-      `background:${hexToRgba(color,0.15)};`;
-    item.innerHTML =
-      `<div class="tl-phase">${esc(phase)}</div>` +
-      (prods.length ? `<div class="tl-product">${esc(prods.join(' / '))}</div>` : '');
-    item.onclick = () => scrollToPhase(phase);
-    el.appendChild(item);
+  ]
+};
+
+function render() {
+  renderStages();
+  renderEmotionCurve();
+}
+
+function renderStages() {
+  const row = document.getElementById('stagesRow');
+  row.innerHTML = '';
+  data.stages.forEach((s, idx) => {
+    const card = document.createElement('div');
+    card.className = 'stage-card';
+    card.id = `stage-${s.id}`;
+
+    card.innerHTML = `
+      <div class="stage-header" onclick="toggleStage(${s.id}, event)">
+        <div class="stage-color-bar" style="background:${s.color}"></div>
+        <div class="stage-top">
+          <span class="stage-num">${String(idx+1).padStart(2,'0')}</span>
+          <input class="stage-title-input" value="${escHtml(s.title)}"
+            onclick="event.stopPropagation()"
+            onchange="updateField(${s.id},'title',this.value)"
+            oninput="updateField(${s.id},'title',this.value)">
+          <span class="stage-chevron">▼</span>
+        </div>
+      </div>
+      <div class="stage-summary" contenteditable="true" spellcheck="false"
+        placeholder="簡短說明此階段..."
+        onclick="event.stopPropagation()"
+        onblur="updateField(${s.id},'summary',this.innerText.trim())"
+      >${escHtml(s.summary)}</div>
+      <div class="stage-detail" id="detail-${s.id}">
+        <div class="detail-inner">
+
+          <div style="margin-bottom:14px;">
+            <div class="detail-group-header">
+              <span class="detail-group-label label-touch">情緒分數</span>
+            </div>
+            <input type="range" min="1" max="10" value="${s.emotion}"
+              style="width:100%;accent-color:${s.color}"
+              oninput="updateField(${s.id},'emotion',+this.value); renderEmotionCurve()">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:2px">
+              <span>負面</span><span style="font-weight:600;color:${s.color}">${s.emotion}</span><span>正面</span>
+            </div>
+          </div>
+
+          ${renderChipGroup(s, 'touch', '觸點', 'touch')}
+          ${renderChipGroup(s, 'pain', '痛點', 'pain')}
+          ${renderChipGroup(s, 'owner', '負責團隊', 'owner')}
+
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+            <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--red-text);border-color:var(--red-border)"
+              onclick="removeStage(${s.id})">刪除此階段</button>
+          </div>
+        </div>
+      </div>
+    `;
+    row.appendChild(card);
   });
 }
 
-// ── Render：Sidebar ───────────────────────────────────────────
+function renderChipGroup(s, key, label, type) {
+  const chips = (s[key]||[]).map(txt => `
+    <span class="chip chip-${type}">
+      <span class="chip-text" contenteditable="true" spellcheck="false"
+        onblur="updateChip(${s.id},'${key}',this)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+      >${escHtml(txt)}</span>
+      <button class="chip-del" onclick="removeChip(${s.id},'${key}',this)">✕</button>
+    </span>
+  `).join('');
+  return `
+    <div class="detail-group">
+      <div class="detail-group-header">
+        <span class="detail-group-label label-${type}">${label}</span>
+        <button class="add-chip-btn" onclick="addChip(${s.id},'${key}','${type}')">+ 新增</button>
+      </div>
+      <div class="chips-wrap" id="chips-${s.id}-${key}">${chips}</div>
+    </div>
+  `;
+}
 
-function renderSidebar(groups, order) {
-  const el = document.getElementById('sb-items');
-  el.innerHTML = '';
-  order.forEach(phase => {
-    const color = assignColor(phase);
-    const item  = document.createElement('div');
-    item.className = 'sb-item';
-    item.id = 'sb-' + slugId(phase);
-    item.dataset.phase = phase;
-    item.innerHTML =
-      `<div class="sb-dot" style="background:${color};"></div>` +
-      `<div class="sb-name">${esc(phase)}</div>` +
-      `<div class="sb-count">${(groups[phase]||[]).length}</div>`;
-    item.onclick = () => scrollToPhase(phase);
-    el.appendChild(item);
+function renderEmotionCurve() {
+  const n = data.stages.length;
+  if (!n) return;
+  const W = 600, H = 56, pad = 30;
+  const xs = data.stages.map((_, i) => pad + i * (W - 2*pad) / Math.max(n-1,1));
+  const ys = data.stages.map(s => H - pad/2 - ((s.emotion-1)/9) * (H - pad));
+
+  const pts = xs.map((x,i) => `${x},${ys[i]}`).join(' ');
+  document.getElementById('emotionLine').setAttribute('points', pts);
+
+  const dotsG = document.getElementById('emotionDots');
+  dotsG.innerHTML = '';
+  data.stages.forEach((s,i) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', xs[i]);
+    c.setAttribute('cy', ys[i]);
+    c.setAttribute('r', '4');
+    c.setAttribute('fill', s.color);
+    c.setAttribute('stroke', '#fff');
+    c.setAttribute('stroke-width', '1.5');
+    dotsG.appendChild(c);
   });
+
+  const namesEl = document.getElementById('stageNames');
+  namesEl.innerHTML = data.stages.map(s =>
+    `<div class="stage-name-cell">${escHtml(s.title)}</div>`
+  ).join('');
 }
 
-// ── Render：Main（Phase Blocks + Node Cards）─────────────────
+function toggleStage(id, e) {
+  const card = document.getElementById(`stage-${id}`);
+  card.classList.toggle('active');
+}
 
-function renderMain(groups, order) {
-  const el = document.getElementById('main');
-  el.innerHTML = '';
+function updateField(id, key, val) {
+  const s = data.stages.find(x => x.id === id);
+  if (s) { s[key] = val; if (key==='title') renderEmotionCurve(); }
+}
 
-  if (!order.length) {
-    el.innerHTML = `
-      <div class="empty-state">
-        <h2>尚無旅程資料</h2>
-        <p>請先確認 <code>GAS_URL</code> 已正確設定，<br>
-           或在 Google Sheets 的「旅程資料」工作表中新增資料後重新整理。</p>
-      </div>`;
-    return;
-  }
+function updateChip(stageId, key, el) {
+  const s = data.stages.find(x => x.id === stageId);
+  if (!s) return;
+  const chips = el.closest('.chips-wrap').querySelectorAll('.chip-text');
+  s[key] = Array.from(chips).map(c => c.innerText.trim()).filter(Boolean);
+}
 
-  order.forEach((phase, pi) => {
-    const color = assignColor(phase);
-    const nodes = groups[phase] || [];
-    const prods = [...new Set(nodes.map(n=>n.productCode).filter(Boolean))];
+function removeChip(stageId, key, btn) {
+  const chip = btn.closest('.chip');
+  const wrap = chip.closest('.chips-wrap');
+  chip.remove();
+  const s = data.stages.find(x => x.id === stageId);
+  if (s) s[key] = Array.from(wrap.querySelectorAll('.chip-text')).map(c=>c.innerText.trim()).filter(Boolean);
+}
 
-    const block = document.createElement('section');
-    block.className = 'phase-block';
-    block.id = slugId(phase);
+function addChip(stageId, key, type) {
+  const s = data.stages.find(x => x.id === stageId);
+  if (!s) return;
+  const wrap = document.getElementById(`chips-${stageId}-${key}`);
+  const newText = '新項目';
+  s[key].push(newText);
+  const span = document.createElement('span');
+  span.className = `chip chip-${type}`;
+  span.innerHTML = `
+    <span class="chip-text" contenteditable="true" spellcheck="false"
+      onblur="updateChip(${stageId},'${key}',this)"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+    >${newText}</span>
+    <button class="chip-del" onclick="removeChip(${stageId},'${key}',this)">✕</button>
+  `;
+  wrap.appendChild(span);
+  setTimeout(() => {
+    const ct = span.querySelector('.chip-text');
+    ct.focus();
+    const range = document.createRange();
+    range.selectNodeContents(ct);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }, 30);
+}
 
-    // ── Phase Header ─────────────────────────────────────────
-    const hdr = document.createElement('div');
-    hdr.className = 'phase-hdr';
-    hdr.style.background = color;
-    hdr.innerHTML =
-      `<div class="phase-hdr-title">${esc(phase)}</div>` +
-      prods.map(p => `<div class="phase-hdr-product">${esc(p)}</div>`).join('') +
-      `<div class="phase-hdr-count">${nodes.length} 個節點</div>`;
-    block.appendChild(hdr);
-
-    // ── Node Cards ────────────────────────────────────────────
-    const nodesWrap = document.createElement('div');
-    nodesWrap.className = 'phase-nodes';
-    nodes.forEach(node => nodesWrap.appendChild(buildNodeCard(node, color)));
-    block.appendChild(nodesWrap);
-
-    // ── Add Node button ───────────────────────────────────────
-    const addWrap = document.createElement('div');
-    addWrap.className = 'add-node-wrap';
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-node-btn';
-    addBtn.innerHTML = `<span>＋</span> 新增節點`;
-    addBtn.onclick = () => addNode(phase, nodesWrap, color);
-    addWrap.appendChild(addBtn);
-    block.appendChild(addWrap);
-
-    el.appendChild(block);
+function addStage() {
+  const id = Date.now();
+  const colorIdx = data.stages.length % STAGE_COLORS.length;
+  data.stages.push({
+    id, title: '新階段', color: STAGE_COLORS[colorIdx],
+    summary: '', emotion: 5,
+    touch: [], pain: [], owner: []
   });
+  render();
+  setTimeout(() => {
+    const card = document.getElementById(`stage-${id}`);
+    if (card) {
+      card.classList.add('active');
+      card.querySelector('.stage-title-input').focus();
+      card.querySelector('.stage-title-input').select();
+      card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+  }, 50);
 }
 
-// ── Build Node Card ───────────────────────────────────────────
-
-function buildNodeCard(node, color) {
-  const id = ++_nodeSerial;
-  const card = document.createElement('div');
-  card.className = 'node-card';
-  card.dataset.cardId = id;
-
-  // 輔助：建立一個 <input> 欄位
-  function inp(key, placeholder='') {
-    const el = document.createElement('input');
-    el.type = 'text';
-    el.className = 'finput' + (key==='risk' ? ' risk' : '');
-    el.dataset.key = key;
-    el.value = node[key] ?? '';
-    el.placeholder = placeholder;
-    return el;
-  }
-  // 輔助：建立一個 <textarea> 欄位
-  function ta(key, rows=2, placeholder='') {
-    const el = document.createElement('textarea');
-    el.className = 'finput' + (key==='risk' ? ' risk' : '');
-    el.dataset.key = key;
-    el.rows = rows;
-    el.value = node[key] ?? '';
-    el.placeholder = placeholder;
-    return el;
-  }
-  // 輔助：包一個 fitem
-  function fitem(label, inputEl) {
-    const wrap = document.createElement('div');
-    wrap.className = 'fitem';
-    const lbl = document.createElement('div');
-    lbl.className = 'flabel'; lbl.textContent = label;
-    wrap.appendChild(lbl); wrap.appendChild(inputEl);
-    return wrap;
-  }
-  // 輔助：frow（橫向）
-  function frow(...items) {
-    const row = document.createElement('div');
-    row.className = 'frow';
-    items.forEach(i => row.appendChild(i));
-    return row;
-  }
-  // 輔助：fgroup
-  function fgroup(title, ...children) {
-    const g = document.createElement('div');
-    g.className = 'fgroup';
-    const t = document.createElement('div');
-    t.className = 'fgroup-title'; t.textContent = title;
-    g.appendChild(t);
-    children.forEach(c => g.appendChild(c));
-    return g;
-  }
-
-  // ── 卡片標頭（節點編號圓圈 + 節點名稱）─────────────────────
-  const hdr = document.createElement('div');
-  hdr.className = 'card-hdr';
-
-  const idxInput = document.createElement('input');
-  idxInput.type = 'text';
-  idxInput.className = 'node-idx-input';
-  idxInput.dataset.key = 'nodeIndex';
-  idxInput.value = node.nodeIndex ?? '';
-  idxInput.title = '節點編號';
-  idxInput.style.background = color;
-
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.className = 'node-name-input';
-  nameInput.dataset.key = 'nodeName';
-  nameInput.value = node.nodeName ?? '';
-  nameInput.placeholder = '節點名稱';
-
-  hdr.appendChild(idxInput); hdr.appendChild(nameInput);
-  card.appendChild(hdr);
-
-  // ── 階段資訊 ────────────────────────────────────────────────
-  card.appendChild(fgroup('階段資訊',
-    frow(
-      fitem('階段名稱',  inp('phase')),
-      fitem('產品代號',  inp('productCode'))
-    )
-  ));
-
-  // ── 客戶行動 ────────────────────────────────────────────────
-  card.appendChild(fgroup('客戶行動',
-    fitem('', ta('customerAction', 2, '描述此節點的客戶行動'))
-  ));
-
-  // ── 負責方 ──────────────────────────────────────────────────
-  card.appendChild(fgroup('負責方',
-    frow(
-      fitem('本節點負責方', inp('ownerMain')),
-      fitem('職稱',         inp('ownerMainRole'))
-    ),
-    frow(
-      fitem('銜接下節點負責方', inp('handoffOwner')),
-      fitem('職稱',             inp('handoffRole'))
-    ),
-    fitem('銜接說明', ta('handoffNote', 2))
-  ));
-
-  // ── 產品 / 工具 ─────────────────────────────────────────────
-  card.appendChild(fgroup('使用產品 / 工具',
-    fitem('', inp('product'))
-  ));
-
-  // ── 導入項目清單 ────────────────────────────────────────────
-  const itemsGrid = document.createElement('div');
-  itemsGrid.className = 'items-grid';
-  ['item1','item2','item3','item4','item5'].forEach((k,i) => {
-    itemsGrid.appendChild(fitem('項目 '+(i+1), inp(k)));
-  });
-  card.appendChild(fgroup('導入項目清單', itemsGrid));
-
-  // ── 備註 ────────────────────────────────────────────────────
-  card.appendChild(fgroup('備註',
-    fitem('風險標示',         inp('risk')),
-    fitem('備註 / 注意事項', ta('notes', 2))
-  ));
-
-  return card;
+function removeStage(id) {
+  if (data.stages.length <= 1) { showToast('至少保留一個階段'); return; }
+  data.stages = data.stages.filter(s => s.id !== id);
+  render();
 }
 
-// ── 新增節點 ──────────────────────────────────────────────────
-
-function addNode(phase, nodesWrap, color) {
-  const newNode = {};
-  KEYS.forEach(k => newNode[k] = '');
-  newNode.phase = phase;
-
-  // 自動產生下一個 nodeIndex
-  const existing = [...nodesWrap.querySelectorAll('[data-key="nodeIndex"]')];
-  const maxIdx = existing.reduce((m,el) => Math.max(m, parseFloat(el.value)||0), 0);
-  newNode.nodeIndex = String(maxIdx + 1);
-
-  const card = buildNodeCard(newNode, color);
-  nodesWrap.appendChild(card);
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  // focus 節點名稱
-  card.querySelector('[data-key="nodeName"]')?.focus();
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ── 收集資料（DOM → JSON）────────────────────────────────────
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-function collectData() {
-  const nodes = [];
-  document.querySelectorAll('.node-card').forEach(card => {
-    const obj = {};
-    card.querySelectorAll('[data-key]').forEach(el => {
-      obj[el.dataset.key] = el.value ?? '';
+function exportJSON() {
+  syncDataFromDOM();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'customer-journey.json'; a.click();
+  showToast('JSON 已匯出');
+}
+
+function exportHTML() {
+  syncDataFromDOM();
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'customer-journey.html'; a.click();
+  showToast('HTML 已儲存');
+}
+
+function syncDataFromDOM() {
+  const h1 = document.querySelector('h1');
+  if (h1) data.title = h1.innerText.trim();
+  const sub = document.querySelector('.subtitle');
+  if (sub) data.subtitle = sub.innerText.trim();
+  data.stages.forEach(s => {
+    const card = document.getElementById(`stage-${s.id}`);
+    if (!card) return;
+    const titleInput = card.querySelector('.stage-title-input');
+    if (titleInput) s.title = titleInput.value;
+    const sumEl = card.querySelector('.stage-summary');
+    if (sumEl) s.summary = sumEl.innerText.trim();
+    ['touch','pain','owner'].forEach(key => {
+      const wrap = document.getElementById(`chips-${s.id}-${key}`);
+      if (wrap) s[key] = Array.from(wrap.querySelectorAll('.chip-text')).map(c=>c.innerText.trim()).filter(Boolean);
     });
-    // 確保所有 KEYS 都存在
-    KEYS.forEach(k => { if (!(k in obj)) obj[k] = ''; });
-    nodes.push(obj);
-  });
-  return nodes;
-}
-
-// ── 儲存 ──────────────────────────────────────────────────────
-
-async function handleSave() {
-  if (GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE') {
-    showStatus('請先設定 GAS_URL！', 'error');
-    return;
-  }
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = '儲存中…';
-
-  const data = collectData();
-
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'save', data })
-    });
-    const json = await res.json();
-    if (json.status !== 'ok') throw new Error(json.message || '儲存失敗');
-    showStatus(`✓ 儲存成功（${data.length} 筆）`, 'success');
-  } catch (err) {
-    showStatus('✗ ' + err.message, 'error');
-  } finally {
-    btn.disabled = false; btn.textContent = '💾 儲存';
-  }
-}
-
-// ── 載入 ──────────────────────────────────────────────────────
-
-async function loadData() {
-  const loadingEl = document.getElementById('loading');
-  const loadingTxt = document.getElementById('loading-text');
-
-  if (GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE') {
-    loadingEl.classList.add('hidden');
-    setTimeout(() => { loadingEl.style.display='none'; }, 350);
-    document.getElementById('main').innerHTML = `
-      <div class="empty-state">
-        <h2>尚未設定 GAS_URL</h2>
-        <p>請開啟此 HTML 檔案，在第一個 <code>&lt;script&gt;</code> 區塊頂部<br>
-           將 <code>GAS_URL</code> 的值替換為您的 Google Apps Script Web App URL。</p>
-        <p style="margin-top:14px;font-size:12px;color:#bbb;">
-          格式：https://script.google.com/macros/s/AKfycb…/exec
-        </p>
-      </div>`;
-    return;
-  }
-
-  try {
-    loadingTxt.textContent = '載入旅程資料中…';
-    const res  = await fetch(GAS_URL + '?action=get', { redirect: 'follow' });
-    const json = await res.json();
-    if (json.status !== 'ok') throw new Error(json.message || '讀取失敗');
-
-    const { groups, order } = groupAndSort(json.data || []);
-    phaseOrder = order;
-
-    renderTimeline(groups, order);
-    renderSidebar(groups, order);
-    renderMain(groups, order);
-    setupScrollSpy(order);
-
-  } catch (err) {
-    document.getElementById('main').innerHTML = `
-      <div class="empty-state">
-        <h2>載入失敗</h2>
-        <p>${esc(err.message)}</p>
-        <p style="margin-top:10px;font-size:12px;">
-          請確認：①&nbsp;GAS_URL 正確 &nbsp;②&nbsp;Web App 已部署為「任何人可存取」
-        </p>
-      </div>`;
-  } finally {
-    loadingEl.classList.add('hidden');
-    setTimeout(() => { loadingEl.style.display='none'; }, 350);
-  }
-}
-
-// ── Scroll to Phase ───────────────────────────────────────────
-
-function scrollToPhase(phase) {
-  const id   = slugId(phase);
-  const el   = document.getElementById(id);
-  if (!el) return;
-  const offset = parseInt(
-    getComputedStyle(document.documentElement).getPropertyValue('--timeline-h')
-  ) || 68;
-  const top = el.getBoundingClientRect().top + window.scrollY - offset - 12;
-  window.scrollTo({ top, behavior: 'smooth' });
-}
-
-// ── Scroll Spy（更新 Sidebar active）─────────────────────────
-
-function setupScrollSpy(order) {
-  if (!order.length || !('IntersectionObserver' in window)) return;
-
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const phase = entry.target.dataset.phase;
-
-      // Sidebar
-      document.querySelectorAll('.sb-item').forEach(el =>
-        el.classList.toggle('active', el.dataset.phase === phase)
-      );
-      // Timeline
-      document.querySelectorAll('.tl-item').forEach(el =>
-        el.classList.toggle('active', el.dataset.phase === phase)
-      );
-    });
-  }, { rootMargin: `-${parseInt(68)+4}px 0px -55% 0px` });
-
-  order.forEach(phase => {
-    const el = document.getElementById(slugId(phase));
-    if (el) { el.dataset.phase = phase; observer.observe(el); }
   });
 }
 
-// ── Status Message ────────────────────────────────────────────
-
-let _statusTimer = null;
-function showStatus(msg, type='success') {
-  const el = document.getElementById('status-msg');
-  el.textContent = msg;
-  el.className = 'show ' + type;
-  clearTimeout(_statusTimer);
-  _statusTimer = setTimeout(() => { el.className = ''; }, 4500);
-}
-
-// ── Init ─────────────────────────────────────────────────────
-
-loadData();
+render();
 </script>
 </body>
 </html>
