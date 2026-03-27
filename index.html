@@ -1,629 +1,369 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOP 階段二 — 管理系統研習與導入</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #F7F5F0;
-    --surface: #FFFFFF;
-    --surface2: #F0EDE6;
-    --border: #E0DAD0;
-    --border2: #C8C0B0;
-    --text-primary: #1A1612;
-    --text-secondary: #6B6258;
-    --text-muted: #A09890;
-    --accent: #2D4A3E;
-    --radius: 10px;
-    --radius-sm: 6px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 客服助理</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Header */
-  .page-header {
-    background: var(--accent);
-    padding: 2.5rem 3rem 2rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .page-header::before {
-    content: '';
-    position: absolute;
-    top: -50px; right: -50px;
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.04);
-    pointer-events: none;
-  }
-  .page-header::after {
-    content: '';
-    position: absolute;
-    bottom: -70px; left: 38%;
-    width: 300px; height: 300px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.03);
-    pointer-events: none;
-  }
-  .header-label {
-    font-size: 11px;
-    letter-spacing: .18em;
-    color: rgba(255,255,255,0.45);
-    text-transform: uppercase;
-    margin-bottom: .5rem;
-  }
-  .header-title {
-    font-family: 'Noto Serif TC', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.25;
-    margin-bottom: .35rem;
-  }
-  .header-sub {
-    font-size: 13px;
-    color: rgba(255,255,255,0.5);
-    font-weight: 300;
-  }
-  .header-meta {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .meta-chip {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 4px 14px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.7);
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-  /* Toolbar */
-  .toolbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: .7rem 3rem;
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    flex-wrap: wrap;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow);
-  }
-  .toolbar-label { font-size: 12px; color: var(--text-muted); }
-  .tb-btn {
-    font-size: 12px;
-    font-family: 'Noto Sans TC', sans-serif;
-    padding: 5px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border2);
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-  }
-  .tb-btn:hover { background: var(--surface2); color: var(--text-primary); }
-  .tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tb-btn.primary:hover { opacity: .85; }
-  .tb-sep { width: 1px; height: 20px; background: var(--border); }
-  .edit-badge {
-    display: none;
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 12px;
-    background: #FFF8E0;
-    border: 1px solid #E8C840;
-    color: #806000;
-  }
-  body.edit-mode .edit-badge { display: inline-block; }
+    .chat-container {
+      width: 100%;
+      max-width: 680px;
+      height: 92vh;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-  /* Main */
-  .main { padding: 2rem 3rem 3rem; }
+    /* Header */
+    .chat-header {
+      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+      color: #fff;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .chat-header .avatar {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .chat-header .info h2 { font-size: 16px; font-weight: 600; }
+    .chat-header .info p  { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .status-dot {
+      width: 8px; height: 8px;
+      background: #69f0ae;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
 
-  /* Legend */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .4rem 1.25rem;
-    margin-bottom: 1.75rem;
-    padding: 1rem 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  .legend-label {
-    width: 100%;
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: .2rem;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text-secondary);
-  }
-  .legend-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 
-  /* Timeline */
-  .timeline-area { overflow-x: auto; padding-bottom: .5rem; }
-  .timeline-inner { min-width: 1080px; }
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      max-width: 80%;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message.user   { align-self: flex-end;  flex-direction: row-reverse; }
+    .message.bot    { align-self: flex-start; }
+    .message.notice { align-self: center; max-width: 90%; }
 
-  /* Axis */
-  .axis-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    position: relative;
-    padding: 0 8px;
-  }
-  .axis-line {
-    position: absolute;
-    top: 17px; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--border2) 10%, var(--border2) 90%, transparent 100%);
-    z-index: 0;
-  }
-  .axis-node {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-  }
-  .axis-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    margin-bottom: 5px;
-    flex-shrink: 0;
-    outline: 2px solid var(--bg);
-  }
-  .axis-tag {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
+    .bubble-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .message.bot  .bubble-avatar { background: #e3f2fd; }
+    .message.user .bubble-avatar { background: #e8f5e9; }
 
-  /* Modules row */
-  .modules-row { display: flex; gap: 8px; align-items: flex-start; }
-  .mod-col { flex: 1; min-width: 0; }
+    .bubble {
+      padding: 11px 16px;
+      border-radius: 18px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .message.bot  .bubble { background: #f1f3f4; color: #202124; border-bottom-left-radius: 4px; }
+    .message.user .bubble { background: #1a73e8; color: #fff;    border-bottom-right-radius: 4px; }
+    .message.notice .bubble {
+      background: #fff3e0; color: #e65100;
+      font-size: 13px; border-radius: 10px; text-align: center;
+    }
 
-  /* Module card */
-  .mod-card {
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    transition: box-shadow .2s;
-  }
-  .mod-card:hover { box-shadow: var(--shadow-md); }
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex; gap: 5px; padding: 12px 16px;
+      background: #f1f3f4; border-radius: 18px; border-bottom-left-radius: 4px;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px;
+      background: #aaa; border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-6px); }
+    }
 
-  .mod-header {
-    padding: 9px 10px 9px 16px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    user-select: none;
-    transition: background .15s;
-    position: relative;
-  }
-  .mod-header:hover { background: var(--surface2); }
-  .mod-accent-bar {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-  }
-  .mod-num {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    padding: 2px 6px;
-    border-radius: 5px;
-    flex-shrink: 0;
-  }
-  .mod-title {
-    font-size: 11.5px;
-    font-weight: 500;
-    color: var(--text-primary);
-    flex: 1;
-    line-height: 1.35;
-  }
-  .mod-count {
-    font-size: 9px;
-    color: var(--text-muted);
-    background: var(--surface2);
-    border-radius: 10px;
-    padding: 1px 6px;
-    flex-shrink: 0;
-  }
-  .mod-chev {
-    font-size: 8px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    transition: transform .22s ease;
-  }
-  .mod-chev.open { transform: rotate(180deg); }
+    /* Input area */
+    .input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #e8eaed;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .input-area textarea {
+      flex: 1;
+      resize: none;
+      border: 1.5px solid #dadce0;
+      border-radius: 24px;
+      padding: 10px 18px;
+      font-size: 14.5px;
+      font-family: inherit;
+      outline: none;
+      max-height: 120px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    .input-area textarea:focus { border-color: #1a73e8; }
+    .input-area textarea::placeholder { color: #9aa0a6; }
+    .input-area textarea:disabled { background: #f5f5f5; }
 
-  /* Sections wrap (horizontal) */
-  .sects-wrap {
-    display: none;
-    border-top: 1px solid var(--border);
-    background: var(--surface2);
-    padding: 8px;
-  }
-  .sects-wrap.open { display: block; }
-  .sects-inner {
-    display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .sects-inner::-webkit-scrollbar { height: 4px; }
-  .sects-inner::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #1a73e8;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover   { background: #1558b0; }
+    .send-btn:active  { transform: scale(0.93); }
+    .send-btn:disabled { background: #dadce0; cursor: not-allowed; }
+    .send-btn svg { fill: #fff; width: 20px; height: 20px; }
 
-  /* Section card */
-  .sect-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    width: 160px;
-    flex-shrink: 0;
-    transition: box-shadow .15s;
-  }
-  .sect-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-  .sect-head {
-    padding: 6px 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 4px;
-    cursor: pointer;
-    user-select: none;
-    transition: background .15s;
-  }
-  .sect-head:hover { background: var(--surface2); }
-  .sect-num {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    margin-top: 1px;
-    min-width: 24px;
-  }
-  .sect-title {
-    font-size: 10.5px;
-    font-weight: 500;
-    color: var(--text-primary);
-    flex: 1;
-    line-height: 1.4;
-  }
-  .sect-chev {
-    font-size: 7px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    margin-top: 2px;
-    transition: transform .2s;
-  }
-  .sect-chev.open { transform: rotate(180deg); }
-
-  .lessons-list {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .28s ease;
-  }
-  .lessons-list.open {
-    max-height: 1000px;
-    border-top: 1px solid var(--border);
-  }
-  .lesson-item {
-    font-size: 10px;
-    color: var(--text-secondary);
-    padding: 3px 8px 3px 13px;
-    line-height: 1.6;
-    border-bottom: 1px solid var(--bg);
-    position: relative;
-    transition: background .1s, color .1s;
-    cursor: default;
-  }
-  .lesson-item::before {
-    content: '';
-    position: absolute;
-    left: 6px; top: 9px;
-    width: 3px; height: 3px;
-    border-radius: 50%;
-    background: var(--text-muted);
-  }
-  .lesson-item:last-child { border-bottom: none; }
-  .lesson-item:hover { background: var(--surface2); color: var(--text-primary); }
-
-  /* Edit mode */
-  body.edit-mode .editable[contenteditable="true"] {
-    border-bottom: 1.5px dashed rgba(45,74,62,.5);
-    border-radius: 2px;
-    cursor: text;
-    background: rgba(45,74,62,.04);
-    outline: none;
-  }
-  body.edit-mode .editable[contenteditable="true"]:focus {
-    background: rgba(45,74,62,.09);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-  @media (max-width: 768px) {
-    .page-header, .toolbar, .main { padding-left: 1.25rem; padding-right: 1.25rem; }
-    .header-title { font-size: 1.5rem; }
-    .timeline-inner { min-width: 720px; }
-  }
-</style>
+    /* Error banner */
+    #error-banner {
+      display: none;
+      background: #fce8e6; color: #c5221f;
+      padding: 10px 20px; font-size: 13px; text-align: center;
+      flex-shrink: 0;
+    }
+  </style>
 </head>
 <body>
 
-<!-- ═══ HEADER ═══ -->
-<header class="page-header">
-  <div class="header-label">Business Owner Program</div>
-  <h1 class="header-title editable">階段二：管理系統研習與導入</h1>
-  <p class="header-sub">BOP 線上班 — 完整課程架構總覽</p>
-  <div class="header-meta">
-    <span class="meta-chip">8 大模組</span>
-    <span class="meta-chip">35 小節</span>
-    <span class="meta-chip">150+ 課程單元</span>
-  </div>
-</header>
-
-<!-- ═══ TOOLBAR ═══ -->
-<div class="toolbar">
-  <span class="toolbar-label">顯示：</span>
-  <button class="tb-btn" onclick="expandAll()">全部展開</button>
-  <button class="tb-btn" onclick="collapseAll()">全部收合</button>
-  <button class="tb-btn" onclick="expandModules()">僅展開模組</button>
-  <div class="tb-sep"></div>
-  <button class="tb-btn primary" id="editBtn" onclick="toggleEdit()">✎ 編輯模式</button>
-  <span class="edit-badge">✎ 編輯中 — 點擊任何文字即可修改</span>
-  <div class="tb-sep"></div>
-  <button class="tb-btn" onclick="saveHTML()">⤓ 儲存 HTML</button>
-</div>
-
-<!-- ═══ MAIN ═══ -->
-<div class="main">
-
-  <!-- Legend -->
-  <div class="legend">
-    <div class="legend-label">模組索引</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#4A3F8C"></span>M1 企業主的角色</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#2D6A4F"></span>M2 戰略基石</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#1A5C8A"></span>M3 組織圖</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#C0440A"></span>M4 溝通系統</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#A06010"></span>M5 日常營運規劃</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#3A7A1A"></span>M6 指標</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#B03060"></span>M7 財務計畫</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#5A5550"></span>M8 戰術計畫</div>
-  </div>
-
-  <!-- Timeline -->
-  <div class="timeline-area">
-    <div class="timeline-inner">
-
-      <!-- Axis -->
-      <div class="axis-row">
-        <div class="axis-line"></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#4A3F8C"></div><span class="axis-tag" style="background:#EDEBF8;color:#4A3F8C">M1</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#2D6A4F"></div><span class="axis-tag" style="background:#E8F4EE;color:#2D6A4F">M2</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#1A5C8A"></div><span class="axis-tag" style="background:#E5F0F8;color:#1A5C8A">M3</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#C0440A"></div><span class="axis-tag" style="background:#FAEEE8;color:#C0440A">M4</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#A06010"></div><span class="axis-tag" style="background:#FBF1E0;color:#A06010">M5</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#3A7A1A"></div><span class="axis-tag" style="background:#EAF4E0;color:#3A7A1A">M6</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#B03060"></div><span class="axis-tag" style="background:#FAEAF0;color:#B03060">M7</span></div>
-        <div class="axis-node"><div class="axis-dot" style="background:#5A5550"></div><span class="axis-tag" style="background:#F0EDE8;color:#5A5550">M8</span></div>
-      </div>
-
-      <!-- Module columns (injected by JS) -->
-      <div class="modules-row" id="modulesRow"></div>
-
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="avatar">🤖</div>
+    <div class="info">
+      <h2>AI 客服助理</h2>
+      <p><span class="status-dot"></span>線上服務中</p>
     </div>
   </div>
+
+  <div id="error-banner"></div>
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <textarea
+      id="user-input"
+      rows="1"
+      placeholder="輸入訊息，按 Enter 傳送（Shift+Enter 換行）"
+      maxlength="2000"
+      disabled
+    ></textarea>
+    <button class="send-btn" id="send-btn" disabled title="傳送">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
 </div>
 
-<!-- ═══ SCRIPT ═══ -->
 <script>
-const MODULES = [
-  {
-    id:'m1', color:'#4A3F8C', bg:'#EDEBF8', num:'M1', title:'企業主的角色',
-    sects:[
-      {num:'1.1', title:'第二階段課程介紹', lessons:['歡迎進入企業主計畫線上班第二階段','課程長度','導入管理系統時的主要瓶頸','第二階段的課程簡介','實際練習：商業模式規劃']},
-      {num:'1.2', title:'領導者的責任', lessons:['課程目標','主管與專家','應付—組織—控制','責任#1：控制讓事情被完成','責任#2：委派','責任#3：撰寫並落實指示','責任#4：訓練下屬','責任#5：計畫','責任#6：協調','責任#7：宣傳公司目標','責任#8：士氣與情緒度','提升自己的勝任能力','常見的錯誤','成功動作','主管的特質','主管的最終有價值產品和統計曲線','夥伴配對演練 & 成果分享']},
-      {num:'1.3', title:'企業主的角色', lessons:['課程目標與計畫','產品的定義','是－做－有','企業主的角色：理念的創建','企業主的角色：策略性行銷','企業主的角色：技術的創造','企業主的角色：組織的建立','企業主的角色：財務與資產','企業主的角色：公司安全','企業主的角色：管理合夥人','企業主觀點的階段','家族企業']}
-    ]
-  },
-  {
-    id:'m2', color:'#2D6A4F', bg:'#E8F4EE', num:'M2', title:'戰略基石',
-    sects:[
-      {num:'2.1', title:'提升動機的工具', lessons:['動機與動機等級表','責任','個人信念','個人收穫','錢','動機、注意力與真實性','想像是動機的基礎','目標制定者的內部公關','如何利用好消息來提高員工參與度','成果分享']},
-      {num:'2.2', title:'行政管理等級表', lessons:['課程目的','如何使用「行政管理等級表」','主要目標與目的','目標與目的相互關係的說明','理想情境','公司歷史所扮演的角色','如何撰寫公司規章','如何舉辦「目標、目的與未來展望」研討會','舉辦「目標與目的」研討會','如何向主要職員介紹企業主計畫','諮詢會議與成果分享']},
-      {num:'2.3', title:'每週職員會議', lessons:['每週職員會議的目標','如何舉辦每週職員會議','每週職員會議的建議與錯誤','「每週職員會議」錄影','「每週職員會議」演練','實施每週職員會議','「每週職員會議」規章','舉辦「第一次每週職員會議」的準備會議','成果分享']}
-    ]
-  },
-  {
-    id:'m3', color:'#1A5C8A', bg:'#E5F0F8', num:'M3', title:'組織圖',
-    sects:[
-      {num:'3.1a', title:'組織圖的理論', lessons:['組織的定義','主要的市場行銷職責','命令線與溝通線','七項主要職責','最終有價值產品與交換','公司的最終有價值產品範例','職員的最終有價值產品','第七部門—主管部門','第一部門—建立部門','第二部門—行銷部門','第三部門—財務部門','第四部門—產品／服務提供部門','第五部門—品質部門','第一部門與第五部門間的差異','第六部門—公共關係部門','統計曲線','組織圖','如何進行客戶訪談','如何創造公司產品的定義']},
-      {num:'3.1b', title:'設計第七部門', lessons:['主管還是職責？','組織圖與營運流程','組織圖的建立','如何進行職責訪談，以建構組織圖','第七部門與其產品','BBP—設計第七部門組織圖']},
-      {num:'3.1c', title:'設計第二與第六部門', lessons:['第二部門的職責與產品','第六部門的職責與產品','如何進行職責訪談，以建構組織圖','設計第二六部門組織圖']},
-      {num:'3.1d', title:'設計第一與第五部門', lessons:['第1課的職責與產品','第2課的職責與產品','第3課的職責與產品','第13課的職責與產品','第14課的職責與產品','第15課的職責與產品','如何進行職責訪談，以建構組織圖','設計第一五部門組織圖']},
-      {num:'3.1e', title:'設計第三與第四部門', lessons:['第7課的職責與產品','第8課的職責與產品','第9課的職責與產品','第四部門的職責與產品','第四部門—牙醫診所','第四部門—電纜安裝公司','第四部門—製造與批發業','如何進行職責訪談，以建構組織圖','設計第三四部門組織圖']},
-      {num:'3.1f', title:'組織圖的導入', lessons:['檢查組織圖的理解程度','組織圖會議','舉辦組織圖會議','將人員派任到組織圖上的面談']},
-      {num:'3.2', title:'主管的職務說明', lessons:['如何撰寫職務說明書','第一部門主管職務說明書','第二部門主管職務說明書','第三部門主管職務說明書','第四部門主管職務說明書','第五部門主管職務說明書','第六部門主管職務說明書','副總的目的','行政副總職務說明','生產副總職務說明','公關副總職務說明','執行長職務說明','如何檢查主管的職務說明書','「如何運用組織圖」規章']},
-      {num:'3.3', title:'主管的職務訓練', lessons:['派任組織圖職位的常見問題','由上而下的順序','重複職責','交叉從屬與跳過','職責衝突','雙重從屬','職責移轉計畫','派任組織圖職位的行動順序','職責移轉整體計畫','諮詢：職責移轉的整體計畫']},
-      {num:'3.4', title:'認可是之身分', lessons:['課程目標','「是之身分」的概念','「認可是之身分」錯誤和正確的做法','奉承和讚賞','摧毀是之身分','職員的錯誤以及如何修正職員','結論','「認可是之身分」演練說明']},
-      {num:'3.5', title:'主管的職務培訓', lessons:['委派職責時的問題','如何委派職責','主管職位資料夾的準備','個人職務說明培訓','如何接手新職位','與未來主管面談','顧問回饋與後續培訓','全體職員的組織圖研討會','如何舉辦組織圖研討會','組織圖研討會演練','舉辦「組織圖研討會」']},
-      {num:'3.6', title:'主管的職責移轉會議', lessons:['職責移轉','職責移轉的準備會議','更新職責移轉計畫','舉辦職責移轉的準備會議','職責移轉的會議','「組織圖上的職責分配」命令','如何舉辦組織圖職員會議','職務說明：維護組織圖','個人職務培訓','檢視職責移轉的進度','專家諮詢']}
-    ]
-  },
-  {
-    id:'m4', color:'#C0440A', bg:'#FAEEE8', num:'M4', title:'溝通系統',
-    sects:[
-      {num:'4.1', title:'溝通線', lessons:['書面溝通系統','錯誤溝通的五個問題','快速流動系統與溝通原則','制式溝通','訊息的五個原則','溝通中心','通訊APP—優點與缺點','如何有效率地運用通訊APP','「書面溝通」規章','「書面溝通」規章的查核問題與解答','實施溝通中心','品格處理的步驟','書面溝通科的建立會議','如何舉辦第三場研討會「書面溝通」','「書面溝通」研討會的準備','舉辦「書面溝通」研討會','結語']},
-      {num:'4.2', title:'工作效率', lessons:['溝通系統中的電子郵件','溝通系統中的三層籃系統','「三層籃系統」的實施計畫','維持高效的工作場所','「三層籃系統」會議','「工作場所檢視」規章','進行工作場所檢視','結語']},
-      {num:'4.3', title:'工作資料夾', lessons:['工作資料夾簡介','為什麼我們需要工作資料夾-1','為什麼我們需要工作資料夾-2','如何使用工作資料夾','第一種：職位資料夾','第二種：職員資料夾','建立工作資料夾的步驟','實施工作資料的步驟','「工作資料夾」規章','「工作資料夾檢視」規章','舉辦第四場研討會「工作資料夾」','工作資料夾科科長職務說明','舉辦「職位資料夾建立會議」','結語']}
-    ]
-  },
-  {
-    id:'m5', color:'#A06010', bg:'#FBF1E0', num:'M5', title:'日常營運規劃',
-    sects:[
-      {num:'5.1', title:'統計曲線簡易版', lessons:['統計曲線簡介','定義統計曲線與生產流程的衡量','定義統計值—統計曲線圖','品格與統計曲線','以統計曲線作為主管的管理工具','如何以統計值衡量最終有價值產品','以積分表為依據的統計值','上下顛倒與百分比的統計曲線，以及錯誤的衡量方式','雙統計曲線','如何讓每一位職員同時運用數條統計曲線','在每位職員工作場所的統計曲線','統計值的目標值與標的','訂定關鍵指標','顧問諮詢：統計曲線']},
-      {num:'5.2', title:'計畫：達成目標的工具', lessons:['如何成為目標導向的人','主導點與影響點','計畫的層級','週計畫表格','優先順序與預估時間','如何核准週計畫','成果分享']},
-      {num:'5.3', title:'協調', lessons:['管理議會與協調議會','協調的五個元素','協調議會','管理議會','協調的層級','協調與主管的責任','協調與規章','主席的角色','會議的準備與舉辦','舉辦會議的建議','「指標、計畫與協調」理論測驗','結語']},
-      {num:'5.4', title:'導入協調會議', lessons:['每週報告','如何替各部門建立每週報告','設計第一部門的指標','設計第二部門的指標','設計第三部門的指標','設計第四部門的指標','設計第五部門的指標','設計第六部門的指標','實施每週報告的第一次會議','設計第七部門的指標','設計副總的指標','顧問諮詢','修改規章與命令','舉辦管理議會','成果分享']}
-    ]
-  },
-  {
-    id:'m6', color:'#3A7A1A', bg:'#EAF4E0', num:'M6', title:'指標',
-    sects:[
-      {num:'6.1', title:'導入企業儀表板', lessons:['企業儀表板','如何使用企業儀表板','如何分析企業儀表板','企業儀表板分析練習','「指標」規章','「指標」規章的查核','指標科科長','建立企業儀表板','如何進行企業儀表板的培訓','結語']},
-      {num:'6.2', title:'協調議會', lessons:['管理議會與協調議會','協調的層級','舉辦會議的建議','議會的種類與時程','顧問諮詢','「協調」規章與相關文件','實施新的規章與時程表','Facebook社團分享與結語']}
-    ]
-  },
-  {
-    id:'m7', color:'#B03060', bg:'#FAEAF0', num:'M7', title:'財務計畫',
-    sects:[
-      {num:'7.1', title:'導入財務計畫的前置工作', lessons:['主管的角色','KRC三角形','帳戶分離系統','如何使用資金分配申請單','CSW與資金分配申請單','儲備金與紅利','規畫與金錢','諮詢議會中的資金分配核准','第一號財務計畫','收支平衡','財務長的角色','用於控制財務計畫的指標','結語']},
-      {num:'7.2', title:'在財務部門實施財務計畫', lessons:['實施財務計畫的準備工作與計畫','階段一：與第三部門主管進行第一次會議','顧問諮詢：釐清導入步驟','與第三部門主管進行第一次會議','階段二：蒐集財務部門現況的相關資料','資料蒐集的問卷','階段三：採購單的協調會議','階段四：與第三部門主管進行第二次會議的準備工作','實施申請單的三種方式','階段五：與第三部門主管進行第二次會議','階段六：財務部門職員的財務計畫訓練','舉辦財務計畫研討會','階段七：財務計畫準備科科長的個人職務說明培訓','階段八：實體的帳戶分離','階段九：財務長助理','結語']},
-      {num:'7.3', title:'財務計畫實戰模擬', lessons:['實戰模擬的進行方式','財務計畫實戰模擬：協調規章','諮詢議會的會議紀錄與範例','週計畫','財務計畫相關文件','諮詢議會主席與第三部門主管','結語']},
-      {num:'7.4', title:'在諮詢議會導入財務計畫', lessons:['實施財務計畫','一般財務計畫規章','主管用財務計畫規章','顧問諮詢：財務計畫','舉辦財務計畫會議的命令','如何舉辦財務計畫會議','舉辦「財務計畫」研討會','結語']}
-    ]
-  },
-  {
-    id:'m8', color:'#5A5550', bg:'#F0EDE8', num:'M8', title:'戰術計畫',
-    sects:[
-      {num:'8.1', title:'生產型戰術計畫', lessons:['課程目標與計畫','三個計畫層級','戰術計畫的兩種類型','戰術計畫的範例','舉辦「生產計畫」研討會','結語']},
-      {num:'8.2', title:'發展型專案', lessons:['季報','季度會議前的準備','舉辦季度報告會議','專案的理想情境','與主管一起為需優先執行的專案創建理想情境','發展型專案','指派主管撰寫發展型專案','管理發展型專案','結語']},
-      {num:'8.3', title:'獎金系統', lessons:['課程目標','動機與獎金系統','交換的類型與薪資','團隊目標值的達成與薪資','以薪資來提升動機的主要要求','獎金系統的各種基準','獎金池與點數','獎金池分配範例','當某人身兼數個職位時','結語']}
-    ]
+  // ============================================================
+  // ▼▼▼ 在這裡填入你的 Google Apps Script 部署網址 ▼▼▼
+  // 部署完成後，從 GAS「部署 > 管理部署作業」複製網址貼到這裡
+  // ============================================================
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
+  // ============================================================
+
+  // ── State ────────────────────────────────────────────────
+  var conversationId = null;
+  var isWaiting      = false;
+
+  // ── DOM refs ─────────────────────────────────────────────
+  var messagesEl  = document.getElementById('messages');
+  var inputEl     = document.getElementById('user-input');
+  var sendBtn     = document.getElementById('send-btn');
+  var errorBanner = document.getElementById('error-banner');
+
+  // ── 初始化：檢查 GAS_URL 是否已設定，並呼叫 GAS 確認設定 ──
+  window.addEventListener('load', function() {
+    if (!GAS_URL || GAS_URL.indexOf('YOUR_DEPLOYMENT_ID') !== -1) {
+      showErrorBanner('⚠️ 尚未設定 GAS_URL，請在 index.html 頂部填入你的 GAS 部署網址。');
+      appendMessage('notice', '⚠️ 請先在 index.html 中填入你的 GAS 部署網址後再使用。');
+      return;
+    }
+    gasRequest({ action: 'check' })
+      .then(function(result) {
+        if (result.ok) {
+          inputEl.disabled = false;
+          sendBtn.disabled = false;
+          appendMessage('bot', '你好！我是 AI 客服助理，有什麼我可以幫你的嗎？😊');
+        } else {
+          showErrorBanner(result.message || '設定異常');
+          appendMessage('notice', result.message || '設定異常，請確認指令碼屬性。');
+        }
+      })
+      .catch(function(err) {
+        showErrorBanner('無法連接到 GAS：' + err.message);
+        appendMessage('notice', '⚠️ 無法連接到 GAS，請確認部署網址是否正確。');
+      });
+  });
+
+  // ── Auto-resize textarea ──────────────────────────────────
+  inputEl.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+
+  // ── Keyboard: Enter 傳送，Shift+Enter 換行 ────────────────
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  sendBtn.addEventListener('click', handleSend);
+
+  // ── Handle Send ───────────────────────────────────────────
+  function handleSend() {
+    var text = inputEl.value.trim();
+    if (!text || isWaiting) return;
+
+    appendMessage('user', text);
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    isWaiting = true;
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+
+    var typingEl = showTyping();
+
+    var params = { action: 'chat', message: text };
+    if (conversationId) params.conversationId = conversationId;
+
+    gasRequest(params)
+      .then(function(result) {
+        removeTyping(typingEl);
+        isWaiting = false;
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+
+        if (result.error) {
+          appendMessage('notice', '⚠️ ' + result.error);
+        } else {
+          if (result.conversationId) conversationId = result.conversationId;
+          appendMessage('bot', result.reply || '（AI 未回覆）');
+        }
+      })
+      .catch(function(err) {
+        removeTyping(typingEl);
+        isWaiting = false;
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        appendMessage('notice', '⚠️ 連線失敗：' + err.message);
+      });
   }
-];
 
-function buildModules() {
-  const row = document.getElementById('modulesRow');
-  MODULES.forEach(m => {
-    const col = document.createElement('div');
-    col.className = 'mod-col';
+  // ── 呼叫 GAS API（GET + query params，避免 CORS preflight）──
+  function gasRequest(params) {
+    var url = GAS_URL + '?' + Object.keys(params)
+      .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+      .join('&');
 
-    const sectsHtml = m.sects.map(s => {
-      const lsHtml = s.lessons.map(l =>
-        `<div class="lesson-item editable">${l}</div>`
-      ).join('');
-      return `<div class="sect-card">
-        <div class="sect-head" onclick="toggleSect(this)">
-          <span class="sect-num">${s.num}</span>
-          <span class="sect-title editable">${s.title}</span>
-          <span class="sect-chev">▾</span>
-        </div>
-        <div class="lessons-list">${lsHtml}</div>
-      </div>`;
-    }).join('');
+    return fetch(url)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      });
+  }
 
-    col.innerHTML = `
-      <div class="mod-card">
-        <div class="mod-header" onclick="toggleMod(this)">
-          <div class="mod-accent-bar" style="background:${m.color}"></div>
-          <span class="mod-num" style="background:${m.bg};color:${m.color}">${m.num}</span>
-          <span class="mod-title editable">${m.title}</span>
-          <span class="mod-count">${m.sects.length}節</span>
-          <span class="mod-chev">▾</span>
-        </div>
-        <div class="sects-wrap">
-          <div class="sects-inner">${sectsHtml}</div>
-        </div>
-      </div>`;
-    row.appendChild(col);
-  });
-}
+  // ── Append Message ────────────────────────────────────────
+  function appendMessage(role, text) {
+    var msgEl = document.createElement('div');
+    msgEl.className = 'message ' + role;
 
-function toggleMod(header) {
-  const wrap = header.nextElementSibling;
-  const chev = header.querySelector('.mod-chev');
-  const isOpen = wrap.classList.toggle('open');
-  chev.classList.toggle('open', isOpen);
-}
+    if (role === 'notice') {
+      msgEl.innerHTML = '<div class="bubble">' + escapeHtml(text) + '</div>';
+    } else {
+      var emoji = role === 'user' ? '🧑' : '🤖';
+      msgEl.innerHTML =
+        '<div class="bubble-avatar">' + emoji + '</div>' +
+        '<div class="bubble">' + escapeHtml(text) + '</div>';
+    }
+    messagesEl.appendChild(msgEl);
+    scrollToBottom();
+  }
 
-function toggleSect(head) {
-  const list = head.nextElementSibling;
-  const chev = head.querySelector('.sect-chev');
-  const isOpen = list.classList.toggle('open');
-  chev.classList.toggle('open', isOpen);
-}
+  // ── Typing Indicator ──────────────────────────────────────
+  function showTyping() {
+    var wrapEl = document.createElement('div');
+    wrapEl.className = 'message bot';
+    wrapEl.innerHTML =
+      '<div class="bubble-avatar">🤖</div>' +
+      '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+    messagesEl.appendChild(wrapEl);
+    scrollToBottom();
+    return wrapEl;
+  }
+  function removeTyping(el) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
 
-function expandAll() {
-  document.querySelectorAll('.sects-wrap').forEach(w => w.classList.add('open'));
-  document.querySelectorAll('.mod-chev').forEach(c => c.classList.add('open'));
-  document.querySelectorAll('.lessons-list').forEach(l => l.classList.add('open'));
-  document.querySelectorAll('.sect-chev').forEach(c => c.classList.add('open'));
-}
-function collapseAll() {
-  document.querySelectorAll('.sects-wrap').forEach(w => w.classList.remove('open'));
-  document.querySelectorAll('.mod-chev').forEach(c => c.classList.remove('open'));
-  document.querySelectorAll('.lessons-list').forEach(l => l.classList.remove('open'));
-  document.querySelectorAll('.sect-chev').forEach(c => c.classList.remove('open'));
-}
-function expandModules() {
-  document.querySelectorAll('.sects-wrap').forEach(w => w.classList.add('open'));
-  document.querySelectorAll('.mod-chev').forEach(c => c.classList.add('open'));
-  document.querySelectorAll('.lessons-list').forEach(l => l.classList.remove('open'));
-  document.querySelectorAll('.sect-chev').forEach(c => c.classList.remove('open'));
-}
-
-let editMode = false;
-function toggleEdit() {
-  editMode = !editMode;
-  document.body.classList.toggle('edit-mode', editMode);
-  const btn = document.getElementById('editBtn');
-  btn.textContent = editMode ? '✓ 完成編輯' : '✎ 編輯模式';
-
-  document.querySelectorAll('.editable').forEach(el => {
-    el.contentEditable = editMode ? 'true' : 'false';
-  });
-  document.querySelector('.header-title').contentEditable = editMode ? 'true' : 'false';
-}
-
-function saveHTML() {
-  const clone = document.documentElement.cloneNode(true);
-  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-  clone.querySelector('body').classList.remove('edit-mode');
-  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'bop_phase2_timeline.html';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-buildModules();
+  function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function showErrorBanner(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.style.display = 'block';
+  }
 </script>
+
 </body>
 </html>
