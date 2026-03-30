@@ -155,6 +155,51 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .api-dot.online  { background: #059669; }
 .api-dot.offline { background: #D97706; }
 .api-dot.error   { background: #E05A38; }
+
+/* ── Inline editing controls ── */
+.phase-add-cell {
+  min-width: 44px; width: 44px; height: 36px; flex-shrink: 0;
+  border: 1px dashed var(--border-strong); border-left: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 300; color: var(--text-3);
+  cursor: pointer; transition: all .15s; border-radius: 0 8px 0 0;
+}
+.phase-add-cell:hover { background: #EEF0FB; color: #6366F1; border-color: #6366F1; }
+
+.lane-divider-row { display: flex; }
+.lane-divider-spacer { width: 88px; flex-shrink: 0; }
+.lane-divider-cell {
+  display: flex; align-items: center; justify-content: center;
+  height: 18px; color: #C4C0B6; font-size: 12px; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+}
+.lane-divider-cell:last-child { border-right: 1px solid var(--border); }
+
+.lane-add-row { display: flex; cursor: pointer; }
+.lane-add-header {
+  width: 88px; flex-shrink: 0; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 300; color: var(--text-3);
+  border: 1px dashed var(--border-strong); border-top: none;
+  border-radius: 0 0 0 8px; background: var(--surface);
+  transition: all .15s;
+}
+.lane-add-row:hover .lane-add-header { background: #EEF0FB; color: #6366F1; border-color: #6366F1; }
+
+.cell-add-btn {
+  opacity: 0; width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px dashed var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px; line-height: 1; font-weight: 300;
+  color: var(--text-3); transition: all .15s; flex-shrink: 0;
+  background: transparent; user-select: none;
+}
+.lane-cell:hover .cell-add-btn { opacity: 1; }
+.cell-add-btn:hover { border-color: #6366F1; color: #6366F1; background: #EEF0FB; }
+
+.lane-row-last .lane-header { border-bottom-width: 1px; border-bottom-left-radius: 8px; }
+.lane-row-last .lane-cell { border-bottom-width: 1px; }
+.lane-row-last .lane-cell:last-child { border-bottom-right-radius: 8px; }
 </style>
 </head>
 <body>
@@ -262,7 +307,7 @@ function NodeCard({ node, lane, selected, onClick }) {
 }
 
 /* ─── LaneCell ─── */
-function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast }) {
+function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast, onAddNode }) {
   const lane      = lanes.find(l => l.id === laneId);
   const cellNodes = nodes.filter(n => n.laneId === laneId && n.phaseId === phaseId);
   const style     = { ...getLaneStyle(lane), width: phase.width, borderRightWidth: isLast ? "1px" : "0" };
@@ -274,12 +319,13 @@ function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, 
           <NodeCard node={node} lane={lane} selected={selectedId===node.id} onClick={onSelect} />
         </React.Fragment>
       ))}
+      <div className="cell-add-btn" title="新增節點" onClick={e=>{e.stopPropagation();onAddNode();}}>＋</div>
     </div>
   );
 }
 
 /* ─── SwimlaneTable ─── */
-function SwimlaneTable({ data, selectedId, onSelect }) {
+function SwimlaneTable({ data, selectedId, onSelect, onAddPhase, onAddLane, onAddNodeInCell }) {
   const { phases, lanes, nodes } = data;
   return (
     <div className="swimlane-wrap">
@@ -289,16 +335,31 @@ function SwimlaneTable({ data, selectedId, onSelect }) {
             {ph.label}
           </div>
         ))}
+        <div className="phase-add-cell" onClick={onAddPhase} title="新增階段">＋</div>
       </div>
-      {lanes.map(lane => (
-        <div className="lane-row" key={lane.id}>
-          <div className="lane-header" style={getHeaderStyle(lane)}>{lane.label}</div>
-          {phases.map((ph, pi) => (
-            <LaneCell key={ph.id} laneId={lane.id} phaseId={ph.id} nodes={nodes} lanes={lanes}
-              phase={ph} selectedId={selectedId} onSelect={onSelect} isLast={pi===phases.length-1} />
-          ))}
-        </div>
+      {lanes.map((lane, li) => (
+        <React.Fragment key={lane.id}>
+          {li > 0 && (
+            <div className="lane-divider-row">
+              <div className="lane-divider-spacer" />
+              {phases.map((ph, pi) => (
+                <div key={ph.id} className="lane-divider-cell" style={{width:ph.width, borderRightWidth: pi===phases.length-1?"1px":"0"}}>↓</div>
+              ))}
+            </div>
+          )}
+          <div className={`lane-row${li===lanes.length-1?" lane-row-last":""}`}>
+            <div className="lane-header" style={getHeaderStyle(lane)}>{lane.label}</div>
+            {phases.map((ph, pi) => (
+              <LaneCell key={ph.id} laneId={lane.id} phaseId={ph.id} nodes={nodes} lanes={lanes}
+                phase={ph} selectedId={selectedId} onSelect={onSelect} isLast={pi===phases.length-1}
+                onAddNode={() => onAddNodeInCell(ph.id, lane.id)} />
+            ))}
+          </div>
+        </React.Fragment>
       ))}
+      <div className="lane-add-row" onClick={onAddLane} title="新增角色">
+        <div className="lane-add-header">＋</div>
+      </div>
     </div>
   );
 }
@@ -553,6 +614,10 @@ function App() {
   // ── 新增節點 ──
   function openAddNode() {
     setModalForm({label:"",sub:"",laneId:data.lanes[0]?.id||"",phaseId:data.phases[0]?.id||"",type:"default"});
+    setModal("node");
+  }
+  function openAddNodeInCell(phaseId, laneId) {
+    setModalForm({label:"",sub:"",laneId,phaseId,type:"default"});
     setModal("node");
   }
   async function confirmAddNode() {
@@ -826,7 +891,8 @@ function App() {
         {/* CANVAS */}
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <div className="canvas-area">
-            <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode} />
+            <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode}
+              onAddPhase={openAddPhase} onAddLane={openAddLane} onAddNodeInCell={openAddNodeInCell} />
           </div>
 
           {/* BOTTOM */}
