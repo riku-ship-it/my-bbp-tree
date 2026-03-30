@@ -36,6 +36,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .btn-sm:hover { background: var(--bg); }
 .btn-primary { background: #1A1916; color: #fff; border-color: #1A1916; }
 .btn-primary:hover { opacity: .85; background: #1A1916; }
+.btn-sm:disabled { opacity: .45; cursor: not-allowed; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: #6366F1; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 
 /* LAYOUT */
@@ -47,14 +48,12 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .sb-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; color: var(--text-3); text-transform: uppercase; margin-bottom: 8px; }
 .sb-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-2); transition: all .12s; margin-bottom: 1px; }
 .sb-item:hover { background: var(--bg); color: var(--text); }
-.sb-item.active { background: var(--bg); color: var(--text); }
 .sb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .legend-box { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin: 0 14px; }
 .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
 .legend-row:last-child { margin-bottom: 0; }
 .legend-chip { width: 22px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 .legend-dash { width: 22px; height: 0; border-top: 2px dashed #94A3B8; flex-shrink: 0; }
-.legend-solid { width: 22px; height: 0; border-top: 2px solid; flex-shrink: 0; }
 
 /* MAIN CANVAS */
 .canvas-area { flex: 1; overflow: auto; padding: 20px; }
@@ -67,7 +66,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .phase-cell:first-child { border-radius: 8px 0 0 0; }
 .phase-cell.variant-positive { background: #F0FDF4; color: #166534; border-color: #BBF7D0; }
 .phase-cell.variant-negative { background: #FFF5F5; color: #9A2E14; border-color: #FECACA; }
-.phase-cell.variant-warning { background: #FFFBEB; color: #78350F; border-color: #FDE68A; }
+.phase-cell.variant-warning  { background: #FFFBEB; color: #78350F; border-color: #FDE68A; }
 
 /* Lane row */
 .lane-row { display: flex; }
@@ -85,7 +84,6 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .node-sub { font-size: 11px; font-weight: 400; margin-top: 3px; opacity: .85; }
 .node-gate { border-radius: 50px !important; min-width: 72px; max-width: 100px; padding: 8px 12px; font-size: 12px; }
 .cell-arrow { color: #C4C0B6; font-size: 16px; user-select: none; flex-shrink: 0; }
-.cell-empty-hint { font-size: 12px; color: var(--text-3); }
 
 /* RIGHT PANEL */
 .right-panel { width: 0; overflow: hidden; background: var(--surface); border-left: 1px solid var(--border); flex-shrink: 0; transition: width .2s; display: flex; flex-direction: column; }
@@ -97,7 +95,6 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .field-group label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: .07em; text-transform: uppercase; display: block; margin-bottom: 5px; }
 .field-group input, .field-group select, .field-group textarea { width: 100%; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border-strong); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
 .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: #6366F1; }
-.field-group textarea { resize: vertical; min-height: 60px; }
 .rp-close { position: absolute; top: 14px; right: 14px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 17px; }
 .rp-actions { display: flex; gap: 6px; margin-top: 6px; }
 .btn-danger { background: #FEF2F2; color: #9A2E14; border: 1px solid #FECACA; border-radius: 7px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; }
@@ -120,7 +117,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .send-btn:hover { opacity: .82; }
 .send-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* MODAL - Add Phase / Lane */
+/* MODAL */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 200; }
 .modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 380px; max-width: 95vw; }
 .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
@@ -128,8 +125,9 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
 /* TOAST */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(16px); background: #1A1916; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .22s; pointer-events: none; white-space: nowrap; z-index: 999; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(16px); background: #1A1916; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .22s; pointer-events: none; white-space: nowrap; z-index: 999; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: #9A2E14; }
 
 /* CHANGELOG */
 .changelog { border-top: 1px solid var(--border); max-height: 0; overflow: hidden; transition: max-height .3s; }
@@ -141,8 +139,22 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .cl-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-3); flex-shrink: 0; margin-top: 1px; }
 .cl-badge { padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
 .badge-edit { background: #EEF0FB; color: #3730A3; }
-.badge-add { background: #E6F7F2; color: #065F46; }
-.badge-del { background: #FEF2F2; color: #9A2E14; }
+.badge-add  { background: #E6F7F2; color: #065F46; }
+.badge-del  { background: #FEF2F2; color: #9A2E14; }
+.badge-ai   { background: #F3F0FF; color: #5B21B6; }
+
+/* LOADING OVERLAY */
+.loading-overlay { position: fixed; inset: 0; background: rgba(247,246,243,.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 300; gap: 12px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: #6366F1; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text-2); font-weight: 500; }
+
+/* API STATUS BADGE */
+.api-status { display: flex; align-items: center; gap: 5px; font-size: 11px; font-family: 'DM Mono', monospace; }
+.api-dot { width: 7px; height: 7px; border-radius: 50%; }
+.api-dot.online  { background: #059669; }
+.api-dot.offline { background: #D97706; }
+.api-dot.error   { background: #E05A38; }
 </style>
 </head>
 <body>
@@ -151,50 +163,73 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 <script type="text/babel">
 const { useState, useRef, useCallback, useEffect } = React;
 
-/* ═══════════════════════════════════════════
-   DEFAULT JSON — everything driven from here
-═══════════════════════════════════════════ */
+// ╔══════════════════════════════════════════════════════════╗
+// ║  ★ 設定區：填入你的 GAS 網址後即可連線後端              ║
+// ╚══════════════════════════════════════════════════════════╝
+const GAS_URL      = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';          // 貼上 GAS 部署網址（空字串 = 離線模式）
+const CURRENT_USER = 'Riku';      // 操作者名稱（會寫入旅程記錄）
+
+/* ─── 預設資料（離線 / 首次載入 fallback） ─── */
 const DEFAULT_DATA = {
   productName: "BBP",
   phases: [
-    { id: "p1", label: "① 課程啟動",    width: 210 },
-    { id: "p2", label: "② 帳號開通",    width: 190 },
-    { id: "p3", label: "③ 試用評估",    width: 220 },
-    { id: "p4a", label: "④ 滿意 → 購買", width: 380, variant: "positive" },
+    { id: "p1",  label: "① 課程啟動",      width: 210 },
+    { id: "p2",  label: "② 帳號開通",      width: 190 },
+    { id: "p3",  label: "③ 試用評估",      width: 220 },
+    { id: "p4a", label: "④ 滿意 → 購買",   width: 380, variant: "positive" },
     { id: "p4b", label: "④ 不滿意 → 反饋", width: 200, variant: "negative" },
-    { id: "p5", label: "⑤ 使用 & 續約", width: 360 }
+    { id: "p5",  label: "⑤ 使用 & 續約",   width: 360 }
   ],
   lanes: [
-    { id: "client", label: "客戶",   color: "#6366F1", bg: "#EEF0FB", border: "#C5CAF0", textColor: "#3730A3" },
+    { id: "client", label: "客戶",    color: "#6366F1", bg: "#EEF0FB", border: "#C5CAF0", textColor: "#3730A3" },
     { id: "d4",     label: "D4 顧問", color: "#059669", bg: "#E6F7F2", border: "#9FD9C5", textColor: "#065F46" },
     { id: "d7",     label: "D7 研發", color: "#E05A38", bg: "#FEF1EE", border: "#F5BBA8", textColor: "#9A2E14" },
     { id: "d2",     label: "D2 業務", color: "#9333EA", bg: "#F6F0FD", border: "#DABFF5", textColor: "#5B1A9A" }
   ],
   nodes: [
-    { id: "n1",  phaseId: "p1",  laneId: "client", label: "報名 BOP",       sub: "開始課程",          type: "default" },
-    { id: "n2",  phaseId: "p1",  laneId: "client", label: "模組三",         sub: "實作 BBP 組織圖",    type: "default" },
-    { id: "n3",  phaseId: "p2",  laneId: "d4",     label: "協助開通帳號",   sub: "引導如何使用",       type: "default" },
-    { id: "n4",  phaseId: "p3",  laneId: "client", label: "開始試用 BBP",   sub: "",                  type: "default" },
-    { id: "n5",  phaseId: "p3",  laneId: "d4",     label: "追蹤詢問",       sub: "BBP 操作滿意度",     type: "default" },
-    { id: "n6",  phaseId: "p3",  laneId: "d4",     label: "滿意？",         sub: "",                  type: "gate"    },
-    { id: "n7",  phaseId: "p4a", laneId: "d4",     label: "了解需求",       sub: "帳號數 & 方案 3/6/12月", type: "default" },
-    { id: "n8",  phaseId: "p4a", laneId: "d4",     label: "回饋需求",       sub: "給 D7 研發",         type: "default" },
-    { id: "n9",  phaseId: "p4a", laneId: "d7",     label: "提供付款連結",   sub: "",                  type: "default" },
-    { id: "n10", phaseId: "p4a", laneId: "d7",     label: "確認付款",       sub: "開通職員帳號",       type: "default" },
-    { id: "n11", phaseId: "p4a", laneId: "client", label: "確認付款",       sub: "",                  type: "default" },
-    { id: "n4b", phaseId: "p4b", laneId: "d4",     label: "反饋提供",       sub: "給 D7 研發",         type: "default" },
-    { id: "n4c", phaseId: "p4b", laneId: "d7",     label: "接收反饋",       sub: "待改善",             type: "default" },
-    { id: "n12", phaseId: "p5",  laneId: "client", label: "正式使用 BBP",   sub: "職員帳號啟用",       type: "success" },
-    { id: "n13", phaseId: "p5",  laneId: "d2",     label: "詢問是否續約",   sub: "購買新方案",         type: "default" },
-    { id: "n14", phaseId: "p5",  laneId: "d2",     label: "續約？",         sub: "",                  type: "gate"    },
-    { id: "n15", phaseId: "p5",  laneId: "d2",     label: "通知 D7 研發",   sub: "",                  type: "default" },
-    { id: "n16", phaseId: "p5",  laneId: "d7",     label: "處理續約",       sub: "提供新付款連結",     type: "default" }
+    { id:"n1",  phaseId:"p1",  laneId:"client", label:"報名 BOP",       sub:"開始課程",              type:"default" },
+    { id:"n2",  phaseId:"p1",  laneId:"client", label:"模組三",          sub:"實作 BBP 組織圖",        type:"default" },
+    { id:"n3",  phaseId:"p2",  laneId:"d4",     label:"協助開通帳號",    sub:"引導如何使用",            type:"default" },
+    { id:"n4",  phaseId:"p3",  laneId:"client", label:"開始試用 BBP",    sub:"",                      type:"default" },
+    { id:"n5",  phaseId:"p3",  laneId:"d4",     label:"追蹤詢問",        sub:"BBP 操作滿意度",          type:"default" },
+    { id:"n6",  phaseId:"p3",  laneId:"d4",     label:"滿意？",          sub:"",                      type:"gate"    },
+    { id:"n7",  phaseId:"p4a", laneId:"d4",     label:"了解需求",        sub:"帳號數 & 方案 3/6/12月",  type:"default" },
+    { id:"n8",  phaseId:"p4a", laneId:"d4",     label:"回饋需求",        sub:"給 D7 研發",              type:"default" },
+    { id:"n9",  phaseId:"p4a", laneId:"d7",     label:"提供付款連結",    sub:"",                      type:"default" },
+    { id:"n10", phaseId:"p4a", laneId:"d7",     label:"確認付款",        sub:"開通職員帳號",            type:"default" },
+    { id:"n11", phaseId:"p4a", laneId:"client", label:"確認付款",        sub:"",                      type:"default" },
+    { id:"n4b", phaseId:"p4b", laneId:"d4",     label:"反饋提供",        sub:"給 D7 研發",              type:"default" },
+    { id:"n4c", phaseId:"p4b", laneId:"d7",     label:"接收反饋",        sub:"待改善",                 type:"default" },
+    { id:"n12", phaseId:"p5",  laneId:"client", label:"正式使用 BBP",    sub:"職員帳號啟用",            type:"success" },
+    { id:"n13", phaseId:"p5",  laneId:"d2",     label:"詢問是否續約",    sub:"購買新方案",              type:"default" },
+    { id:"n14", phaseId:"p5",  laneId:"d2",     label:"續約？",          sub:"",                      type:"gate"    },
+    { id:"n15", phaseId:"p5",  laneId:"d2",     label:"通知 D7 研發",    sub:"",                      type:"default" },
+    { id:"n16", phaseId:"p5",  laneId:"d7",     label:"處理續約",        sub:"提供新付款連結",           type:"default" }
   ]
 };
 
-/* ═══════════════════════════════════════════
-   COLOR HELPERS
-═══════════════════════════════════════════ */
+/* ─── API 呼叫工具 ─── */
+async function gasGet(params) {
+  if (!GAS_URL) throw new Error('GAS_URL 未設定');
+  const url = new URL(GAS_URL);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function gasPost(body) {
+  if (!GAS_URL) throw new Error('GAS_URL 未設定');
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body)
+    // 不設 Content-Type 讓 browser 用 text/plain，避免 CORS preflight
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+/* ─── 顏色工具 ─── */
 function getLaneStyle(lane) {
   return { backgroundColor: lane.bg + "55", borderColor: lane.border };
 }
@@ -203,8 +238,7 @@ function getHeaderStyle(lane) {
 }
 function getNodeStyle(node, lane) {
   if (node.type === "gate") return {
-    backgroundColor: "#FEF3C7", color: "#78350F",
-    borderColor: "#F59E0B", borderRadius: "50px"
+    backgroundColor: "#FEF3C7", color: "#78350F", borderColor: "#F59E0B", borderRadius: "50px"
   };
   if (node.type === "success") return {
     backgroundColor: "#059669", color: "#fff", borderColor: "#047857"
@@ -212,14 +246,12 @@ function getNodeStyle(node, lane) {
   return { backgroundColor: lane.color, color: "#fff", borderColor: lane.color };
 }
 
-/* ═══════════════════════════════════════════
-   NODE CARD
-═══════════════════════════════════════════ */
+/* ─── NodeCard ─── */
 function NodeCard({ node, lane, selected, onClick }) {
   const style = getNodeStyle(node, lane);
   return (
     <div
-      className={`node-card${node.type === "gate" ? " node-gate" : ""}${selected ? " selected" : ""}`}
+      className={`node-card${node.type==="gate"?" node-gate":""}${selected?" selected":""}`}
       style={style}
       onClick={() => onClick(node)}
     >
@@ -229,71 +261,41 @@ function NodeCard({ node, lane, selected, onClick }) {
   );
 }
 
-/* ═══════════════════════════════════════════
-   LANE CELL — renders all nodes for laneId × phaseId
-═══════════════════════════════════════════ */
+/* ─── LaneCell ─── */
 function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast }) {
-  const lane = lanes.find(l => l.id === laneId);
+  const lane      = lanes.find(l => l.id === laneId);
   const cellNodes = nodes.filter(n => n.laneId === laneId && n.phaseId === phaseId);
-  const style = {
-    ...getLaneStyle(lane),
-    width: phase.width,
-    borderRightWidth: isLast ? "1px" : "0"
-  };
+  const style     = { ...getLaneStyle(lane), width: phase.width, borderRightWidth: isLast ? "1px" : "0" };
   return (
     <div className="lane-cell" style={style}>
-      {cellNodes.length === 0 && <span className="cell-empty-hint"></span>}
       {cellNodes.map((node, i) => (
         <React.Fragment key={node.id}>
           {i > 0 && <span className="cell-arrow">→</span>}
-          <NodeCard node={node} lane={lane} selected={selectedId === node.id} onClick={onSelect} />
+          <NodeCard node={node} lane={lane} selected={selectedId===node.id} onClick={onSelect} />
         </React.Fragment>
       ))}
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════
-   SWIMLANE TABLE — pure render from data
-═══════════════════════════════════════════ */
+/* ─── SwimlaneTable ─── */
 function SwimlaneTable({ data, selectedId, onSelect }) {
   const { phases, lanes, nodes } = data;
   return (
     <div className="swimlane-wrap">
-      {/* Phase header row */}
       <div className="phase-row">
-        {phases.map((ph, i) => (
-          <div
-            key={ph.id}
-            className={`phase-cell${ph.variant ? " variant-" + ph.variant : ""}`}
-            style={{ width: ph.width }}
-          >
+        {phases.map(ph => (
+          <div key={ph.id} className={`phase-cell${ph.variant?" variant-"+ph.variant:""}`} style={{width:ph.width}}>
             {ph.label}
           </div>
         ))}
       </div>
-
-      {/* Lane rows */}
-      {lanes.map((lane, li) => (
+      {lanes.map(lane => (
         <div className="lane-row" key={lane.id}>
-          <div
-            className="lane-header"
-            style={getHeaderStyle(lane)}
-          >
-            {lane.label}
-          </div>
+          <div className="lane-header" style={getHeaderStyle(lane)}>{lane.label}</div>
           {phases.map((ph, pi) => (
-            <LaneCell
-              key={ph.id}
-              laneId={lane.id}
-              phaseId={ph.id}
-              nodes={nodes}
-              lanes={lanes}
-              phase={ph}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              isLast={pi === phases.length - 1}
-            />
+            <LaneCell key={ph.id} laneId={lane.id} phaseId={ph.id} nodes={nodes} lanes={lanes}
+              phase={ph} selectedId={selectedId} onSelect={onSelect} isLast={pi===phases.length-1} />
           ))}
         </div>
       ))}
@@ -301,90 +303,74 @@ function SwimlaneTable({ data, selectedId, onSelect }) {
   );
 }
 
-/* ═══════════════════════════════════════════
-   RIGHT PANEL — edit selected node
-═══════════════════════════════════════════ */
-function RightPanel({ node, data, onSave, onDelete, onClose }) {
-  const [form, setForm] = useState({ label: "", sub: "", laneId: "", phaseId: "", type: "default" });
+/* ─── RightPanel ─── */
+function RightPanel({ node, data, onSave, onDelete, onClose, isSaving }) {
+  const [form, setForm] = useState({ label:"", sub:"", laneId:"", phaseId:"", type:"default" });
   useEffect(() => {
-    if (node) setForm({ label: node.label, sub: node.sub || "", laneId: node.laneId, phaseId: node.phaseId, type: node.type || "default" });
+    if (node) setForm({ label:node.label, sub:node.sub||"", laneId:node.laneId, phaseId:node.phaseId, type:node.type||"default" });
   }, [node]);
   if (!node) return null;
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
   return (
     <div className="rp-inner">
       <button className="rp-close" onClick={onClose}>✕</button>
       <div className="rp-title">編輯節點</div>
       <div className="rp-sub">ID: {node.id}</div>
-      <div className="field-group">
-        <label>節點標題</label>
-        <input value={form.label} onChange={e => set("label", e.target.value)} />
-      </div>
-      <div className="field-group">
-        <label>副標題</label>
-        <input value={form.sub} onChange={e => set("sub", e.target.value)} placeholder="（選填）" />
-      </div>
-      <div className="field-group">
-        <label>負責角色（泳道）</label>
-        <select value={form.laneId} onChange={e => set("laneId", e.target.value)}>
-          {data.lanes.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
-        </select>
-      </div>
-      <div className="field-group">
-        <label>所屬階段</label>
-        <select value={form.phaseId} onChange={e => set("phaseId", e.target.value)}>
-          {data.phases.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-        </select>
-      </div>
-      <div className="field-group">
-        <label>節點類型</label>
-        <select value={form.type} onChange={e => set("type", e.target.value)}>
+      <div className="field-group"><label>節點標題</label>
+        <input value={form.label} onChange={e=>set("label",e.target.value)} /></div>
+      <div className="field-group"><label>副標題</label>
+        <input value={form.sub} onChange={e=>set("sub",e.target.value)} placeholder="（選填）" /></div>
+      <div className="field-group"><label>負責角色（泳道）</label>
+        <select value={form.laneId} onChange={e=>set("laneId",e.target.value)}>
+          {data.lanes.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
+      <div className="field-group"><label>所屬階段</label>
+        <select value={form.phaseId} onChange={e=>set("phaseId",e.target.value)}>
+          {data.phases.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+      <div className="field-group"><label>節點類型</label>
+        <select value={form.type} onChange={e=>set("type",e.target.value)}>
           <option value="default">一般節點</option>
           <option value="gate">判斷點（圓角）</option>
           <option value="success">成功節點（綠色）</option>
-        </select>
-      </div>
+        </select></div>
       <div className="rp-actions">
-        <button className="btn-danger" onClick={() => onDelete(node.id)}>刪除</button>
-        <button className="btn-sm btn-primary" style={{flex:1}} onClick={() => onSave(node.id, form)}>儲存變更</button>
+        <button className="btn-danger" disabled={isSaving} onClick={()=>onDelete(node.id)}>刪除</button>
+        <button className="btn-sm btn-primary" style={{flex:1}} disabled={isSaving} onClick={()=>onSave(node.id,form)}>
+          {isSaving?"儲存中…":"儲存變更"}</button>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════
-   MODAL — generic dialog
-═══════════════════════════════════════════ */
-function Modal({ title, sub, children, onClose, onConfirm, confirmLabel = "確認新增" }) {
+/* ─── Modal ─── */
+function Modal({ title, sub, children, onClose, onConfirm, confirmLabel="確認新增", loading=false }) {
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal">
         <div className="modal-title">{title}</div>
         <div className="modal-sub">{sub}</div>
         {children}
         <div className="modal-actions">
-          <button className="btn-sm" onClick={onClose}>取消</button>
-          <button className="btn-sm btn-primary" onClick={onConfirm}>{confirmLabel}</button>
+          <button className="btn-sm" onClick={onClose} disabled={loading}>取消</button>
+          <button className="btn-sm btn-primary" onClick={onConfirm} disabled={loading}>
+            {loading?"處理中…":confirmLabel}</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════
-   CHANGELOG
-═══════════════════════════════════════════ */
+/* ─── Changelog ─── */
 function Changelog({ logs, open }) {
   return (
-    <div className={`changelog${open ? " open" : ""}`}>
+    <div className={`changelog${open?" open":""}`}>
       <div className="changelog-inner">
         <div className="cl-label">變更記錄</div>
-        {logs.length === 0 && <div style={{fontSize:13,color:"var(--text-3)"}}>尚無變更</div>}
-        {logs.map((log, i) => (
+        {logs.length===0 && <div style={{fontSize:13,color:"var(--text-3)"}}>尚無變更</div>}
+        {logs.map((log,i)=>(
           <div className="cl-item" key={i}>
             <span className="cl-time">{log.time}</span>
             <span className={`cl-badge badge-${log.type}`}>{log.typeLabel}</span>
-            <span dangerouslySetInnerHTML={{__html: log.desc}} />
+            <span dangerouslySetInnerHTML={{__html:log.desc}} />
           </div>
         ))}
       </div>
@@ -392,247 +378,399 @@ function Changelog({ logs, open }) {
   );
 }
 
-/* ═══════════════════════════════════════════
-   TOAST HOOK
-═══════════════════════════════════════════ */
+/* ─── Toast Hook ─── */
 function useToast() {
-  const [msg, setMsg] = useState("");
+  const [msg,  setMsg]  = useState("");
   const [show, setShow] = useState(false);
+  const [isErr,setIsErr]= useState(false);
   const timerRef = useRef(null);
-  const toast = useCallback((m) => {
+  const toast = useCallback((m, err=false) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setMsg(m); setShow(true);
-    timerRef.current = setTimeout(() => setShow(false), 2200);
+    setMsg(m); setShow(true); setIsErr(err);
+    timerRef.current = setTimeout(()=>setShow(false), err?3500:2200);
   }, []);
-  return { msg, show, toast };
+  return { msg, show, isErr, toast };
 }
 
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    MAIN APP
-═══════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 function App() {
-  const [data, setData] = useState(() => {
-    try { const s = localStorage.getItem("bbp_data"); return s ? JSON.parse(s) : DEFAULT_DATA; } catch { return DEFAULT_DATA; }
-  });
-  const [selectedId, setSelectedId] = useState(null);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [logOpen, setLogOpen] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [aiInput, setAiInput] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [modal, setModal] = useState(null); // "phase" | "lane" | "node"
-  const [modalForm, setModalForm] = useState({});
-  const { msg: toastMsg, show: toastShow, toast } = useToast();
+  // ── State ──
+  const [data,         setData]         = useState(DEFAULT_DATA);
+  const [products,     setProducts]     = useState(['BBP']);
+  const [activeProduct,setActiveProduct]= useState('BBP');
+  const [apiStatus,    setApiStatus]    = useState(GAS_URL ? 'loading' : 'offline'); // online|offline|error|loading
+  const [pageLoading,  setPageLoading]  = useState(!!GAS_URL);
+  const [isSaving,     setIsSaving]     = useState(false);
+  const [selectedId,   setSelectedId]   = useState(null);
+  const [panelOpen,    setPanelOpen]    = useState(false);
+  const [logOpen,      setLogOpen]      = useState(false);
+  const [logs,         setLogs]         = useState([]);
+  const [aiInput,      setAiInput]      = useState("");
+  const [aiLoading,    setAiLoading]    = useState(false);
+  const [modal,        setModal]        = useState(null);     // "phase"|"lane"|"node"|"product"
+  const [modalForm,    setModalForm]    = useState({});
+  const [modalLoading, setModalLoading] = useState(false);
+  const { msg:toastMsg, show:toastShow, isErr:toastErr, toast } = useToast();
   const textareaRef = useRef(null);
 
-  // Persist
-  useEffect(() => {
-    try { localStorage.setItem("bbp_data", JSON.stringify(data)); } catch {}
-  }, [data]);
-
+  // ── 時間工具 ──
   function now() {
     const d = new Date();
-    return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+    return d.getHours().toString().padStart(2,"0")+":"+d.getMinutes().toString().padStart(2,"0");
   }
-
   function addLog(type, typeLabel, desc) {
-    setLogs(l => [{ time: now(), type, typeLabel, desc }, ...l]);
+    setLogs(l=>[{time:now(),type,typeLabel,desc},...l]);
   }
 
-  function handleSelectNode(node) {
-    setSelectedId(node.id);
-    setPanelOpen(true);
-  }
+  // ── 初始載入 ──
+  useEffect(() => {
+    if (!GAS_URL) return;
+    (async () => {
+      try {
+        // 取產品列表
+        const pRes = await gasGet({ action: 'getProducts' });
+        if (pRes.products) setProducts(pRes.products);
 
-  function handleSaveNode(id, form) {
-    const old = data.nodes.find(n => n.id === id);
-    setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === id ? { ...n, ...form } : n) }));
-    addLog("edit", "修改", `節點「<strong>${form.label}</strong>」已更新（角色: ${data.lanes.find(l=>l.id===form.laneId)?.label}）`);
-    toast("已儲存並更新 JSON");
+        // 載入當前產品資料
+        const dRes = await gasGet({ action: 'getProduct', product: activeProduct });
+        if (dRes.error) {
+          toast('載入失敗：' + dRes.error, true);
+          setApiStatus('error');
+        } else {
+          setData(dRes);
+          setApiStatus('online');
+        }
+      } catch (err) {
+        toast('無法連線到 GAS，已切換為離線模式', true);
+        setApiStatus('error');
+      } finally {
+        setPageLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── 切換產品 ──
+  async function switchProduct(pid) {
+    if (pid === activeProduct) return;
+    setActiveProduct(pid);
     setPanelOpen(false); setSelectedId(null);
+    if (!GAS_URL) { setData({ ...DEFAULT_DATA, productName: pid }); return; }
+    setPageLoading(true);
+    try {
+      const res = await gasGet({ action: 'getProduct', product: pid });
+      if (res.error) { toast('載入失敗：' + res.error, true); }
+      else { setData(res); }
+    } catch(e) { toast('連線錯誤', true); }
+    setPageLoading(false);
   }
 
-  function handleDeleteNode(id) {
-    const node = data.nodes.find(n => n.id === id);
+  // ── 選取節點 ──
+  function handleSelectNode(node) {
+    setSelectedId(node.id); setPanelOpen(true);
+  }
+
+  // ── 儲存節點 ──
+  async function handleSaveNode(id, form) {
+    const old = data.nodes.find(n=>n.id===id);
+    const updated = { ...old, ...form };
+    // 樂觀更新
+    setData(d=>({...d, nodes: d.nodes.map(n=>n.id===id ? updated : n)}));
+    addLog("edit","修改",`節點「<strong>${form.label}</strong>」已更新`);
+    toast("已儲存"); setPanelOpen(false); setSelectedId(null);
+
+    if (!GAS_URL) return;
+    setIsSaving(true);
+    try {
+      const res = await gasPost({ action:'saveNode', product:activeProduct, node:updated, user:CURRENT_USER });
+      if (res.error) toast('同步失敗：' + res.error, true);
+    } catch(e) { toast('同步失敗：' + e.message, true); }
+    setIsSaving(false);
+  }
+
+  // ── 刪除節點 ──
+  async function handleDeleteNode(id) {
+    const node = data.nodes.find(n=>n.id===id);
     if (!node) return;
-    setData(d => ({ ...d, nodes: d.nodes.filter(n => n.id !== id) }));
-    addLog("del", "刪除", `已刪除節點「<strong>${node.label}</strong>」`);
+    setData(d=>({...d, nodes:d.nodes.filter(n=>n.id!==id)}));
+    addLog("del","刪除",`已刪除節點「<strong>${node.label}</strong>」`);
     toast(`已刪除「${node.label}」`);
     setPanelOpen(false); setSelectedId(null);
+
+    if (!GAS_URL) return;
+    try {
+      const res = await gasPost({ action:'deleteNode', product:activeProduct, nodeId:id, user:CURRENT_USER });
+      if (res.error) toast('同步失敗：' + res.error, true);
+    } catch(e) { toast('同步失敗：' + e.message, true); }
   }
 
-  // ADD PHASE
-  function openAddPhase() {
-    setModalForm({ label: "", width: 200, variant: "" });
-    setModal("phase");
-  }
-  function confirmAddPhase() {
-    if (!modalForm.label) { toast("請輸入階段名稱"); return; }
-    const id = "p_" + Date.now();
-    setData(d => ({ ...d, phases: [...d.phases, { id, label: modalForm.label, width: parseInt(modalForm.width)||200, variant: modalForm.variant||undefined }] }));
-    addLog("add", "新增", `新增階段「<strong>${modalForm.label}</strong>」`);
+  // ── 新增階段 ──
+  function openAddPhase() { setModalForm({label:"",width:200,variant:""}); setModal("phase"); }
+  async function confirmAddPhase() {
+    if (!modalForm.label) { toast("請輸入階段名稱",true); return; }
+    setModalLoading(true);
+    const id = 'p_' + Date.now();
+    const newPhase = { id, label:modalForm.label, width:parseInt(modalForm.width)||200 };
+    if (modalForm.variant) newPhase.variant = modalForm.variant;
+    setData(d=>({...d, phases:[...d.phases, newPhase]}));
+    addLog("add","新增",`新增階段「<strong>${modalForm.label}</strong>」`);
     toast(`已新增階段「${modalForm.label}」`);
-    setModal(null);
+
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action:'addStage', product:activeProduct, stage:newPhase, user:CURRENT_USER });
+        if (res.error) toast('同步失敗：' + res.error, true);
+      } catch(e) { toast('同步失敗：' + e.message, true); }
+    }
+    setModalLoading(false); setModal(null);
   }
 
-  // ADD LANE
+  // ── 新增角色 ──
   function openAddLane() {
-    setModalForm({ label: "", color: "#6366F1", bg: "#EEF0FB", border: "#C5CAF0", textColor: "#3730A3" });
+    setModalForm({label:"",color:"#6366F1",bg:"#EEF0FB",border:"#C5CAF0",textColor:"#3730A3"});
     setModal("lane");
   }
-  function confirmAddLane() {
-    if (!modalForm.label) { toast("請輸入角色名稱"); return; }
-    const id = "lane_" + Date.now();
-    setData(d => ({ ...d, lanes: [...d.lanes, { id, label: modalForm.label, color: modalForm.color, bg: modalForm.bg, border: modalForm.border, textColor: modalForm.textColor }] }));
-    addLog("add", "新增", `新增角色泳道「<strong>${modalForm.label}</strong>」`);
+  async function confirmAddLane() {
+    if (!modalForm.label) { toast("請輸入角色名稱",true); return; }
+    setModalLoading(true);
+    const id = 'lane_' + Date.now();
+    const newLane = { id, label:modalForm.label, color:modalForm.color, bg:modalForm.bg,
+                      border:modalForm.border||"#C5CAF0", textColor:modalForm.textColor||"#3730A3" };
+    setData(d=>({...d, lanes:[...d.lanes, newLane]}));
+    addLog("add","新增",`新增角色「<strong>${modalForm.label}</strong>」`);
     toast(`已新增角色「${modalForm.label}」`);
-    setModal(null);
+
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action:'addLane', product:activeProduct, lane:newLane, user:CURRENT_USER });
+        if (res.error) toast('同步失敗：' + res.error, true);
+      } catch(e) { toast('同步失敗：' + e.message, true); }
+    }
+    setModalLoading(false); setModal(null);
   }
 
-  // ADD NODE
+  // ── 新增節點 ──
   function openAddNode() {
-    setModalForm({ label: "", sub: "", laneId: data.lanes[0]?.id || "", phaseId: data.phases[0]?.id || "", type: "default" });
+    setModalForm({label:"",sub:"",laneId:data.lanes[0]?.id||"",phaseId:data.phases[0]?.id||"",type:"default"});
     setModal("node");
   }
-  function confirmAddNode() {
-    if (!modalForm.label) { toast("請輸入節點名稱"); return; }
-    const id = "n_" + Date.now();
-    setData(d => ({ ...d, nodes: [...d.nodes, { id, ...modalForm }] }));
-    addLog("add", "新增", `新增節點「<strong>${modalForm.label}</strong>」`);
+  async function confirmAddNode() {
+    if (!modalForm.label) { toast("請輸入節點名稱",true); return; }
+    setModalLoading(true);
+    const id = 'n_' + Date.now();
+    const newNode = { id, ...modalForm };
+    setData(d=>({...d, nodes:[...d.nodes, newNode]}));
+    addLog("add","新增",`新增節點「<strong>${modalForm.label}</strong>」`);
     toast(`已新增節點「${modalForm.label}」`);
-    setModal(null);
+
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action:'saveNode', product:activeProduct, node:newNode, user:CURRENT_USER });
+        if (res.error) toast('同步失敗：' + res.error, true);
+      } catch(e) { toast('同步失敗：' + e.message, true); }
+    }
+    setModalLoading(false); setModal(null);
   }
 
-  // AI COMMAND — parses natural language and modifies data
+  // ── 新增產品 ──
+  function openAddProduct() { setModalForm({ productName:"" }); setModal("product"); }
+  async function confirmAddProduct() {
+    if (!modalForm.productName) { toast("請輸入產品名稱",true); return; }
+    setModalLoading(true);
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action:'addProduct', productName:modalForm.productName, user:CURRENT_USER });
+        if (res.error) { toast('新增失敗：' + res.error, true); setModalLoading(false); return; }
+        setProducts(p=>[...p, modalForm.productName]);
+        toast(`已新增產品「${modalForm.productName}」`);
+        addLog("add","新增",`新增產品「<strong>${modalForm.productName}</strong>」`);
+      } catch(e) { toast('連線錯誤：' + e.message, true); }
+    } else {
+      setProducts(p=>[...p, modalForm.productName]);
+      toast(`已新增產品「${modalForm.productName}」（離線模式）`);
+    }
+    setModalLoading(false); setModal(null);
+  }
+
+  // ── AI 指令 ──
   async function handleAiSend() {
     const cmd = aiInput.trim();
     if (!cmd || aiLoading) return;
     setAiInput(""); setAiLoading(true);
 
-    // Simulate AI parse (rule-based for demo; replace with Claude API call)
-    await new Promise(r => setTimeout(r, 700));
+    if (GAS_URL) {
+      // ★ 連線模式：透過 GAS 呼叫 MaiAgent
+      try {
+        const res = await gasPost({
+          action: 'aiCommand', product: activeProduct,
+          command: cmd, currentData: data, user: CURRENT_USER
+        });
+        if (res.error) {
+          toast('AI 錯誤：' + res.error, true);
+        } else {
+          if (res.updatedData && !res.updatedData.error) {
+            setData(res.updatedData);
+          }
+          const reply = res.reply || '已處理';
+          const short = reply.length > 60 ? reply.substring(0,57)+'…' : reply;
+          addLog("ai","AI", short.replace(/\{[\s\S]*\}/, '').trim() || '已執行 AI 指令');
+          toast(res.changes && res.changes.length > 0
+            ? `✅ 已執行 ${res.changes.length} 項變更`
+            : (short || '已處理'));
+        }
+      } catch(e) {
+        toast('連線錯誤，改用規則模式', true);
+        handleAiRuleBased(cmd);
+      }
+    } else {
+      // ★ 離線模式：規則式解析
+      await new Promise(r=>setTimeout(r,600));
+      handleAiRuleBased(cmd);
+    }
+    setAiLoading(false);
+  }
 
+  // ── 規則式 AI（離線 fallback）──
+  function handleAiRuleBased(cmd) {
     let handled = false;
 
-    // Pattern: 把「X」的負責人/角色 改成/換成 Y
+    // 換負責人
     const swapRole = cmd.match(/[「"](.+?)[」"]\s*.*?(?:負責人|角色).*?(?:改|換|改成|換成|改為|換為)\s*(.+)/);
     if (swapRole) {
       const nodeLabel = swapRole[1];
-      const newLaneLabel = swapRole[2].trim().replace(/[「」]/g, "");
-      const targetNode = data.nodes.find(n => n.label === nodeLabel);
-      const targetLane = data.lanes.find(l => l.label.includes(newLaneLabel) || newLaneLabel.includes(l.label));
-      if (targetNode && targetLane) {
-        setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === targetNode.id ? { ...n, laneId: targetLane.id } : n) }));
-        addLog("edit", "修改", `將「<strong>${nodeLabel}</strong>」負責人改為 <strong>${targetLane.label}</strong>`);
-        toast(`已更新：「${nodeLabel}」→ ${targetLane.label}`);
-        handled = true;
-      } else {
-        toast(targetNode ? `找不到角色「${newLaneLabel}」` : `找不到節點「${nodeLabel}」`);
-        handled = true;
-      }
+      const newLL     = swapRole[2].trim().replace(/[「」]/g,"");
+      const tNode     = data.nodes.find(n=>n.label===nodeLabel);
+      const tLane     = data.lanes.find(l=>l.label.includes(newLL)||newLL.includes(l.label));
+      if (tNode && tLane) {
+        setData(d=>({...d,nodes:d.nodes.map(n=>n.id===tNode.id?{...n,laneId:tLane.id}:n)}));
+        addLog("edit","修改",`「<strong>${nodeLabel}</strong>」→ ${tLane.label}`);
+        toast(`已更新：「${nodeLabel}」→ ${tLane.label}`);
+      } else { toast(tNode?`找不到角色「${newLL}」`:`找不到節點「${nodeLabel}」`, true); }
+      handled=true;
     }
 
-    // Pattern: 新增節點「X」到 Y × Z
+    // 新增節點
     if (!handled) {
       const addNode = cmd.match(/新增.*?節點.*?[「"](.+?)[」"]/);
       if (addNode) {
-        const label = addNode[1];
-        const laneMatch = data.lanes.find(l => cmd.includes(l.label));
-        const phaseMatch = data.phases.find(p => cmd.includes(p.label.replace(/[①②③④⑤]/g, "").trim()) || cmd.includes(p.id));
-        const id = "n_" + Date.now();
-        setData(d => ({ ...d, nodes: [...d.nodes, { id, label, sub: "", laneId: laneMatch?.id || d.lanes[0].id, phaseId: phaseMatch?.id || d.phases[0].id, type: "default" }] }));
-        addLog("add", "新增", `新增節點「<strong>${label}</strong>」`);
+        const label    = addNode[1];
+        const laneMatch = data.lanes.find(l=>cmd.includes(l.label));
+        const phaseMatch= data.phases.find(p=>cmd.includes(p.label.replace(/[①②③④⑤]/g,"").trim())||cmd.includes(p.id));
+        const id = 'n_'+Date.now();
+        const newNode = { id, label, sub:"", laneId:laneMatch?.id||data.lanes[0].id, phaseId:phaseMatch?.id||data.phases[0].id, type:"default" };
+        setData(d=>({...d,nodes:[...d.nodes,newNode]}));
+        addLog("add","新增",`新增節點「<strong>${label}</strong>」`);
         toast(`已新增節點「${label}」`);
-        handled = true;
+        handled=true;
       }
     }
 
-    // Pattern: 刪除節點「X」
+    // 刪除節點
     if (!handled) {
       const delNode = cmd.match(/刪除.*?[「"](.+?)[」"]/);
       if (delNode) {
         const label = delNode[1];
-        const target = data.nodes.find(n => n.label === label);
+        const target = data.nodes.find(n=>n.label===label);
         if (target) {
-          setData(d => ({ ...d, nodes: d.nodes.filter(n => n.id !== target.id) }));
-          addLog("del", "刪除", `已刪除節點「<strong>${label}</strong>」`);
+          setData(d=>({...d,nodes:d.nodes.filter(n=>n.id!==target.id)}));
+          addLog("del","刪除",`已刪除節點「<strong>${label}</strong>」`);
           toast(`已刪除「${label}」`);
-        } else toast(`找不到節點「${label}」`);
-        handled = true;
+        } else toast(`找不到節點「${label}」`, true);
+        handled=true;
       }
     }
 
-    // Pattern: 新增階段「X」
+    // 新增階段
     if (!handled) {
       const addPhase = cmd.match(/新增.*?階段.*?[「"](.+?)[」"]/);
       if (addPhase) {
         const label = addPhase[1];
-        const id = "p_" + Date.now();
-        setData(d => ({ ...d, phases: [...d.phases, { id, label, width: 200 }] }));
-        addLog("add", "新增", `新增階段「<strong>${label}</strong>」`);
+        const id = 'p_'+Date.now();
+        setData(d=>({...d,phases:[...d.phases,{id,label,width:200}]}));
+        addLog("add","新增",`新增階段「<strong>${label}</strong>」`);
         toast(`已新增階段「${label}」`);
-        handled = true;
+        handled=true;
       }
     }
 
-    // Pattern: 修改「X」標題/名稱為「Y」
+    // 改名
     if (!handled) {
-      const rename = cmd.match(/(?:修改|改|更改)[「"](.+?)[」"].*?(?:標題|名稱|改為|為)[「"](.+?)[」"]/);
+      const rename = cmd.match(/(?:修改|改|更改)[「"](.+?)[」"].*?(?:名稱|改為|為)[「"](.+?)[」"]/);
       if (rename) {
-        const oldLabel = rename[1], newLabel = rename[2];
-        const target = data.nodes.find(n => n.label === oldLabel);
+        const [,oldL,newL] = rename;
+        const target = data.nodes.find(n=>n.label===oldL);
         if (target) {
-          setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === target.id ? { ...n, label: newLabel } : n) }));
-          addLog("edit", "修改", `將節點「<strong>${oldLabel}</strong>」改名為「<strong>${newLabel}</strong>」`);
-          toast(`已更名：${oldLabel} → ${newLabel}`);
-        } else toast(`找不到節點「${oldLabel}」`);
-        handled = true;
+          setData(d=>({...d,nodes:d.nodes.map(n=>n.id===target.id?{...n,label:newL}:n)}));
+          addLog("edit","修改",`「<strong>${oldL}</strong>」→「<strong>${newL}</strong>」`);
+          toast(`已更名：${oldL} → ${newL}`);
+        } else toast(`找不到節點「${oldL}」`, true);
+        handled=true;
       }
     }
 
-    if (!handled) {
-      toast("無法解析指令，請嘗試：「把『節點名』負責人改成 D4 顧問」");
-    }
-
-    setAiLoading(false);
+    if (!handled) toast('無法解析指令，請嘗試：「把「追蹤詢問」負責人改成 D7 研發」', true);
   }
 
   function fillAi(text) { setAiInput(text); textareaRef.current?.focus(); }
 
+  // ── 匯出 JSON ──
   function exportJson() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `${data.productName}_flowmap.json`; a.click();
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href=url; a.download=`${data.productName}_flowmap.json`; a.click();
     URL.revokeObjectURL(url);
     toast("JSON 已匯出");
   }
 
+  // ── 重置 ──
   function resetData() {
-    if (window.confirm("確定要重置回預設資料？")) {
+    if (window.confirm("確定要重置回預設資料（只影響本地顯示）？")) {
       setData(DEFAULT_DATA); setLogs([]); toast("已重置");
     }
   }
 
-  const selectedNode = data.nodes.find(n => n.id === selectedId);
-  const totalLogs = logs.length;
+  const selectedNode = data.nodes.find(n=>n.id===selectedId);
+  const totalLogs    = logs.length;
+
+  // API 狀態顯示
+  const apiStatusLabel = { online:'已連線', offline:'離線模式', error:'連線失敗', loading:'連線中' };
+  const apiStatusDot   = { online:'online', offline:'offline', error:'error', loading:'offline' };
 
   return (
     <>
+      {/* LOADING OVERLAY */}
+      {pageLoading && (
+        <div className="loading-overlay">
+          <div className="spinner" />
+          <div className="loading-text">從 Google 試算表載入資料…</div>
+        </div>
+      )}
+
       {/* TOPBAR */}
       <div className="topbar">
         <div className="topbar-logo">Flow<span>Map</span></div>
         <div className="topbar-sep" />
         <div className="product-tabs">
-          <button className="tab-btn active">{data.productName}</button>
-          <button className="tab-btn">+ 新增產品</button>
+          {products.map(pid => (
+            <button key={pid} className={`tab-btn${pid===activeProduct?" active":""}`} onClick={()=>switchProduct(pid)}>{pid}</button>
+          ))}
+          <button className="tab-btn" onClick={openAddProduct}>+ 新增產品</button>
         </div>
         <div className="topbar-actions">
+          {GAS_URL && (
+            <div className="api-status" title={GAS_URL}>
+              <div className={`api-dot ${apiStatusDot[apiStatus]||'offline'}`} />
+              <span style={{color:"var(--text-3)"}}>{apiStatusLabel[apiStatus]||''}</span>
+            </div>
+          )}
           <button className="btn-sm" onClick={openAddPhase}>+ 新增階段</button>
           <button className="btn-sm" onClick={openAddLane}>+ 新增角色</button>
           <button className="btn-sm" onClick={openAddNode}>+ 新增節點</button>
           <div className="topbar-sep" />
-          <button className="btn-sm" onClick={() => { setLogOpen(v=>!v); }}>
-            變更記錄 {totalLogs > 0 && <span style={{background:"#EEF0FB",color:"#3730A3",padding:"1px 6px",borderRadius:4,fontSize:11,marginLeft:4}}>{totalLogs}</span>}
+          <button className="btn-sm" onClick={()=>setLogOpen(v=>!v)}>
+            變更記錄 {totalLogs>0 && <span style={{background:"#EEF0FB",color:"#3730A3",padding:"1px 6px",borderRadius:4,fontSize:11,marginLeft:4}}>{totalLogs}</span>}
           </button>
           <button className="btn-sm btn-primary" onClick={exportJson}>匯出 JSON</button>
           <div className="avatar">陳</div>
@@ -645,18 +783,18 @@ function App() {
         <div className="sidebar">
           <div className="sb-section">
             <div className="sb-label">產品週期階段</div>
-            {data.phases.map(ph => (
+            {data.phases.map(ph=>(
               <div className="sb-item" key={ph.id}>
-                <span className="sb-dot" style={{background: ph.variant==="positive"?"#059669":ph.variant==="negative"?"#E05A38":"#6366F1"}} />
+                <span className="sb-dot" style={{background:ph.variant==="positive"?"#059669":ph.variant==="negative"?"#E05A38":ph.variant==="warning"?"#D97706":"#6366F1"}} />
                 {ph.label}
               </div>
             ))}
           </div>
           <div className="sb-section">
             <div className="sb-label">角色</div>
-            {data.lanes.map(lane => (
+            {data.lanes.map(lane=>(
               <div className="sb-item" key={lane.id}>
-                <span className="sb-dot" style={{background: lane.color}} />
+                <span className="sb-dot" style={{background:lane.color}} />
                 {lane.label}
               </div>
             ))}
@@ -664,9 +802,9 @@ function App() {
           <div className="sb-section">
             <div className="sb-label">圖例</div>
             <div className="legend-box">
-              {data.lanes.map(lane => (
+              {data.lanes.map(lane=>(
                 <div className="legend-row" key={lane.id}>
-                  <div className="legend-chip" style={{background: lane.color}} />
+                  <div className="legend-chip" style={{background:lane.color}} />
                   {lane.label}
                 </div>
               ))}
@@ -686,21 +824,21 @@ function App() {
         </div>
 
         {/* CANVAS */}
-        <div style={{flex:1, display:"flex", flexDirection:"column", overflow:"hidden"}}>
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <div className="canvas-area">
             <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode} />
           </div>
 
-          {/* BOTTOM: suggestions + AI bar + changelog */}
+          {/* BOTTOM */}
           <div className="bottom-area">
             <Changelog logs={logs} open={logOpen} />
             <div className="suggestions-row">
               <span style={{fontSize:11,color:"var(--text-3)",fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",alignSelf:"center"}}>快速指令</span>
-              <div className="suggestion-chip" onClick={() => fillAi('把「模組三」的負責人改成 D7 研發')}>✏️ 更換負責人</div>
-              <div className="suggestion-chip" onClick={() => fillAi('新增節點「客戶教育訓練」到 D4 顧問')}>＋ 新增節點</div>
-              <div className="suggestion-chip" onClick={() => fillAi('刪除節點「接收反饋」')}>🗑 刪除節點</div>
-              <div className="suggestion-chip" onClick={() => fillAi('新增階段「⑥ 深度整合期」')}>📋 新增階段</div>
-              <div className="suggestion-chip" onClick={() => fillAi('修改「正式使用 BBP」名稱為「持續使用 BBP」')}>🏷 改名稱</div>
+              <div className="suggestion-chip" onClick={()=>fillAi('把「模組三」的負責人改成 D7 研發')}>✏️ 更換負責人</div>
+              <div className="suggestion-chip" onClick={()=>fillAi('新增節點「客戶教育訓練」到 D4 顧問')}>＋ 新增節點</div>
+              <div className="suggestion-chip" onClick={()=>fillAi('刪除節點「接收反饋」')}>🗑 刪除節點</div>
+              <div className="suggestion-chip" onClick={()=>fillAi('新增階段「⑥ 深度整合期」')}>📋 新增階段</div>
+              <div className="suggestion-chip" onClick={()=>fillAi('修改「正式使用 BBP」名稱為「持續使用 BBP」')}>🏷 改名稱</div>
             </div>
             <div className="ai-bar">
               <div className="ai-input-wrap">
@@ -711,111 +849,90 @@ function App() {
                   rows={1}
                   placeholder="白話文輸入修改指令，例如：把「追蹤詢問」的負責人從 D4 顧問換成 D7 研發"
                   value={aiInput}
-                  onChange={e => { setAiInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,88)+"px"; }}
-                  onKeyDown={e => { if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handleAiSend(); } }}
+                  onChange={e=>{setAiInput(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,88)+"px";}}
+                  onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleAiSend();}}}
                 />
                 <span className="ai-hint">Enter ↵</span>
               </div>
-              <button className="send-btn" disabled={aiLoading || !aiInput.trim()} onClick={handleAiSend}>
-                {aiLoading ? "解析中…" : "送出修改"}
+              <button className="send-btn" disabled={aiLoading||!aiInput.trim()} onClick={handleAiSend}>
+                {aiLoading?"解析中…":"送出修改"}
               </button>
             </div>
           </div>
         </div>
 
         {/* RIGHT PANEL */}
-        <div className={`right-panel${panelOpen && selectedNode ? " open" : ""}`}>
+        <div className={`right-panel${panelOpen&&selectedNode?" open":""}`}>
           {panelOpen && selectedNode && (
-            <RightPanel
-              node={selectedNode}
-              data={data}
-              onSave={handleSaveNode}
-              onDelete={handleDeleteNode}
-              onClose={() => { setPanelOpen(false); setSelectedId(null); }}
-            />
+            <RightPanel node={selectedNode} data={data} onSave={handleSaveNode}
+              onDelete={handleDeleteNode} onClose={()=>{setPanelOpen(false);setSelectedId(null);}}
+              isSaving={isSaving} />
           )}
         </div>
       </div>
 
-      {/* MODALS */}
-      {modal === "phase" && (
-        <Modal title="新增產品階段" sub="新階段將加到橫軸最右側" onClose={() => setModal(null)} onConfirm={confirmAddPhase}>
-          <div className="field-group">
-            <label>階段名稱</label>
-            <input placeholder="例：⑥ 深度整合期" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
-          </div>
-          <div className="field-group">
-            <label>欄寬（px）</label>
-            <input type="number" value={modalForm.width||200} onChange={e => setModalForm(f=>({...f,width:e.target.value}))} />
-          </div>
-          <div className="field-group">
-            <label>樣式（選填）</label>
-            <select value={modalForm.variant||""} onChange={e => setModalForm(f=>({...f,variant:e.target.value}))}>
+      {/* ── MODALS ── */}
+      {modal==="phase" && (
+        <Modal title="新增產品階段" sub="新階段將加到橫軸最右側" onClose={()=>setModal(null)} onConfirm={confirmAddPhase} loading={modalLoading}>
+          <div className="field-group"><label>階段名稱</label>
+            <input placeholder="例：⑥ 深度整合期" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
+          <div className="field-group"><label>欄寬（px）</label>
+            <input type="number" value={modalForm.width||200} onChange={e=>setModalForm(f=>({...f,width:e.target.value}))} /></div>
+          <div className="field-group"><label>樣式（選填）</label>
+            <select value={modalForm.variant||""} onChange={e=>setModalForm(f=>({...f,variant:e.target.value}))}>
               <option value="">預設</option>
               <option value="positive">正向（綠色）</option>
               <option value="negative">負向（紅色）</option>
               <option value="warning">警告（黃色）</option>
-            </select>
-          </div>
+            </select></div>
         </Modal>
       )}
-      {modal === "lane" && (
-        <Modal title="新增角色泳道" sub="新角色將加到縱軸最下方" onClose={() => setModal(null)} onConfirm={confirmAddLane}>
-          <div className="field-group">
-            <label>角色名稱</label>
-            <input placeholder="例：D1 行銷" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
-          </div>
-          <div className="field-group">
-            <label>主色（節點顏色）</label>
+
+      {modal==="lane" && (
+        <Modal title="新增角色泳道" sub="新角色將加到縱軸最下方" onClose={()=>setModal(null)} onConfirm={confirmAddLane} loading={modalLoading}>
+          <div className="field-group"><label>角色名稱</label>
+            <input placeholder="例：D1 行銷" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
+          <div className="field-group"><label>主色（節點顏色）</label>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="color" value={modalForm.color||"#6366F1"} onChange={e => setModalForm(f=>({...f,color:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
-              <input value={modalForm.color||"#6366F1"} onChange={e => setModalForm(f=>({...f,color:e.target.value}))} style={{flex:1}} />
-            </div>
-          </div>
-          <div className="field-group">
-            <label>背景色</label>
+              <input type="color" value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{flex:1}} /></div></div>
+          <div className="field-group"><label>背景色</label>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="color" value={modalForm.bg||"#EEF0FB"} onChange={e => setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
-              <input value={modalForm.bg||"#EEF0FB"} onChange={e => setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} />
-            </div>
-          </div>
+              <input type="color" value={modalForm.bg||"#EEF0FB"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.bg||"#EEF0FB"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} /></div></div>
         </Modal>
       )}
-      {modal === "node" && (
-        <Modal title="新增節點" sub="選擇位置後節點會出現在對應格子" onClose={() => setModal(null)} onConfirm={confirmAddNode}>
-          <div className="field-group">
-            <label>節點標題</label>
-            <input placeholder="例：審核文件" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
-          </div>
-          <div className="field-group">
-            <label>副標題（選填）</label>
-            <input placeholder="例：確認資料完整性" value={modalForm.sub||""} onChange={e => setModalForm(f=>({...f,sub:e.target.value}))} />
-          </div>
-          <div className="field-group">
-            <label>負責角色</label>
-            <select value={modalForm.laneId} onChange={e => setModalForm(f=>({...f,laneId:e.target.value}))}>
-              {data.lanes.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
-            </select>
-          </div>
-          <div className="field-group">
-            <label>所屬階段</label>
-            <select value={modalForm.phaseId} onChange={e => setModalForm(f=>({...f,phaseId:e.target.value}))}>
-              {data.phases.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </select>
-          </div>
-          <div className="field-group">
-            <label>節點類型</label>
-            <select value={modalForm.type||"default"} onChange={e => setModalForm(f=>({...f,type:e.target.value}))}>
+
+      {modal==="node" && (
+        <Modal title="新增節點" sub="選擇位置後節點會出現在對應格子" onClose={()=>setModal(null)} onConfirm={confirmAddNode} loading={modalLoading}>
+          <div className="field-group"><label>節點標題</label>
+            <input placeholder="例：審核文件" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
+          <div className="field-group"><label>副標題（選填）</label>
+            <input placeholder="例：確認資料完整性" value={modalForm.sub||""} onChange={e=>setModalForm(f=>({...f,sub:e.target.value}))} /></div>
+          <div className="field-group"><label>負責角色</label>
+            <select value={modalForm.laneId} onChange={e=>setModalForm(f=>({...f,laneId:e.target.value}))}>
+              {data.lanes.map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select></div>
+          <div className="field-group"><label>所屬階段</label>
+            <select value={modalForm.phaseId} onChange={e=>setModalForm(f=>({...f,phaseId:e.target.value}))}>
+              {data.phases.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+          <div className="field-group"><label>節點類型</label>
+            <select value={modalForm.type||"default"} onChange={e=>setModalForm(f=>({...f,type:e.target.value}))}>
               <option value="default">一般節點</option>
               <option value="gate">判斷點（圓角）</option>
               <option value="success">成功節點（綠色）</option>
-            </select>
-          </div>
+            </select></div>
+        </Modal>
+      )}
+
+      {modal==="product" && (
+        <Modal title="新增產品旅程" sub="將複製 BBP 的階段和角色結構作為範本" onClose={()=>setModal(null)} onConfirm={confirmAddProduct} confirmLabel="確認新增" loading={modalLoading}>
+          <div className="field-group"><label>產品名稱</label>
+            <input placeholder="例：CRM系統" value={modalForm.productName||""} onChange={e=>setModalForm(f=>({...f,productName:e.target.value}))} /></div>
         </Modal>
       )}
 
       {/* TOAST */}
-      <div className={`toast${toastShow ? " show" : ""}`}>{toastMsg}</div>
+      <div className={`toast${toastShow?" show":""}${toastErr?" error":""}`}>{toastMsg}</div>
     </>
   );
 }
@@ -824,4 +941,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
-bbp_swimlane_react.html
