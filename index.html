@@ -1,1350 +1,827 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlowMap</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BBP FlowMap</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F6F3;
+  --surface: #FFFFFF;
+  --border: #E2DFD8;
+  --border-strong: #C4C0B6;
+  --text: #1A1916;
+  --text-2: #6B6860;
+  --text-3: #9B9890;
+  --radius: 10px;
+}
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    :root {
-      --blue:   #1a73e8;
-      --blue2:  #0d47a1;
-      --blue-l: #e8f0fe;
-      --gray:   #f8f9fa;
-      --border: #e0e0e0;
-      --text:   #202124;
-      --muted:  #666;
-      --radius: 8px;
-      --shadow: 0 1px 6px rgba(0,0,0,0.1);
-    }
+/* TOPBAR */
+.topbar { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-weight: 600; font-size: 15px; color: var(--text); }
+.topbar-logo span { color: #6366F1; }
+.topbar-sep { width: 1px; height: 20px; background: var(--border); }
+.product-tabs { display: flex; gap: 2px; }
+.tab-btn { padding: 5px 13px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--text-2); font-family: 'Noto Sans TC', sans-serif; transition: all .15s; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: #1A1916; color: #fff; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn-sm { padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; color: var(--text); transition: background .12s; }
+.btn-sm:hover { background: var(--bg); }
+.btn-primary { background: #1A1916; color: #fff; border-color: #1A1916; }
+.btn-primary:hover { opacity: .85; background: #1A1916; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #6366F1; color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 
-    html, body {
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      background: #f0f2f5;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
+/* LAYOUT */
+.app-body { display: flex; height: calc(100vh - 52px); }
 
-    /* ── TOP BAR ─────────────────────────────────────── */
-    .top-bar {
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
-      color: #fff;
-      padding: 0 20px;
-      height: 52px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      z-index: 50;
-    }
-    .logo {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: #fff;
-      white-space: nowrap;
-    }
-    .logo span { color: #69f0ae; }
+/* SIDEBAR */
+.sidebar { width: 210px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 20px; }
+.sb-section { padding: 0 14px; }
+.sb-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; color: var(--text-3); text-transform: uppercase; margin-bottom: 8px; }
+.sb-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-2); transition: all .12s; margin-bottom: 1px; }
+.sb-item:hover { background: var(--bg); color: var(--text); }
+.sb-item.active { background: var(--bg); color: var(--text); }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-box { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin: 0 14px; }
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
+.legend-row:last-child { margin-bottom: 0; }
+.legend-chip { width: 22px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.legend-dash { width: 22px; height: 0; border-top: 2px dashed #94A3B8; flex-shrink: 0; }
+.legend-solid { width: 22px; height: 0; border-top: 2px solid; flex-shrink: 0; }
 
-    /* 產品切換器 */
-    .product-tabs {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex: 1;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .product-tabs::-webkit-scrollbar { display: none; }
-    .prod-tab {
-      padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      background: rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.85);
-      border: none;
-      transition: background 0.15s, color 0.15s;
-    }
-    .prod-tab:hover   { background: rgba(255,255,255,0.25); color: #fff; }
-    .prod-tab.active  { background: #fff; color: var(--blue); }
-    .prod-tab.add-tab {
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.7);
-      border: 1.5px dashed rgba(255,255,255,0.4);
-    }
-    .prod-tab.add-tab:hover { background: rgba(255,255,255,0.2); color: #fff; }
+/* MAIN CANVAS */
+.canvas-area { flex: 1; overflow: auto; padding: 20px; }
+.swimlane-wrap { display: inline-block; min-width: 100%; }
 
-    /* 右側工具列 */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .tb-btn {
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1.5px solid rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .tb-btn:hover { background: rgba(255,255,255,0.25); }
-    .tb-btn.primary {
-      background: #fff;
-      color: var(--blue);
-      border-color: transparent;
-      font-weight: 600;
-    }
-    .tb-btn.primary:hover { background: #e8f0fe; }
+/* Phase header */
+.phase-row { display: flex; margin-left: 88px; }
+.phase-cell { border: 1px solid var(--border); border-right: none; background: var(--surface); display: flex; align-items: center; justify-content: center; height: 36px; font-size: 12px; font-weight: 600; color: var(--text-2); padding: 0 10px; white-space: nowrap; flex-shrink: 0; }
+.phase-cell:last-child { border-right: 1px solid var(--border); border-radius: 0 8px 0 0; }
+.phase-cell:first-child { border-radius: 8px 0 0 0; }
+.phase-cell.variant-positive { background: #F0FDF4; color: #166534; border-color: #BBF7D0; }
+.phase-cell.variant-negative { background: #FFF5F5; color: #9A2E14; border-color: #FECACA; }
+.phase-cell.variant-warning { background: #FFFBEB; color: #78350F; border-color: #FDE68A; }
 
-    /* 狀態點 */
-    .status-dot {
-      width: 7px; height: 7px;
-      background: #69f0ae;
-      border-radius: 50%;
-      display: inline-block;
-      animation: pulse 2s infinite;
-      flex-shrink: 0;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+/* Lane row */
+.lane-row { display: flex; }
+.lane-header { width: 88px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-top: none; border-right: none; padding: 10px 6px; text-align: center; line-height: 1.3; }
+.lane-cell { border: 1px solid; border-top: none; border-right: none; min-height: 120px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 12px 14px; position: relative; flex-shrink: 0; }
+.lane-cell:last-child { border-right-width: 1px; }
+.lane-row:last-child .lane-header { border-bottom-width: 1px; border-bottom-left-radius: 8px; }
+.lane-row:last-child .lane-cell:last-child { border-bottom-right-radius: 8px; }
+.lane-row:last-child .lane-cell { border-bottom-width: 1px; }
 
-    /* ── MAIN CANVAS ──────────────────────────────────── */
-    .main {
-      flex: 1;
-      overflow: auto;
-      position: relative;
-    }
-    #bbp-swimlane {
-      padding: 20px 24px 80px;
-      min-width: max-content;
-    }
+/* NODE */
+.node-card { border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .12s, box-shadow .12s; text-align: center; min-width: 90px; max-width: 160px; line-height: 1.3; border: 1.5px solid transparent; position: relative; }
+.node-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.13); }
+.node-card.selected { outline: 2px solid #1A1916; outline-offset: 2px; }
+.node-sub { font-size: 11px; font-weight: 400; margin-top: 3px; opacity: .85; }
+.node-gate { border-radius: 50px !important; min-width: 72px; max-width: 100px; padding: 8px 12px; font-size: 12px; }
+.cell-arrow { color: #C4C0B6; font-size: 16px; user-select: none; flex-shrink: 0; }
+.cell-empty-hint { font-size: 12px; color: var(--text-3); }
 
-    /* ── SWIMLANE TABLE ───────────────────────────────── */
-    .sw-table {
-      border-collapse: collapse;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      border: 1.5px solid #ccc;
-    }
+/* RIGHT PANEL */
+.right-panel { width: 0; overflow: hidden; background: var(--surface); border-left: 1px solid var(--border); flex-shrink: 0; transition: width .2s; display: flex; flex-direction: column; }
+.right-panel.open { width: 250px; overflow-y: auto; }
+.rp-inner { width: 250px; padding: 18px 16px; position: relative; }
+.rp-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.rp-sub { font-size: 12px; color: var(--text-2); margin-bottom: 18px; }
+.field-group { margin-bottom: 13px; }
+.field-group label { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: .07em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.field-group input, .field-group select, .field-group textarea { width: 100%; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border-strong); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: #6366F1; }
+.field-group textarea { resize: vertical; min-height: 60px; }
+.rp-close { position: absolute; top: 14px; right: 14px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 17px; }
+.rp-actions { display: flex; gap: 6px; margin-top: 6px; }
+.btn-danger { background: #FEF2F2; color: #9A2E14; border: 1px solid #FECACA; border-radius: 7px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; }
+.btn-danger:hover { background: #FEE2E2; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
 
-    /* Phase header */
-    .sw-table thead th {
-      background: var(--blue);
-      color: #fff;
-      font-weight: 700;
-      font-size: 12px;
-      padding: 10px 16px;
-      text-align: center;
-      border-right: 1px solid rgba(255,255,255,0.2);
-      white-space: nowrap;
-      position: relative;
-    }
-    .sw-table thead th.corner {
-      background: var(--blue2);
-      min-width: 88px;
-    }
-    /* Phase header actions (on hover) */
-    .ph-actions {
-      display: none;
-      position: absolute;
-      top: 4px; right: 4px;
-      gap: 2px;
-    }
-    .sw-table thead th:not(.corner):hover .ph-actions { display: flex; }
-    .ph-del-btn {
-      width: 18px; height: 18px;
-      border-radius: 3px;
-      border: none;
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      font-size: 10px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .ph-del-btn:hover { background: rgba(220,50,50,0.6); }
+/* BOTTOM AREA */
+.bottom-area { background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+.suggestions-row { padding: 10px 20px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.suggestion-chip { display: flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 12px; color: var(--text-2); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.suggestion-chip:hover { background: var(--bg); color: var(--text); }
+.ai-bar { display: flex; gap: 10px; padding: 10px 20px 14px; align-items: flex-end; }
+.ai-input-wrap { flex: 1; background: var(--bg); border: 1.5px solid var(--border-strong); border-radius: 12px; padding: 9px 13px; display: flex; align-items: center; gap: 10px; transition: border-color .15s; }
+.ai-input-wrap:focus-within { border-color: #6366F1; }
+.ai-badge { width: 22px; height: 22px; border-radius: 6px; background: #6366F1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.ai-textarea { flex: 1; border: none; background: transparent; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--text); outline: none; resize: none; min-height: 22px; max-height: 88px; line-height: 1.5; }
+.ai-textarea::placeholder { color: var(--text-3); }
+.ai-hint { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+.send-btn { height: 44px; padding: 0 20px; border-radius: 10px; border: none; background: #1A1916; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; transition: opacity .15s; }
+.send-btn:hover { opacity: .82; }
+.send-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* Lane rows */
-    .sw-table tbody tr td {
-      vertical-align: top;
-      border: 1px solid var(--border);
-      padding: 6px;
-    }
-    .lane-label {
-      font-weight: 700;
-      font-size: 12px;
-      text-align: center;
-      white-space: nowrap;
-      padding: 12px 10px !important;
-      border-right: 2px solid #ccc !important;
-      vertical-align: middle !important;
-      position: relative;
-      min-width: 80px;
-    }
-    /* Lane header actions */
-    .lane-actions {
-      display: none;
-      position: absolute;
-      top: 4px; right: 2px;
-    }
-    .lane-label:hover .lane-actions { display: flex; }
-    .lane-del-btn {
-      width: 16px; height: 16px;
-      border-radius: 3px; border: none;
-      background: rgba(200,50,50,0.12);
-      color: #c5221f; font-size: 10px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .lane-del-btn:hover { background: #fce8e6; }
+/* MODAL - Add Phase / Lane */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 380px; max-width: 95vw; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
-    /* Cell */
-    .sw-cell {
-      min-width: 160px;
-      min-height: 80px;
-      transition: background 0.15s;
-    }
-    .sw-cell.drag-over {
-      background: rgba(26,115,232,0.08) !important;
-      outline: 2px dashed var(--blue);
-      outline-offset: -2px;
-      border-radius: 6px;
-    }
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(16px); background: #1A1916; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .22s; pointer-events: none; white-space: nowrap; z-index: 999; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── NODE CARD ─────────────────────────────────────── */
-    .bbp-node {
-      background: #fff;
-      border: 2px solid var(--blue);
-      border-radius: var(--radius);
-      padding: 7px 10px;
-      margin: 4px;
-      cursor: grab;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s;
-      position: relative;
-      user-select: none;
-    }
-    .bbp-node:hover {
-      box-shadow: 0 3px 10px rgba(26,115,232,0.22);
-      transform: translateY(-1px);
-    }
-    .bbp-node.dragging {
-      opacity: 0.4;
-      cursor: grabbing;
-    }
-    .bbp-node.decision {
-      border-radius: 0;
-      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-      padding: 16px 20px;
-      text-align: center;
-    }
-    .node-label { font-weight: 600; font-size: 12px; color: var(--text); margin-bottom: 2px; }
-    .node-sub   { font-size: 11px; color: var(--muted); line-height: 1.4; }
-
-    /* Node actions (show on hover) */
-    .node-actions {
-      display: none;
-      position: absolute;
-      top: 4px; right: 4px;
-      gap: 3px;
-    }
-    .bbp-node:hover .node-actions { display: flex; }
-    .node-btn {
-      width: 20px; height: 20px;
-      border: none; border-radius: 4px;
-      cursor: pointer; font-size: 11px;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--blue-l); color: var(--blue);
-      transition: background 0.12s;
-    }
-    .node-btn.del { background: #fce8e6; color: #c5221f; }
-    .node-btn:hover { filter: brightness(0.9); }
-
-    /* Add node button */
-    .add-node-btn {
-      width: calc(100% - 8px);
-      margin: 4px;
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      background: none;
-      color: #bbb;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 8px;
-      transition: border-color 0.15s, color 0.15s;
-      display: block;
-    }
-    .add-node-btn:hover { border-color: var(--blue); color: var(--blue); }
-
-    /* ── LOADING ───────────────────────────────────────── */
-    .loading-overlay {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 14px;
-      background: #f0f2f5;
-      z-index: 10;
-    }
-    .spin {
-      width: 32px; height: 32px;
-      border: 3px solid #ddd;
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-overlay p { color: var(--muted); font-size: 14px; }
-
-    /* ── AI CHAT WIDGET ────────────────────────────────── */
-    .chat-widget {
-      position: fixed; bottom: 20px; right: 20px;
-      width: 340px; max-height: 500px;
-      background: #fff; border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.16);
-      display: flex; flex-direction: column;
-      overflow: hidden; z-index: 100;
-      transition: max-height 0.28s ease;
-    }
-    .chat-widget.collapsed { max-height: 52px; }
-    .widget-header {
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
-      color: #fff; padding: 13px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; flex-shrink: 0;
-    }
-    .widget-header .left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
-    .widget-toggle { font-size: 14px; opacity: 0.8; }
-    .widget-messages {
-      flex: 1; overflow-y: auto; padding: 14px 12px;
-      display: flex; flex-direction: column; gap: 10px;
-    }
-    .widget-messages::-webkit-scrollbar { width: 4px; }
-    .widget-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-    .w-msg { display: flex; align-items: flex-end; gap: 6px; max-width: 90%; }
-    .w-msg.user   { align-self: flex-end; flex-direction: row-reverse; }
-    .w-msg.bot    { align-self: flex-start; }
-    .w-msg.notice { align-self: center; max-width: 100%; }
-    .w-avatar {
-      width: 24px; height: 24px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; flex-shrink: 0; background: #e3f2fd;
-    }
-    .w-msg.user .w-avatar { background: #e8f5e9; }
-    .w-bubble {
-      padding: 8px 12px; border-radius: 14px;
-      font-size: 13px; line-height: 1.5;
-      word-break: break-word; white-space: pre-wrap;
-    }
-    .w-msg.bot    .w-bubble { background: #f1f3f4; color: var(--text); border-bottom-left-radius: 4px; }
-    .w-msg.user   .w-bubble { background: var(--blue); color: #fff; border-bottom-right-radius: 4px; }
-    .w-msg.notice .w-bubble { background: #fff3e0; color: #e65100; font-size: 12px; border-radius: 8px; text-align: center; }
-    .typing-indicator { display: flex; gap: 4px; padding: 9px 12px; background: #f1f3f4; border-radius: 14px; border-bottom-left-radius: 4px; }
-    .typing-indicator span { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: bounce 1.2s infinite; }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
-    .widget-input {
-      padding: 8px 10px; border-top: 1px solid var(--border);
-      display: flex; gap: 6px; align-items: flex-end;
-      background: #fff; flex-shrink: 0;
-    }
-    .widget-input textarea {
-      flex: 1; resize: none;
-      border: 1.5px solid #dadce0; border-radius: 18px;
-      padding: 7px 12px; font-size: 13px; font-family: inherit;
-      outline: none; max-height: 72px; line-height: 1.5;
-      transition: border-color 0.2s;
-    }
-    .widget-input textarea:focus { border-color: var(--blue); }
-    .widget-input textarea:disabled { background: #f5f5f5; }
-    .w-send-btn {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--blue); border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s; flex-shrink: 0;
-    }
-    .w-send-btn:hover    { background: var(--blue2); }
-    .w-send-btn:disabled { background: #dadce0; cursor: not-allowed; }
-    .w-send-btn svg { fill: #fff; width: 15px; height: 15px; }
-
-    /* ── MODAL ─────────────────────────────────────────── */
-    .overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.38);
-      z-index: 200; align-items: center; justify-content: center;
-    }
-    .overlay.open { display: flex; }
-    .modal {
-      background: #fff; border-radius: 12px;
-      padding: 24px; width: 360px; max-width: 96vw;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      animation: modalIn 0.18s ease;
-    }
-    @keyframes modalIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
-    .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
-    .modal label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; margin-top: 12px; }
-    .modal input, .modal select, .modal textarea {
-      width: 100%; border: 1.5px solid #dadce0; border-radius: 8px;
-      padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none;
-      transition: border-color 0.2s;
-    }
-    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--blue); }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-    .btn-cancel {
-      padding: 7px 16px; border-radius: 8px;
-      border: 1.5px solid #dadce0; background: #fff;
-      font-size: 13px; cursor: pointer; color: var(--muted);
-    }
-    .btn-cancel:hover { background: #f5f5f5; }
-    .btn-save {
-      padding: 7px 16px; border-radius: 8px;
-      border: none; background: var(--blue);
-      font-size: 13px; cursor: pointer; color: #fff; font-weight: 600;
-    }
-    .btn-save:hover { background: var(--blue2); }
-    .color-row { display: flex; gap: 8px; align-items: center; }
-    .color-row input[type="color"] { width: 40px; height: 32px; border: 1.5px solid #dadce0; border-radius: 6px; padding: 2px; cursor: pointer; }
-    .color-row input[type="text"] { flex: 1; }
-
-    /* ── TOAST ─────────────────────────────────────────── */
-    .toast {
-      position: fixed; bottom: 76px; left: 50%;
-      transform: translateX(-50%);
-      background: #323232; color: #fff;
-      padding: 9px 20px; border-radius: 8px;
-      font-size: 13px; font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 300; pointer-events: none;
-      animation: toastIn 0.22s ease, toastOut 0.22s ease 2s forwards;
-    }
-    .toast.success { background: #1e8e3e; }
-    .toast.error   { background: #c5221f; }
-    @keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%)} }
-    @keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(8px)} }
-
-    /* flow-updated badge */
-    .flow-badge {
-      position: fixed; top: 70px; left: 50%;
-      transform: translateX(-50%);
-      background: var(--blue); color: #fff;
-      padding: 7px 18px; border-radius: 20px;
-      font-size: 12px; font-weight: 500;
-      box-shadow: 0 4px 12px rgba(26,115,232,0.3);
-      animation: toastIn 0.22s ease, toastOut 0.22s ease 2.5s forwards;
-      z-index: 150;
-    }
-
-    /* AI flow diagram (kept from original) */
-    #flow-nodes {
-      position: relative; min-height: 100%;
-      padding: 40px 0;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 0;
-    }
-    .flow-node {
-      width: 220px; background: #fff;
-      border: 2px solid var(--blue); border-radius: 12px;
-      padding: 14px 18px; text-align: center;
-      box-shadow: 0 2px 10px rgba(26,115,232,0.12);
-      position: relative; z-index: 1;
-      animation: nodeIn 0.3s ease;
-    }
-    @keyframes nodeIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
-    .flow-node .node-label { font-size: 15px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
-    .flow-node .node-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
-    .flow-arrow {
-      width: 2px; height: 36px; background: var(--blue);
-      position: relative; margin: 0 auto;
-    }
-    .flow-arrow::after {
-      content: '';
-      position: absolute; bottom: -1px; left: 50%;
-      transform: translateX(-50%);
-      border-left: 6px solid transparent; border-right: 6px solid transparent;
-      border-top: 8px solid var(--blue);
-    }
-    .empty-hint {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center; color: #bbb; pointer-events: none;
-    }
-    .empty-hint .icon { font-size: 44px; margin-bottom: 10px; }
-  </style>
+/* CHANGELOG */
+.changelog { border-top: 1px solid var(--border); max-height: 0; overflow: hidden; transition: max-height .3s; }
+.changelog.open { max-height: 160px; overflow-y: auto; }
+.changelog-inner { padding: 12px 20px; }
+.cl-label { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.cl-item { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: flex-start; }
+.cl-item:last-child { border-bottom: none; }
+.cl-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-3); flex-shrink: 0; margin-top: 1px; }
+.cl-badge { padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+.badge-edit { background: #EEF0FB; color: #3730A3; }
+.badge-add { background: #E6F7F2; color: #065F46; }
+.badge-del { background: #FEF2F2; color: #9A2E14; }
+</style>
 </head>
 <body>
+<div id="root"></div>
 
-<!-- ── TOP BAR ──────────────────────────────────────────── -->
-<div class="top-bar">
-  <span class="logo">Flow<span>Map</span></span>
-  <div class="product-tabs" id="product-tabs">
-    <!-- 動態填入 -->
-  </div>
-  <div class="toolbar">
-    <span class="status-dot" id="status-dot" style="display:none;"></span>
-    <button class="tb-btn" id="btn-add-stage">＋ 新增階段</button>
-    <button class="tb-btn" id="btn-add-lane">＋ 新增角色</button>
-    <button class="tb-btn primary" id="btn-add-node">＋ 新增節點</button>
-    <button class="tb-btn" id="btn-changelog" title="變更記錄">📋</button>
-  </div>
-</div>
+<script type="text/babel">
+const { useState, useRef, useCallback, useEffect } = React;
 
-<!-- ── MAIN AREA ─────────────────────────────────────────── -->
-<div class="main" id="main">
-  <div class="loading-overlay" id="loading">
-    <div class="spin"></div>
-    <p>載入中…</p>
-  </div>
-  <div id="bbp-swimlane"></div>
-  <!-- AI flow diagram -->
-  <div id="flow-nodes" style="display:none;">
-    <div class="empty-hint" id="empty-hint">
-      <div class="icon">🗂️</div>
-      <p>在右下角輸入你的商旅流程<br>AI 將自動產生視覺化流程圖</p>
-    </div>
-  </div>
-</div>
-
-<!-- ── AI CHAT WIDGET ────────────────────────────────────── -->
-<div class="chat-widget" id="chat-widget">
-  <div class="widget-header" id="widget-header">
-    <div class="left">🤖 <span>AI 客服助理</span></div>
-    <span class="widget-toggle" id="widget-toggle">▼</span>
-  </div>
-  <div class="widget-messages" id="widget-messages"></div>
-  <div class="widget-input">
-    <textarea id="user-input" rows="1" placeholder="輸入訊息，Enter 傳送" maxlength="2000" disabled></textarea>
-    <button class="w-send-btn" id="send-btn" disabled>
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
-  </div>
-</div>
-
-<!-- ── NODE MODAL ────────────────────────────────────────── -->
-<div class="overlay" id="node-modal">
-  <div class="modal">
-    <h3 id="modal-title">編輯節點</h3>
-    <input type="hidden" id="m-node-id" />
-    <label>節點名稱 *</label>
-    <input type="text" id="m-label" placeholder="節點名稱" />
-    <label>副標題 / 備註</label>
-    <input type="text" id="m-sub" placeholder="（可空白）" />
-    <label>所在階段</label>
-    <select id="m-phase"></select>
-    <label>所在角色（泳道）</label>
-    <select id="m-lane"></select>
-    <label>節點類型</label>
-    <select id="m-type">
-      <option value="default">default（一般）</option>
-      <option value="decision">decision（判斷點）</option>
-      <option value="start">start（開始）</option>
-      <option value="end">end（結束）</option>
-    </select>
-    <div class="modal-actions">
-      <button class="btn-cancel" id="m-cancel">取消</button>
-      <button class="btn-save"   id="m-save">儲存</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── STAGE MODAL ───────────────────────────────────────── -->
-<div class="overlay" id="stage-modal">
-  <div class="modal">
-    <h3 id="stage-modal-title">新增階段</h3>
-    <label>階段名稱 *</label>
-    <input type="text" id="s-label" placeholder="例如：付款" />
-    <label>欄寬（px，建議 160–300）</label>
-    <input type="number" id="s-width" value="200" min="120" max="400" />
-    <div class="modal-actions">
-      <button class="btn-cancel" id="s-cancel">取消</button>
-      <button class="btn-save"   id="s-save">新增</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── LANE MODAL ────────────────────────────────────────── -->
-<div class="overlay" id="lane-modal">
-  <div class="modal">
-    <h3 id="lane-modal-title">新增角色</h3>
-    <label>角色名稱 *</label>
-    <input type="text" id="l-label" placeholder="例如：財務" />
-    <label>代表色</label>
-    <div class="color-row">
-      <input type="color" id="l-color-picker" value="#1a73e8" />
-      <input type="text"  id="l-color" value="#1a73e8" placeholder="#rrggbb" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" id="l-cancel">取消</button>
-      <button class="btn-save"   id="l-save">新增</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── PRODUCT MODAL ─────────────────────────────────────── -->
-<div class="overlay" id="prod-modal">
-  <div class="modal">
-    <h3>新增產品</h3>
-    <label>產品名稱（同時作為 Sheet tab 名稱）*</label>
-    <input type="text" id="p-name" placeholder="例如：CRM" />
-    <div class="modal-actions">
-      <button class="btn-cancel" id="p-cancel">取消</button>
-      <button class="btn-save"   id="p-save">建立</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── CHANGELOG MODAL ───────────────────────────────────── -->
-<div class="overlay" id="changelog-modal">
-  <div class="modal" style="width:520px;max-height:80vh;display:flex;flex-direction:column;">
-    <h3>變更記錄</h3>
-    <div id="changelog-list" style="flex:1;overflow-y:auto;margin-top:14px;display:flex;flex-direction:column;gap:8px;"></div>
-    <div class="modal-actions" style="margin-top:16px;">
-      <button class="btn-cancel" id="cl-close">關閉</button>
-    </div>
-  </div>
-</div>
-
-<script>
-'use strict';
-// ── CONFIG ───────────────────────────────────────────────────
-var GAS_URL  = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
-var LS_USER  = '我';
-var CACHE_PFX = 'fm_';
-
-// ── STATE ────────────────────────────────────────────────────
-var state = {
-  currentProduct: null,
-  products: [],
-  data: null,          // { phases, lanes, nodes }
-  changes: [],         // local changelog
-  draggingNodeId: null
+/* ═══════════════════════════════════════════
+   DEFAULT JSON — everything driven from here
+═══════════════════════════════════════════ */
+const DEFAULT_DATA = {
+  productName: "BBP",
+  phases: [
+    { id: "p1", label: "① 課程啟動",    width: 210 },
+    { id: "p2", label: "② 帳號開通",    width: 190 },
+    { id: "p3", label: "③ 試用評估",    width: 220 },
+    { id: "p4a", label: "④ 滿意 → 購買", width: 380, variant: "positive" },
+    { id: "p4b", label: "④ 不滿意 → 反饋", width: 200, variant: "negative" },
+    { id: "p5", label: "⑤ 使用 & 續約", width: 360 }
+  ],
+  lanes: [
+    { id: "client", label: "客戶",   color: "#6366F1", bg: "#EEF0FB", border: "#C5CAF0", textColor: "#3730A3" },
+    { id: "d4",     label: "D4 顧問", color: "#059669", bg: "#E6F7F2", border: "#9FD9C5", textColor: "#065F46" },
+    { id: "d7",     label: "D7 研發", color: "#E05A38", bg: "#FEF1EE", border: "#F5BBA8", textColor: "#9A2E14" },
+    { id: "d2",     label: "D2 業務", color: "#9333EA", bg: "#F6F0FD", border: "#DABFF5", textColor: "#5B1A9A" }
+  ],
+  nodes: [
+    { id: "n1",  phaseId: "p1",  laneId: "client", label: "報名 BOP",       sub: "開始課程",          type: "default" },
+    { id: "n2",  phaseId: "p1",  laneId: "client", label: "模組三",         sub: "實作 BBP 組織圖",    type: "default" },
+    { id: "n3",  phaseId: "p2",  laneId: "d4",     label: "協助開通帳號",   sub: "引導如何使用",       type: "default" },
+    { id: "n4",  phaseId: "p3",  laneId: "client", label: "開始試用 BBP",   sub: "",                  type: "default" },
+    { id: "n5",  phaseId: "p3",  laneId: "d4",     label: "追蹤詢問",       sub: "BBP 操作滿意度",     type: "default" },
+    { id: "n6",  phaseId: "p3",  laneId: "d4",     label: "滿意？",         sub: "",                  type: "gate"    },
+    { id: "n7",  phaseId: "p4a", laneId: "d4",     label: "了解需求",       sub: "帳號數 & 方案 3/6/12月", type: "default" },
+    { id: "n8",  phaseId: "p4a", laneId: "d4",     label: "回饋需求",       sub: "給 D7 研發",         type: "default" },
+    { id: "n9",  phaseId: "p4a", laneId: "d7",     label: "提供付款連結",   sub: "",                  type: "default" },
+    { id: "n10", phaseId: "p4a", laneId: "d7",     label: "確認付款",       sub: "開通職員帳號",       type: "default" },
+    { id: "n11", phaseId: "p4a", laneId: "client", label: "確認付款",       sub: "",                  type: "default" },
+    { id: "n4b", phaseId: "p4b", laneId: "d4",     label: "反饋提供",       sub: "給 D7 研發",         type: "default" },
+    { id: "n4c", phaseId: "p4b", laneId: "d7",     label: "接收反饋",       sub: "待改善",             type: "default" },
+    { id: "n12", phaseId: "p5",  laneId: "client", label: "正式使用 BBP",   sub: "職員帳號啟用",       type: "success" },
+    { id: "n13", phaseId: "p5",  laneId: "d2",     label: "詢問是否續約",   sub: "購買新方案",         type: "default" },
+    { id: "n14", phaseId: "p5",  laneId: "d2",     label: "續約？",         sub: "",                  type: "gate"    },
+    { id: "n15", phaseId: "p5",  laneId: "d2",     label: "通知 D7 研發",   sub: "",                  type: "default" },
+    { id: "n16", phaseId: "p5",  laneId: "d7",     label: "處理續約",       sub: "提供新付款連結",     type: "default" }
+  ]
 };
 
-// ── DOM REFS ─────────────────────────────────────────────────
-var $ = function(id) { return document.getElementById(id); };
-var productTabsEl  = $('product-tabs');
-var swimlaneEl     = $('bbp-swimlane');
-var loadingEl      = $('loading');
-var statusDot      = $('status-dot');
-var flowNodesEl    = $('flow-nodes');
-var widgetEl       = $('chat-widget');
-var messagesEl     = $('widget-messages');
-var inputEl        = $('user-input');
-var sendBtn        = $('send-btn');
-
-var conversationId = null;
-var isWaiting      = false;
-
-// ── INIT ─────────────────────────────────────────────────────
-window.addEventListener('load', function() {
-  initProductTabs();
-  initEventListeners();
-  checkAIConfig();
-});
-
-function initProductTabs() {
-  showLoading(true);
-  fetch(GAS_URL + '?action=getProducts')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var products = (d.products && d.products.length) ? d.products : ['BBP'];
-      state.products = products;
-      renderProductTabs(products);
-      loadProduct(products[0]);
-    })
-    .catch(function() {
-      state.products = ['BBP'];
-      renderProductTabs(['BBP']);
-      loadProduct('BBP');
-    });
+/* ═══════════════════════════════════════════
+   COLOR HELPERS
+═══════════════════════════════════════════ */
+function getLaneStyle(lane) {
+  return { backgroundColor: lane.bg + "55", borderColor: lane.border };
 }
-
-function renderProductTabs(products) {
-  productTabsEl.innerHTML = '';
-  products.forEach(function(name) {
-    var btn = document.createElement('button');
-    btn.className = 'prod-tab' + (name === state.currentProduct ? ' active' : '');
-    btn.textContent = name;
-    btn.addEventListener('click', function() { loadProduct(name); });
-    productTabsEl.appendChild(btn);
-  });
-  // + 新增產品
-  var addBtn = document.createElement('button');
-  addBtn.className = 'prod-tab add-tab';
-  addBtn.textContent = '＋ 新增產品';
-  addBtn.addEventListener('click', openProdModal);
-  productTabsEl.appendChild(addBtn);
+function getHeaderStyle(lane) {
+  return { backgroundColor: lane.bg, borderColor: lane.border, color: lane.textColor };
 }
-
-function loadProduct(name) {
-  state.currentProduct = name;
-  // Update active tab UI
-  productTabsEl.querySelectorAll('.prod-tab:not(.add-tab)').forEach(function(btn) {
-    btn.classList.toggle('active', btn.textContent === name);
-  });
-
-  showLoading(true);
-  swimlaneEl.innerHTML = '';
-
-  // Try cache first
-  var cached = null;
-  try { var raw = localStorage.getItem(CACHE_PFX + name); if (raw) cached = JSON.parse(raw); } catch(e) {}
-
-  fetch(GAS_URL + '?action=getProduct&product=' + encodeURIComponent(name))
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      showLoading(false);
-      if (d.error) {
-        renderSwimlane(cached || fallbackData(name));
-      } else {
-        state.data = d;
-        try { localStorage.setItem(CACHE_PFX + name, JSON.stringify(d)); } catch(e) {}
-        renderSwimlane(d);
-      }
-    })
-    .catch(function() {
-      showLoading(false);
-      renderSwimlane(cached || fallbackData(name));
-    });
-}
-
-function fallbackData(name) {
-  return {
-    productName: name,
-    phases: [
-      { id:'p1', label:'曝光',  width:200 },
-      { id:'p2', label:'報名',  width:200 },
-      { id:'p3', label:'參與',  width:200 },
-      { id:'p4', label:'轉換',  width:240 },
-      { id:'p5', label:'成交',  width:240 }
-    ],
-    lanes: [
-      { id:'client', label:'客戶',    color:'#6366F1', bg:'#EEF0FB', border:'#C5CAF0', textColor:'#3730A3' },
-      { id:'d4',     label:'D4 顧問', color:'#059669', bg:'#E6F7F2', border:'#9FD9C5', textColor:'#065F46' },
-      { id:'d7',     label:'D7 研發', color:'#E05A38', bg:'#FEF1EE', border:'#F5BBA8', textColor:'#9A2E14' },
-      { id:'d2',     label:'D2 業務', color:'#9333EA', bg:'#F6F0FD', border:'#DABFF5', textColor:'#5B1A9A' }
-    ],
-    nodes: []
+function getNodeStyle(node, lane) {
+  if (node.type === "gate") return {
+    backgroundColor: "#FEF3C7", color: "#78350F",
+    borderColor: "#F59E0B", borderRadius: "50px"
   };
-}
-
-// ── RENDER SWIMLANE ───────────────────────────────────────────
-function renderSwimlane(data) {
-  if (!data || !data.phases || !data.lanes) return;
-  state.data = data;
-
-  // nodeMap[phaseId][laneId] = [nodes]
-  var nodeMap = {};
-  (data.nodes || []).forEach(function(n) {
-    if (!nodeMap[n.phaseId]) nodeMap[n.phaseId] = {};
-    if (!nodeMap[n.phaseId][n.laneId]) nodeMap[n.phaseId][n.laneId] = [];
-    nodeMap[n.phaseId][n.laneId].push(n);
-  });
-
-  var table = document.createElement('table');
-  table.className = 'sw-table';
-
-  // thead
-  var thead = document.createElement('thead');
-  var headRow = document.createElement('tr');
-
-  var corner = document.createElement('th');
-  corner.className = 'corner';
-  headRow.appendChild(corner);
-
-  data.phases.forEach(function(ph) {
-    var th = document.createElement('th');
-    th.style.minWidth = (ph.width || 180) + 'px';
-
-    var label = document.createElement('span');
-    label.textContent = ph.label;
-    th.appendChild(label);
-
-    // Delete phase button
-    var actions = document.createElement('div');
-    actions.className = 'ph-actions';
-    var delBtn = document.createElement('button');
-    delBtn.className = 'ph-del-btn';
-    delBtn.title = '刪除此階段';
-    delBtn.textContent = '✕';
-    delBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (confirm('確定刪除階段「' + ph.label + '」及其所有節點？')) {
-        handleDeleteStage(ph.id);
-      }
-    });
-    actions.appendChild(delBtn);
-    th.appendChild(actions);
-    headRow.appendChild(th);
-  });
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  // tbody
-  var tbody = document.createElement('tbody');
-  data.lanes.forEach(function(lane) {
-    var tr = document.createElement('tr');
-
-    // Lane label cell
-    var tdLabel = document.createElement('td');
-    tdLabel.className = 'lane-label';
-    tdLabel.style.background  = lane.bg    || '#f5f5f5';
-    tdLabel.style.color       = lane.color || '#333';
-    tdLabel.style.borderColor = lane.border || '#ccc';
-    tdLabel.textContent = lane.label;
-
-    var laneActions = document.createElement('div');
-    laneActions.className = 'lane-actions';
-    var lDelBtn = document.createElement('button');
-    lDelBtn.className = 'lane-del-btn';
-    lDelBtn.title = '刪除此角色';
-    lDelBtn.textContent = '✕';
-    lDelBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (confirm('確定刪除角色「' + lane.label + '」及其所有節點？')) {
-        handleDeleteLane(lane.id);
-      }
-    });
-    laneActions.appendChild(lDelBtn);
-    tdLabel.appendChild(laneActions);
-    tr.appendChild(tdLabel);
-
-    // Phase cells
-    data.phases.forEach(function(ph) {
-      var td = document.createElement('td');
-      td.className = 'sw-cell';
-      td.style.background = lane.bg || '#fff';
-      td.dataset.phaseId = ph.id;
-      td.dataset.laneId  = lane.id;
-
-      // drag-over events
-      td.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        td.classList.add('drag-over');
-      });
-      td.addEventListener('dragleave', function() {
-        td.classList.remove('drag-over');
-      });
-      td.addEventListener('drop', function(e) {
-        e.preventDefault();
-        td.classList.remove('drag-over');
-        if (state.draggingNodeId) {
-          handleMoveNode(state.draggingNodeId, ph.id, lane.id);
-        }
-      });
-
-      // Existing nodes
-      var cellNodes = (nodeMap[ph.id] && nodeMap[ph.id][lane.id]) || [];
-      cellNodes.forEach(function(node) {
-        td.appendChild(buildNodeCard(node, lane));
-      });
-
-      // Add node button
-      var addBtn = document.createElement('button');
-      addBtn.className = 'add-node-btn';
-      addBtn.textContent = '+';
-      addBtn.title = '新增節點';
-      addBtn.addEventListener('click', function() {
-        openNodeModal(null, ph.id, lane.id);
-      });
-      td.appendChild(addBtn);
-      tr.appendChild(td);
-    });
-
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-
-  swimlaneEl.innerHTML = '';
-  swimlaneEl.appendChild(table);
-}
-
-// ── NODE CARD ──────────────────────────────────────────────
-function buildNodeCard(node, lane) {
-  var card = document.createElement('div');
-  card.className = 'bbp-node' + (node.type === 'decision' ? ' decision' : '');
-  card.dataset.id = node.id;
-  card.style.borderColor = lane ? (lane.color || '#1a73e8') : '#1a73e8';
-  card.draggable = true;
-
-  // Drag events
-  card.addEventListener('dragstart', function() {
-    state.draggingNodeId = node.id;
-    setTimeout(function() { card.classList.add('dragging'); }, 0);
-  });
-  card.addEventListener('dragend', function() {
-    state.draggingNodeId = null;
-    card.classList.remove('dragging');
-  });
-
-  // Actions
-  var actions = document.createElement('div');
-  actions.className = 'node-actions';
-
-  var editBtn = document.createElement('button');
-  editBtn.className = 'node-btn';
-  editBtn.title = '編輯';
-  editBtn.textContent = '✏️';
-  editBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    openNodeModal(node, node.phaseId, node.laneId);
-  });
-
-  var delBtn = document.createElement('button');
-  delBtn.className = 'node-btn del';
-  delBtn.title = '刪除';
-  delBtn.textContent = '🗑';
-  delBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (confirm('確定刪除節點「' + node.label + '」？')) {
-      handleDeleteNode(node.id);
-    }
-  });
-
-  actions.appendChild(editBtn);
-  actions.appendChild(delBtn);
-  card.appendChild(actions);
-
-  var labelEl = document.createElement('div');
-  labelEl.className = 'node-label';
-  labelEl.textContent = node.label || '（無標題）';
-  card.appendChild(labelEl);
-
-  if (node.sub) {
-    var subEl = document.createElement('div');
-    subEl.className = 'node-sub';
-    subEl.textContent = node.sub;
-    card.appendChild(subEl);
-  }
-
-  return card;
-}
-
-// ── HANDLERS ──────────────────────────────────────────────
-function handleSaveNode(updatedNode) {
-  var d = state.data;
-  if (!d) return;
-  var idx = d.nodes.findIndex(function(n) { return n.id === updatedNode.id; });
-  if (idx >= 0) d.nodes[idx] = updatedNode; else d.nodes.push(updatedNode);
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'saveNode', product: state.currentProduct, node: updatedNode, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '已儲存' : ('儲存失敗：' + r.error), r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('儲存失敗，請重試', 'error'); });
-}
-
-function handleDeleteNode(nodeId) {
-  var d = state.data;
-  if (!d) return;
-  d.nodes = d.nodes.filter(function(n) { return n.id !== nodeId; });
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'deleteNode', product: state.currentProduct, node: {id: nodeId}, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '已刪除' : ('刪除失敗：' + r.error), r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('刪除失敗，請重試', 'error'); });
-}
-
-function handleMoveNode(nodeId, newPhaseId, newLaneId) {
-  var d = state.data;
-  if (!d) return;
-  var node = d.nodes.find(function(n) { return n.id === nodeId; });
-  if (!node) return;
-  if (node.phaseId === newPhaseId && node.laneId === newLaneId) return; // no-op
-  node.phaseId = newPhaseId;
-  node.laneId  = newLaneId;
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-  showToast('移動中…');
-
-  gasPost({ action:'saveNode', product: state.currentProduct, node: node, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '已儲存移動' : '移動失敗', r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('移動失敗，請重試', 'error'); });
-}
-
-function handleAddStage(label, width) {
-  var d = state.data;
-  if (!d) return;
-  var id = 'p_' + Date.now();
-  d.phases.push({ id: id, label: label, width: width || 200 });
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'addStage', product: state.currentProduct, stage: {id:id, label:label, width:width}, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '階段已新增' : '新增失敗', r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('新增失敗', 'error'); });
-}
-
-function handleDeleteStage(stageId) {
-  var d = state.data;
-  if (!d) return;
-  d.phases = d.phases.filter(function(p) { return p.id !== stageId; });
-  d.nodes  = d.nodes.filter(function(n)  { return n.phaseId !== stageId; });
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'deleteStage', product: state.currentProduct, stageId: stageId, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '階段已刪除' : '刪除失敗', r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('刪除失敗', 'error'); });
-}
-
-function handleAddLane(laneData) {
-  var d = state.data;
-  if (!d) return;
-  var color = laneData.color || '#888888';
-  // auto-generate bg/border/textColor from color
-  var lane = {
-    id:        'lane_' + Date.now(),
-    label:     laneData.label,
-    color:     color,
-    bg:        hexToAlpha(color, 0.08),
-    border:    hexToAlpha(color, 0.3),
-    textColor: color
+  if (node.type === "success") return {
+    backgroundColor: "#059669", color: "#fff", borderColor: "#047857"
   };
-  d.lanes.push(lane);
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'addLane', product: state.currentProduct, lane: lane, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '角色已新增' : '新增失敗', r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('新增失敗', 'error'); });
+  return { backgroundColor: lane.color, color: "#fff", borderColor: lane.color };
 }
 
-function handleDeleteLane(laneId) {
-  var d = state.data;
-  if (!d) return;
-  d.lanes = d.lanes.filter(function(l) { return l.id !== laneId; });
-  d.nodes = d.nodes.filter(function(n) { return n.laneId !== laneId; });
-  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
-  renderSwimlane(d);
-
-  gasPost({ action:'deleteLane', product: state.currentProduct, laneId: laneId, user: LS_USER })
-    .then(function(r) { showToast(r.success ? '角色已刪除' : '刪除失敗', r.success ? 'success' : 'error'); })
-    .catch(function() { showToast('刪除失敗', 'error'); });
-}
-
-function handleAddProduct(name) {
-  if (!name) return;
-  showLoading(true);
-  gasPost({ action:'addProduct', productName: name, user: LS_USER })
-    .then(function(r) {
-      showLoading(false);
-      if (r.success) {
-        state.products.push(name);
-        renderProductTabs(state.products);
-        loadProduct(name);
-        showToast('產品「' + name + '」已建立', 'success');
-      } else {
-        showToast(r.error || '建立失敗', 'error');
-      }
-    })
-    .catch(function() {
-      showLoading(false);
-      showToast('建立失敗，請重試', 'error');
-    });
-}
-
-// ── MODALS ─────────────────────────────────────────────────
-// Node modal
-function openNodeModal(node, defaultPhase, defaultLane) {
-  $('modal-title').textContent = node ? '編輯節點' : '新增節點';
-  $('m-node-id').value = node ? (node.id || '') : '';
-  $('m-label').value   = node ? (node.label  || '') : '';
-  $('m-sub').value     = node ? (node.sub    || '') : '';
-  $('m-type').value    = node ? (node.type   || 'default') : 'default';
-
-  // Populate phase/lane selects
-  var d = state.data;
-  var phSel = $('m-phase');
-  var lnSel = $('m-lane');
-  phSel.innerHTML = '';
-  lnSel.innerHTML = '';
-  (d ? d.phases : []).forEach(function(ph) {
-    var opt = document.createElement('option');
-    opt.value = ph.id; opt.textContent = ph.label;
-    if ((node ? node.phaseId : defaultPhase) === ph.id) opt.selected = true;
-    phSel.appendChild(opt);
-  });
-  (d ? d.lanes : []).forEach(function(ln) {
-    var opt = document.createElement('option');
-    opt.value = ln.id; opt.textContent = ln.label;
-    if ((node ? node.laneId : defaultLane) === ln.id) opt.selected = true;
-    lnSel.appendChild(opt);
-  });
-
-  $('node-modal').classList.add('open');
-  $('m-label').focus();
-}
-
-$('m-cancel').addEventListener('click', function() { $('node-modal').classList.remove('open'); });
-$('node-modal').addEventListener('click', function(e) { if (e.target === $('node-modal')) $('node-modal').classList.remove('open'); });
-$('m-save').addEventListener('click', function() {
-  var label = $('m-label').value.trim();
-  if (!label) { $('m-label').focus(); showToast('請填寫節點名稱', 'error'); return; }
-  var nodeId = $('m-node-id').value.trim() || ('n_' + Date.now());
-  handleSaveNode({
-    id:      nodeId,
-    phaseId: $('m-phase').value,
-    laneId:  $('m-lane').value,
-    label:   label,
-    sub:     $('m-sub').value.trim(),
-    type:    $('m-type').value
-  });
-  $('node-modal').classList.remove('open');
-});
-
-// Stage modal
-$('btn-add-stage').addEventListener('click', function() {
-  $('s-label').value = '';
-  $('s-width').value = 200;
-  $('stage-modal').classList.add('open');
-  $('s-label').focus();
-});
-$('s-cancel').addEventListener('click', function() { $('stage-modal').classList.remove('open'); });
-$('stage-modal').addEventListener('click', function(e) { if (e.target === $('stage-modal')) $('stage-modal').classList.remove('open'); });
-$('s-save').addEventListener('click', function() {
-  var label = $('s-label').value.trim();
-  if (!label) { $('s-label').focus(); showToast('請填寫階段名稱', 'error'); return; }
-  handleAddStage(label, parseInt($('s-width').value) || 200);
-  $('stage-modal').classList.remove('open');
-});
-
-// Lane modal
-$('btn-add-lane').addEventListener('click', function() {
-  $('l-label').value = '';
-  $('l-color').value = '#1a73e8';
-  $('l-color-picker').value = '#1a73e8';
-  $('lane-modal').classList.add('open');
-  $('l-label').focus();
-});
-$('l-cancel').addEventListener('click', function() { $('lane-modal').classList.remove('open'); });
-$('lane-modal').addEventListener('click', function(e) { if (e.target === $('lane-modal')) $('lane-modal').classList.remove('open'); });
-$('l-color-picker').addEventListener('input', function() { $('l-color').value = this.value; });
-$('l-color').addEventListener('input', function() {
-  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) $('l-color-picker').value = this.value;
-});
-$('l-save').addEventListener('click', function() {
-  var label = $('l-label').value.trim();
-  if (!label) { $('l-label').focus(); showToast('請填寫角色名稱', 'error'); return; }
-  handleAddLane({ label: label, color: $('l-color').value });
-  $('lane-modal').classList.remove('open');
-});
-
-// Add node toolbar button
-$('btn-add-node').addEventListener('click', function() {
-  openNodeModal(null,
-    state.data && state.data.phases[0] ? state.data.phases[0].id : '',
-    state.data && state.data.lanes[0]  ? state.data.lanes[0].id  : ''
+/* ═══════════════════════════════════════════
+   NODE CARD
+═══════════════════════════════════════════ */
+function NodeCard({ node, lane, selected, onClick }) {
+  const style = getNodeStyle(node, lane);
+  return (
+    <div
+      className={`node-card${node.type === "gate" ? " node-gate" : ""}${selected ? " selected" : ""}`}
+      style={style}
+      onClick={() => onClick(node)}
+    >
+      {node.label}
+      {node.sub && <div className="node-sub">{node.sub}</div>}
+    </div>
   );
-});
-
-// Product modal
-function openProdModal() {
-  $('p-name').value = '';
-  $('prod-modal').classList.add('open');
-  $('p-name').focus();
 }
-$('p-cancel').addEventListener('click', function() { $('prod-modal').classList.remove('open'); });
-$('prod-modal').addEventListener('click', function(e) { if (e.target === $('prod-modal')) $('prod-modal').classList.remove('open'); });
-$('p-save').addEventListener('click', function() {
-  var name = $('p-name').value.trim();
-  if (!name) { $('p-name').focus(); return; }
-  $('prod-modal').classList.remove('open');
-  handleAddProduct(name);
-});
 
-// Changelog modal
-$('btn-changelog').addEventListener('click', function() {
-  var list = $('changelog-list');
-  list.innerHTML = '';
-  state.changes.slice().reverse().forEach(function(c) {
-    var item = document.createElement('div');
-    item.style.cssText = 'background:#f8f9fa;border-radius:6px;padding:8px 12px;font-size:12px;color:#444;';
-    item.innerHTML = '<strong>' + esc(c.action) + '</strong> — ' + esc(c.label) + '<br><span style="color:#999;">' + esc(c.time) + '</span>';
-    list.appendChild(item);
+/* ═══════════════════════════════════════════
+   LANE CELL — renders all nodes for laneId × phaseId
+═══════════════════════════════════════════ */
+function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast }) {
+  const lane = lanes.find(l => l.id === laneId);
+  const cellNodes = nodes.filter(n => n.laneId === laneId && n.phaseId === phaseId);
+  const style = {
+    ...getLaneStyle(lane),
+    width: phase.width,
+    borderRightWidth: isLast ? "1px" : "0"
+  };
+  return (
+    <div className="lane-cell" style={style}>
+      {cellNodes.length === 0 && <span className="cell-empty-hint"></span>}
+      {cellNodes.map((node, i) => (
+        <React.Fragment key={node.id}>
+          {i > 0 && <span className="cell-arrow">→</span>}
+          <NodeCard node={node} lane={lane} selected={selectedId === node.id} onClick={onSelect} />
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   SWIMLANE TABLE — pure render from data
+═══════════════════════════════════════════ */
+function SwimlaneTable({ data, selectedId, onSelect }) {
+  const { phases, lanes, nodes } = data;
+  return (
+    <div className="swimlane-wrap">
+      {/* Phase header row */}
+      <div className="phase-row">
+        {phases.map((ph, i) => (
+          <div
+            key={ph.id}
+            className={`phase-cell${ph.variant ? " variant-" + ph.variant : ""}`}
+            style={{ width: ph.width }}
+          >
+            {ph.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Lane rows */}
+      {lanes.map((lane, li) => (
+        <div className="lane-row" key={lane.id}>
+          <div
+            className="lane-header"
+            style={getHeaderStyle(lane)}
+          >
+            {lane.label}
+          </div>
+          {phases.map((ph, pi) => (
+            <LaneCell
+              key={ph.id}
+              laneId={lane.id}
+              phaseId={ph.id}
+              nodes={nodes}
+              lanes={lanes}
+              phase={ph}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              isLast={pi === phases.length - 1}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   RIGHT PANEL — edit selected node
+═══════════════════════════════════════════ */
+function RightPanel({ node, data, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState({ label: "", sub: "", laneId: "", phaseId: "", type: "default" });
+  useEffect(() => {
+    if (node) setForm({ label: node.label, sub: node.sub || "", laneId: node.laneId, phaseId: node.phaseId, type: node.type || "default" });
+  }, [node]);
+  if (!node) return null;
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <div className="rp-inner">
+      <button className="rp-close" onClick={onClose}>✕</button>
+      <div className="rp-title">編輯節點</div>
+      <div className="rp-sub">ID: {node.id}</div>
+      <div className="field-group">
+        <label>節點標題</label>
+        <input value={form.label} onChange={e => set("label", e.target.value)} />
+      </div>
+      <div className="field-group">
+        <label>副標題</label>
+        <input value={form.sub} onChange={e => set("sub", e.target.value)} placeholder="（選填）" />
+      </div>
+      <div className="field-group">
+        <label>負責角色（泳道）</label>
+        <select value={form.laneId} onChange={e => set("laneId", e.target.value)}>
+          {data.lanes.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
+        </select>
+      </div>
+      <div className="field-group">
+        <label>所屬階段</label>
+        <select value={form.phaseId} onChange={e => set("phaseId", e.target.value)}>
+          {data.phases.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+        </select>
+      </div>
+      <div className="field-group">
+        <label>節點類型</label>
+        <select value={form.type} onChange={e => set("type", e.target.value)}>
+          <option value="default">一般節點</option>
+          <option value="gate">判斷點（圓角）</option>
+          <option value="success">成功節點（綠色）</option>
+        </select>
+      </div>
+      <div className="rp-actions">
+        <button className="btn-danger" onClick={() => onDelete(node.id)}>刪除</button>
+        <button className="btn-sm btn-primary" style={{flex:1}} onClick={() => onSave(node.id, form)}>儲存變更</button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MODAL — generic dialog
+═══════════════════════════════════════════ */
+function Modal({ title, sub, children, onClose, onConfirm, confirmLabel = "確認新增" }) {
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">{title}</div>
+        <div className="modal-sub">{sub}</div>
+        {children}
+        <div className="modal-actions">
+          <button className="btn-sm" onClick={onClose}>取消</button>
+          <button className="btn-sm btn-primary" onClick={onConfirm}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   CHANGELOG
+═══════════════════════════════════════════ */
+function Changelog({ logs, open }) {
+  return (
+    <div className={`changelog${open ? " open" : ""}`}>
+      <div className="changelog-inner">
+        <div className="cl-label">變更記錄</div>
+        {logs.length === 0 && <div style={{fontSize:13,color:"var(--text-3)"}}>尚無變更</div>}
+        {logs.map((log, i) => (
+          <div className="cl-item" key={i}>
+            <span className="cl-time">{log.time}</span>
+            <span className={`cl-badge badge-${log.type}`}>{log.typeLabel}</span>
+            <span dangerouslySetInnerHTML={{__html: log.desc}} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   TOAST HOOK
+═══════════════════════════════════════════ */
+function useToast() {
+  const [msg, setMsg] = useState("");
+  const [show, setShow] = useState(false);
+  const timerRef = useRef(null);
+  const toast = useCallback((m) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setMsg(m); setShow(true);
+    timerRef.current = setTimeout(() => setShow(false), 2200);
+  }, []);
+  return { msg, show, toast };
+}
+
+/* ═══════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════ */
+function App() {
+  const [data, setData] = useState(() => {
+    try { const s = localStorage.getItem("bbp_data"); return s ? JSON.parse(s) : DEFAULT_DATA; } catch { return DEFAULT_DATA; }
   });
-  if (!state.changes.length) {
-    list.innerHTML = '<p style="color:#bbb;text-align:center;padding:20px;">尚無變更記錄</p>';
+  const [selectedId, setSelectedId] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [modal, setModal] = useState(null); // "phase" | "lane" | "node"
+  const [modalForm, setModalForm] = useState({});
+  const { msg: toastMsg, show: toastShow, toast } = useToast();
+  const textareaRef = useRef(null);
+
+  // Persist
+  useEffect(() => {
+    try { localStorage.setItem("bbp_data", JSON.stringify(data)); } catch {}
+  }, [data]);
+
+  function now() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
   }
-  $('changelog-modal').classList.add('open');
-});
-$('cl-close').addEventListener('click', function() { $('changelog-modal').classList.remove('open'); });
-$('changelog-modal').addEventListener('click', function(e) { if (e.target === $('changelog-modal')) $('changelog-modal').classList.remove('open'); });
 
-// ── AI CHAT (original, fully preserved) ───────────────────
-function initEventListeners() {
-  $('widget-header').addEventListener('click', function() {
-    widgetEl.classList.toggle('collapsed');
-    $('widget-toggle').textContent = widgetEl.classList.contains('collapsed') ? '▲' : '▼';
-  });
+  function addLog(type, typeLabel, desc) {
+    setLogs(l => [{ time: now(), type, typeLabel, desc }, ...l]);
+  }
 
-  inputEl.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 72) + 'px';
-  });
-  inputEl.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-  });
-  sendBtn.addEventListener('click', handleSend);
-}
+  function handleSelectNode(node) {
+    setSelectedId(node.id);
+    setPanelOpen(true);
+  }
 
-function checkAIConfig() {
-  gasGet({ action: 'check' })
-    .then(function(r) {
-      if (r.ok) {
-        inputEl.disabled = false;
-        sendBtn.disabled = false;
-        statusDot.style.display = 'inline-block';
-        appendMessage('bot', '你好！請描述你的商旅流程，我會幫你轉成視覺化流程圖 😊');
+  function handleSaveNode(id, form) {
+    const old = data.nodes.find(n => n.id === id);
+    setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === id ? { ...n, ...form } : n) }));
+    addLog("edit", "修改", `節點「<strong>${form.label}</strong>」已更新（角色: ${data.lanes.find(l=>l.id===form.laneId)?.label}）`);
+    toast("已儲存並更新 JSON");
+    setPanelOpen(false); setSelectedId(null);
+  }
+
+  function handleDeleteNode(id) {
+    const node = data.nodes.find(n => n.id === id);
+    if (!node) return;
+    setData(d => ({ ...d, nodes: d.nodes.filter(n => n.id !== id) }));
+    addLog("del", "刪除", `已刪除節點「<strong>${node.label}</strong>」`);
+    toast(`已刪除「${node.label}」`);
+    setPanelOpen(false); setSelectedId(null);
+  }
+
+  // ADD PHASE
+  function openAddPhase() {
+    setModalForm({ label: "", width: 200, variant: "" });
+    setModal("phase");
+  }
+  function confirmAddPhase() {
+    if (!modalForm.label) { toast("請輸入階段名稱"); return; }
+    const id = "p_" + Date.now();
+    setData(d => ({ ...d, phases: [...d.phases, { id, label: modalForm.label, width: parseInt(modalForm.width)||200, variant: modalForm.variant||undefined }] }));
+    addLog("add", "新增", `新增階段「<strong>${modalForm.label}</strong>」`);
+    toast(`已新增階段「${modalForm.label}」`);
+    setModal(null);
+  }
+
+  // ADD LANE
+  function openAddLane() {
+    setModalForm({ label: "", color: "#6366F1", bg: "#EEF0FB", border: "#C5CAF0", textColor: "#3730A3" });
+    setModal("lane");
+  }
+  function confirmAddLane() {
+    if (!modalForm.label) { toast("請輸入角色名稱"); return; }
+    const id = "lane_" + Date.now();
+    setData(d => ({ ...d, lanes: [...d.lanes, { id, label: modalForm.label, color: modalForm.color, bg: modalForm.bg, border: modalForm.border, textColor: modalForm.textColor }] }));
+    addLog("add", "新增", `新增角色泳道「<strong>${modalForm.label}</strong>」`);
+    toast(`已新增角色「${modalForm.label}」`);
+    setModal(null);
+  }
+
+  // ADD NODE
+  function openAddNode() {
+    setModalForm({ label: "", sub: "", laneId: data.lanes[0]?.id || "", phaseId: data.phases[0]?.id || "", type: "default" });
+    setModal("node");
+  }
+  function confirmAddNode() {
+    if (!modalForm.label) { toast("請輸入節點名稱"); return; }
+    const id = "n_" + Date.now();
+    setData(d => ({ ...d, nodes: [...d.nodes, { id, ...modalForm }] }));
+    addLog("add", "新增", `新增節點「<strong>${modalForm.label}</strong>」`);
+    toast(`已新增節點「${modalForm.label}」`);
+    setModal(null);
+  }
+
+  // AI COMMAND — parses natural language and modifies data
+  async function handleAiSend() {
+    const cmd = aiInput.trim();
+    if (!cmd || aiLoading) return;
+    setAiInput(""); setAiLoading(true);
+
+    // Simulate AI parse (rule-based for demo; replace with Claude API call)
+    await new Promise(r => setTimeout(r, 700));
+
+    let handled = false;
+
+    // Pattern: 把「X」的負責人/角色 改成/換成 Y
+    const swapRole = cmd.match(/[「"](.+?)[」"]\s*.*?(?:負責人|角色).*?(?:改|換|改成|換成|改為|換為)\s*(.+)/);
+    if (swapRole) {
+      const nodeLabel = swapRole[1];
+      const newLaneLabel = swapRole[2].trim().replace(/[「」]/g, "");
+      const targetNode = data.nodes.find(n => n.label === nodeLabel);
+      const targetLane = data.lanes.find(l => l.label.includes(newLaneLabel) || newLaneLabel.includes(l.label));
+      if (targetNode && targetLane) {
+        setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === targetNode.id ? { ...n, laneId: targetLane.id } : n) }));
+        addLog("edit", "修改", `將「<strong>${nodeLabel}</strong>」負責人改為 <strong>${targetLane.label}</strong>`);
+        toast(`已更新：「${nodeLabel}」→ ${targetLane.label}`);
+        handled = true;
       } else {
-        appendMessage('notice', r.message || '設定異常');
+        toast(targetNode ? `找不到角色「${newLaneLabel}」` : `找不到節點「${nodeLabel}」`);
+        handled = true;
       }
-    })
-    .catch(function(err) { appendMessage('notice', '⚠️ 無法連接：' + err.message); });
-}
-
-function handleSend() {
-  var text = inputEl.value.trim();
-  if (!text || isWaiting) return;
-  appendMessage('user', text);
-  inputEl.value = ''; inputEl.style.height = 'auto';
-  isWaiting = true; inputEl.disabled = true; sendBtn.disabled = true;
-  var typingEl = showTyping();
-  var params = { action: 'chat', message: text };
-  if (conversationId) params.conversationId = conversationId;
-  gasGet(params)
-    .then(function(r) {
-      removeTyping(typingEl);
-      isWaiting = false; inputEl.disabled = false; sendBtn.disabled = false; inputEl.focus();
-      if (r.error) {
-        appendMessage('notice', '⚠️ ' + r.error);
-      } else {
-        if (r.conversationId) conversationId = r.conversationId;
-        appendMessage('bot', stripJsonBlock(r.reply || '（AI 未回覆）'));
-        if (r.extractedJson) {
-          renderFlowDiagram(r.extractedJson);
-          showBadge('✅ 流程圖已更新！');
-        }
-      }
-    })
-    .catch(function(err) {
-      removeTyping(typingEl);
-      isWaiting = false; inputEl.disabled = false; sendBtn.disabled = false;
-      appendMessage('notice', '⚠️ 連線失敗：' + err.message);
-    });
-}
-
-function stripJsonBlock(text) {
-  return text.replace(/```json[\s\S]*?```/gi, '').replace(/\{[\s\S]*"nodes"[\s\S]*\}/g, '').replace(/\n{3,}/g, '\n\n').trim();
-}
-
-function renderFlowDiagram(flowJson) {
-  var nodes = flowJson.nodes;
-  if (!nodes || !nodes.length) return;
-  flowNodesEl.style.display = 'flex';
-  flowNodesEl.innerHTML = '';
-  nodes.sort(function(a,b) { return ((a.position&&a.position.y)||0)-((b.position&&b.position.y)||0); });
-  nodes.forEach(function(node, idx) {
-    if (idx > 0) {
-      var arr = document.createElement('div');
-      arr.className = 'flow-arrow';
-      flowNodesEl.appendChild(arr);
     }
-    var card = document.createElement('div');
-    card.className = 'flow-node';
-    var label = (node.data && node.data.label) || node.id || '節點';
-    var desc  = (node.data && node.data.description) || '';
-    card.innerHTML = '<div class="node-label">' + esc(label) + '</div>' + (desc ? '<div class="node-desc">' + esc(desc) + '</div>' : '');
-    flowNodesEl.appendChild(card);
-  });
-}
 
-// ── UTILS ─────────────────────────────────────────────────
-function gasGet(params) {
-  var url = GAS_URL + '?' + Object.keys(params).map(function(k) {
-    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-  }).join('&');
-  return fetch(url).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
-}
+    // Pattern: 新增節點「X」到 Y × Z
+    if (!handled) {
+      const addNode = cmd.match(/新增.*?節點.*?[「"](.+?)[」"]/);
+      if (addNode) {
+        const label = addNode[1];
+        const laneMatch = data.lanes.find(l => cmd.includes(l.label));
+        const phaseMatch = data.phases.find(p => cmd.includes(p.label.replace(/[①②③④⑤]/g, "").trim()) || cmd.includes(p.id));
+        const id = "n_" + Date.now();
+        setData(d => ({ ...d, nodes: [...d.nodes, { id, label, sub: "", laneId: laneMatch?.id || d.lanes[0].id, phaseId: phaseMatch?.id || d.phases[0].id, type: "default" }] }));
+        addLog("add", "新增", `新增節點「<strong>${label}</strong>」`);
+        toast(`已新增節點「${label}」`);
+        handled = true;
+      }
+    }
 
-function gasPost(body) {
-  return fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
-}
+    // Pattern: 刪除節點「X」
+    if (!handled) {
+      const delNode = cmd.match(/刪除.*?[「"](.+?)[」"]/);
+      if (delNode) {
+        const label = delNode[1];
+        const target = data.nodes.find(n => n.label === label);
+        if (target) {
+          setData(d => ({ ...d, nodes: d.nodes.filter(n => n.id !== target.id) }));
+          addLog("del", "刪除", `已刪除節點「<strong>${label}</strong>」`);
+          toast(`已刪除「${label}」`);
+        } else toast(`找不到節點「${label}」`);
+        handled = true;
+      }
+    }
 
-function showLoading(show) { loadingEl.style.display = show ? 'flex' : 'none'; }
+    // Pattern: 新增階段「X」
+    if (!handled) {
+      const addPhase = cmd.match(/新增.*?階段.*?[「"](.+?)[」"]/);
+      if (addPhase) {
+        const label = addPhase[1];
+        const id = "p_" + Date.now();
+        setData(d => ({ ...d, phases: [...d.phases, { id, label, width: 200 }] }));
+        addLog("add", "新增", `新增階段「<strong>${label}</strong>」`);
+        toast(`已新增階段「${label}」`);
+        handled = true;
+      }
+    }
 
-function showToast(msg, type) {
-  var el = document.createElement('div');
-  el.className = 'toast ' + (type || '');
-  el.textContent = msg;
-  document.body.appendChild(el);
-  // track change
-  if (type === 'success') {
-    state.changes.push({ action: msg, label: state.currentProduct || '', time: new Date().toLocaleString() });
-    if (state.changes.length > 100) state.changes.shift();
+    // Pattern: 修改「X」標題/名稱為「Y」
+    if (!handled) {
+      const rename = cmd.match(/(?:修改|改|更改)[「"](.+?)[」"].*?(?:標題|名稱|改為|為)[「"](.+?)[」"]/);
+      if (rename) {
+        const oldLabel = rename[1], newLabel = rename[2];
+        const target = data.nodes.find(n => n.label === oldLabel);
+        if (target) {
+          setData(d => ({ ...d, nodes: d.nodes.map(n => n.id === target.id ? { ...n, label: newLabel } : n) }));
+          addLog("edit", "修改", `將節點「<strong>${oldLabel}</strong>」改名為「<strong>${newLabel}</strong>」`);
+          toast(`已更名：${oldLabel} → ${newLabel}`);
+        } else toast(`找不到節點「${oldLabel}」`);
+        handled = true;
+      }
+    }
+
+    if (!handled) {
+      toast("無法解析指令，請嘗試：「把『節點名』負責人改成 D4 顧問」");
+    }
+
+    setAiLoading(false);
   }
-  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 2500);
-}
 
-function showBadge(msg) {
-  var el = document.createElement('div');
-  el.className = 'flow-badge';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
-}
+  function fillAi(text) { setAiInput(text); textareaRef.current?.focus(); }
 
-function appendMessage(role, text) {
-  var msgEl = document.createElement('div');
-  msgEl.className = 'w-msg ' + role;
-  if (role === 'notice') {
-    msgEl.innerHTML = '<div class="w-bubble">' + esc(text) + '</div>';
-  } else {
-    var emoji = role === 'user' ? '🧑' : '🤖';
-    msgEl.innerHTML = '<div class="w-avatar">' + emoji + '</div><div class="w-bubble">' + esc(text) + '</div>';
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${data.productName}_flowmap.json`; a.click();
+    URL.revokeObjectURL(url);
+    toast("JSON 已匯出");
   }
-  messagesEl.appendChild(msgEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  function resetData() {
+    if (window.confirm("確定要重置回預設資料？")) {
+      setData(DEFAULT_DATA); setLogs([]); toast("已重置");
+    }
+  }
+
+  const selectedNode = data.nodes.find(n => n.id === selectedId);
+  const totalLogs = logs.length;
+
+  return (
+    <>
+      {/* TOPBAR */}
+      <div className="topbar">
+        <div className="topbar-logo">Flow<span>Map</span></div>
+        <div className="topbar-sep" />
+        <div className="product-tabs">
+          <button className="tab-btn active">{data.productName}</button>
+          <button className="tab-btn">+ 新增產品</button>
+        </div>
+        <div className="topbar-actions">
+          <button className="btn-sm" onClick={openAddPhase}>+ 新增階段</button>
+          <button className="btn-sm" onClick={openAddLane}>+ 新增角色</button>
+          <button className="btn-sm" onClick={openAddNode}>+ 新增節點</button>
+          <div className="topbar-sep" />
+          <button className="btn-sm" onClick={() => { setLogOpen(v=>!v); }}>
+            變更記錄 {totalLogs > 0 && <span style={{background:"#EEF0FB",color:"#3730A3",padding:"1px 6px",borderRadius:4,fontSize:11,marginLeft:4}}>{totalLogs}</span>}
+          </button>
+          <button className="btn-sm btn-primary" onClick={exportJson}>匯出 JSON</button>
+          <div className="avatar">陳</div>
+        </div>
+      </div>
+
+      {/* APP BODY */}
+      <div className="app-body">
+        {/* SIDEBAR */}
+        <div className="sidebar">
+          <div className="sb-section">
+            <div className="sb-label">產品週期階段</div>
+            {data.phases.map(ph => (
+              <div className="sb-item" key={ph.id}>
+                <span className="sb-dot" style={{background: ph.variant==="positive"?"#059669":ph.variant==="negative"?"#E05A38":"#6366F1"}} />
+                {ph.label}
+              </div>
+            ))}
+          </div>
+          <div className="sb-section">
+            <div className="sb-label">角色</div>
+            {data.lanes.map(lane => (
+              <div className="sb-item" key={lane.id}>
+                <span className="sb-dot" style={{background: lane.color}} />
+                {lane.label}
+              </div>
+            ))}
+          </div>
+          <div className="sb-section">
+            <div className="sb-label">圖例</div>
+            <div className="legend-box">
+              {data.lanes.map(lane => (
+                <div className="legend-row" key={lane.id}>
+                  <div className="legend-chip" style={{background: lane.color}} />
+                  {lane.label}
+                </div>
+              ))}
+              <div className="legend-row">
+                <div className="legend-chip" style={{background:"#FEF3C7",border:"1px solid #F59E0B",borderRadius:"50px"}} />
+                判斷點
+              </div>
+              <div className="legend-row">
+                <div className="legend-dash" />
+                跨泳道
+              </div>
+            </div>
+          </div>
+          <div className="sb-section" style={{marginTop:"auto"}}>
+            <button className="btn-sm" style={{width:"100%",fontSize:12,color:"var(--text-3)"}} onClick={resetData}>重置預設資料</button>
+          </div>
+        </div>
+
+        {/* CANVAS */}
+        <div style={{flex:1, display:"flex", flexDirection:"column", overflow:"hidden"}}>
+          <div className="canvas-area">
+            <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode} />
+          </div>
+
+          {/* BOTTOM: suggestions + AI bar + changelog */}
+          <div className="bottom-area">
+            <Changelog logs={logs} open={logOpen} />
+            <div className="suggestions-row">
+              <span style={{fontSize:11,color:"var(--text-3)",fontWeight:600,letterSpacing:".06em",textTransform:"uppercase",alignSelf:"center"}}>快速指令</span>
+              <div className="suggestion-chip" onClick={() => fillAi('把「模組三」的負責人改成 D7 研發')}>✏️ 更換負責人</div>
+              <div className="suggestion-chip" onClick={() => fillAi('新增節點「客戶教育訓練」到 D4 顧問')}>＋ 新增節點</div>
+              <div className="suggestion-chip" onClick={() => fillAi('刪除節點「接收反饋」')}>🗑 刪除節點</div>
+              <div className="suggestion-chip" onClick={() => fillAi('新增階段「⑥ 深度整合期」')}>📋 新增階段</div>
+              <div className="suggestion-chip" onClick={() => fillAi('修改「正式使用 BBP」名稱為「持續使用 BBP」')}>🏷 改名稱</div>
+            </div>
+            <div className="ai-bar">
+              <div className="ai-input-wrap">
+                <div className="ai-badge">AI</div>
+                <textarea
+                  ref={textareaRef}
+                  className="ai-textarea"
+                  rows={1}
+                  placeholder="白話文輸入修改指令，例如：把「追蹤詢問」的負責人從 D4 顧問換成 D7 研發"
+                  value={aiInput}
+                  onChange={e => { setAiInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,88)+"px"; }}
+                  onKeyDown={e => { if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handleAiSend(); } }}
+                />
+                <span className="ai-hint">Enter ↵</span>
+              </div>
+              <button className="send-btn" disabled={aiLoading || !aiInput.trim()} onClick={handleAiSend}>
+                {aiLoading ? "解析中…" : "送出修改"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div className={`right-panel${panelOpen && selectedNode ? " open" : ""}`}>
+          {panelOpen && selectedNode && (
+            <RightPanel
+              node={selectedNode}
+              data={data}
+              onSave={handleSaveNode}
+              onDelete={handleDeleteNode}
+              onClose={() => { setPanelOpen(false); setSelectedId(null); }}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* MODALS */}
+      {modal === "phase" && (
+        <Modal title="新增產品階段" sub="新階段將加到橫軸最右側" onClose={() => setModal(null)} onConfirm={confirmAddPhase}>
+          <div className="field-group">
+            <label>階段名稱</label>
+            <input placeholder="例：⑥ 深度整合期" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
+          </div>
+          <div className="field-group">
+            <label>欄寬（px）</label>
+            <input type="number" value={modalForm.width||200} onChange={e => setModalForm(f=>({...f,width:e.target.value}))} />
+          </div>
+          <div className="field-group">
+            <label>樣式（選填）</label>
+            <select value={modalForm.variant||""} onChange={e => setModalForm(f=>({...f,variant:e.target.value}))}>
+              <option value="">預設</option>
+              <option value="positive">正向（綠色）</option>
+              <option value="negative">負向（紅色）</option>
+              <option value="warning">警告（黃色）</option>
+            </select>
+          </div>
+        </Modal>
+      )}
+      {modal === "lane" && (
+        <Modal title="新增角色泳道" sub="新角色將加到縱軸最下方" onClose={() => setModal(null)} onConfirm={confirmAddLane}>
+          <div className="field-group">
+            <label>角色名稱</label>
+            <input placeholder="例：D1 行銷" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
+          </div>
+          <div className="field-group">
+            <label>主色（節點顏色）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.color||"#6366F1"} onChange={e => setModalForm(f=>({...f,color:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.color||"#6366F1"} onChange={e => setModalForm(f=>({...f,color:e.target.value}))} style={{flex:1}} />
+            </div>
+          </div>
+          <div className="field-group">
+            <label>背景色</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.bg||"#EEF0FB"} onChange={e => setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.bg||"#EEF0FB"} onChange={e => setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} />
+            </div>
+          </div>
+        </Modal>
+      )}
+      {modal === "node" && (
+        <Modal title="新增節點" sub="選擇位置後節點會出現在對應格子" onClose={() => setModal(null)} onConfirm={confirmAddNode}>
+          <div className="field-group">
+            <label>節點標題</label>
+            <input placeholder="例：審核文件" value={modalForm.label||""} onChange={e => setModalForm(f=>({...f,label:e.target.value}))} />
+          </div>
+          <div className="field-group">
+            <label>副標題（選填）</label>
+            <input placeholder="例：確認資料完整性" value={modalForm.sub||""} onChange={e => setModalForm(f=>({...f,sub:e.target.value}))} />
+          </div>
+          <div className="field-group">
+            <label>負責角色</label>
+            <select value={modalForm.laneId} onChange={e => setModalForm(f=>({...f,laneId:e.target.value}))}>
+              {data.lanes.map(l => <option key={l.id} value={l.id}>{l.label}</option>)}
+            </select>
+          </div>
+          <div className="field-group">
+            <label>所屬階段</label>
+            <select value={modalForm.phaseId} onChange={e => setModalForm(f=>({...f,phaseId:e.target.value}))}>
+              {data.phases.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+          </div>
+          <div className="field-group">
+            <label>節點類型</label>
+            <select value={modalForm.type||"default"} onChange={e => setModalForm(f=>({...f,type:e.target.value}))}>
+              <option value="default">一般節點</option>
+              <option value="gate">判斷點（圓角）</option>
+              <option value="success">成功節點（綠色）</option>
+            </select>
+          </div>
+        </Modal>
+      )}
+
+      {/* TOAST */}
+      <div className={`toast${toastShow ? " show" : ""}`}>{toastMsg}</div>
+    </>
+  );
 }
 
-function showTyping() {
-  var w = document.createElement('div');
-  w.className = 'w-msg bot';
-  w.innerHTML = '<div class="w-avatar">🤖</div><div class="typing-indicator"><span></span><span></span><span></span></div>';
-  messagesEl.appendChild(w);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-  return w;
-}
-function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
-
-function esc(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// hex #rrggbb → rgba(r,g,b,a) string
-function hexToAlpha(hex, a) {
-  var r = parseInt(hex.slice(1,3),16);
-  var g = parseInt(hex.slice(3,5),16);
-  var b = parseInt(hex.slice(5,7),16);
-  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
+bbp_swimlane_react.html
