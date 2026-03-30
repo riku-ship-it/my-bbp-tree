@@ -3,163 +3,260 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>商旅旅程分析</title>
+  <title>FlowMap</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+
+    :root {
+      --blue:   #1a73e8;
+      --blue2:  #0d47a1;
+      --blue-l: #e8f0fe;
+      --gray:   #f8f9fa;
+      --border: #e0e0e0;
+      --text:   #202124;
+      --muted:  #666;
+      --radius: 8px;
+      --shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+
+    html, body {
+      height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+      font-size: 13px;
+      color: var(--text);
       background: #f0f2f5;
-      height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
-    /* ── 頂部標題列 ── */
+
+    /* ── TOP BAR ─────────────────────────────────────── */
     .top-bar {
-      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
       color: #fff;
-      padding: 14px 24px;
+      padding: 0 20px;
+      height: 52px;
       display: flex;
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      z-index: 50;
     }
-    .top-bar .avatar {
-      width: 36px; height: 36px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .top-bar h2 { font-size: 16px; font-weight: 600; }
-    .top-bar p  { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-    .status-dot {
-      width: 8px; height: 8px;
-      background: #69f0ae; border-radius: 50%;
-      display: inline-block; margin-right: 5px;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    /* ── 主區域 ── */
-    .main-area {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      background: #f8f9fa;
-    }
-    #flow-canvas {
-      width: 100%; height: 100%;
-      position: relative;
-      overflow: auto;
-    }
-
-    /* ── 載入中 ── */
-    .loading-hint {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: #888;
-      font-size: 15px;
-    }
-    .loading-hint .spin {
-      display: inline-block;
-      width: 32px; height: 32px;
-      border: 3px solid #ddd;
-      border-top-color: #1a73e8;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 10px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── 空白提示（AI 流程圖用） ── */
-    .empty-hint {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: #bbb;
-      pointer-events: none;
-    }
-    .empty-hint .icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-hint p { font-size: 15px; }
-
-    /* ── BBP 泳道圖 ── */
-    #bbp-swimlane {
-      display: none;
-      min-width: max-content;
-      padding: 24px;
-    }
-    /* 整體表格 */
-    .swimlane-table {
-      border-collapse: collapse;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    }
-    /* Phase 標頭列 */
-    .phase-header-row th {
-      background: #1a73e8;
-      color: #fff;
+    .logo {
+      font-size: 17px;
       font-weight: 700;
-      font-size: 13px;
-      padding: 10px 16px;
-      text-align: center;
-      border-right: 1px solid rgba(255,255,255,0.25);
-      min-width: 170px;
+      letter-spacing: -0.5px;
+      color: #fff;
       white-space: nowrap;
     }
-    .phase-header-row th.corner-cell {
-      background: #0d47a1;
-      min-width: 90px;
+    .logo span { color: #69f0ae; }
+
+    /* 產品切換器 */
+    .product-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
-    /* Lane 行 */
-    .lane-row td {
-      vertical-align: top;
-      border: 1px solid #e0e0e0;
-      min-height: 90px;
-      padding: 8px;
+    .product-tabs::-webkit-scrollbar { display: none; }
+    .prod-tab {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+      border: none;
+      transition: background 0.15s, color 0.15s;
     }
-    .lane-label-cell {
+    .prod-tab:hover   { background: rgba(255,255,255,0.25); color: #fff; }
+    .prod-tab.active  { background: #fff; color: var(--blue); }
+    .prod-tab.add-tab {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+      border: 1.5px dashed rgba(255,255,255,0.4);
+    }
+    .prod-tab.add-tab:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* 右側工具列 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .tb-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,0.25); }
+    .tb-btn.primary {
+      background: #fff;
+      color: var(--blue);
+      border-color: transparent;
+      font-weight: 600;
+    }
+    .tb-btn.primary:hover { background: #e8f0fe; }
+
+    /* 狀態點 */
+    .status-dot {
+      width: 7px; height: 7px;
+      background: #69f0ae;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── MAIN CANVAS ──────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+    #bbp-swimlane {
+      padding: 20px 24px 80px;
+      min-width: max-content;
+    }
+
+    /* ── SWIMLANE TABLE ───────────────────────────────── */
+    .sw-table {
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1.5px solid #ccc;
+    }
+
+    /* Phase header */
+    .sw-table thead th {
+      background: var(--blue);
+      color: #fff;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
+      padding: 10px 16px;
       text-align: center;
-      vertical-align: middle !important;
+      border-right: 1px solid rgba(255,255,255,0.2);
+      white-space: nowrap;
+      position: relative;
+    }
+    .sw-table thead th.corner {
+      background: var(--blue2);
+      min-width: 88px;
+    }
+    /* Phase header actions (on hover) */
+    .ph-actions {
+      display: none;
+      position: absolute;
+      top: 4px; right: 4px;
+      gap: 2px;
+    }
+    .sw-table thead th:not(.corner):hover .ph-actions { display: flex; }
+    .ph-del-btn {
+      width: 18px; height: 18px;
+      border-radius: 3px;
+      border: none;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ph-del-btn:hover { background: rgba(220,50,50,0.6); }
+
+    /* Lane rows */
+    .sw-table tbody tr td {
+      vertical-align: top;
+      border: 1px solid var(--border);
+      padding: 6px;
+    }
+    .lane-label {
+      font-weight: 700;
+      font-size: 12px;
+      text-align: center;
       white-space: nowrap;
       padding: 12px 10px !important;
       border-right: 2px solid #ccc !important;
+      vertical-align: middle !important;
+      position: relative;
+      min-width: 80px;
     }
-    /* Node 卡片 */
+    /* Lane header actions */
+    .lane-actions {
+      display: none;
+      position: absolute;
+      top: 4px; right: 2px;
+    }
+    .lane-label:hover .lane-actions { display: flex; }
+    .lane-del-btn {
+      width: 16px; height: 16px;
+      border-radius: 3px; border: none;
+      background: rgba(200,50,50,0.12);
+      color: #c5221f; font-size: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lane-del-btn:hover { background: #fce8e6; }
+
+    /* Cell */
+    .sw-cell {
+      min-width: 160px;
+      min-height: 80px;
+      transition: background 0.15s;
+    }
+    .sw-cell.drag-over {
+      background: rgba(26,115,232,0.08) !important;
+      outline: 2px dashed var(--blue);
+      outline-offset: -2px;
+      border-radius: 6px;
+    }
+
+    /* ── NODE CARD ─────────────────────────────────────── */
     .bbp-node {
       background: #fff;
-      border: 2px solid #1a73e8;
-      border-radius: 8px;
-      padding: 8px 10px;
+      border: 2px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 7px 10px;
       margin: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      transition: box-shadow 0.15s, transform 0.15s;
+      cursor: grab;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s;
       position: relative;
+      user-select: none;
     }
     .bbp-node:hover {
-      box-shadow: 0 3px 10px rgba(26,115,232,0.25);
+      box-shadow: 0 3px 10px rgba(26,115,232,0.22);
       transform: translateY(-1px);
     }
-    .bbp-node .node-label {
-      font-weight: 600;
-      color: #202124;
-      margin-bottom: 3px;
+    .bbp-node.dragging {
+      opacity: 0.4;
+      cursor: grabbing;
     }
-    .bbp-node .node-sub {
-      color: #666;
-      font-size: 11px;
+    .bbp-node.decision {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      padding: 16px 20px;
+      text-align: center;
     }
-    .bbp-node .node-actions {
+    .node-label { font-weight: 600; font-size: 12px; color: var(--text); margin-bottom: 2px; }
+    .node-sub   { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    /* Node actions (show on hover) */
+    .node-actions {
       display: none;
       position: absolute;
       top: 4px; right: 4px;
@@ -167,64 +264,209 @@
     }
     .bbp-node:hover .node-actions { display: flex; }
     .node-btn {
-      width: 22px; height: 22px;
+      width: 20px; height: 20px;
       border: none; border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
+      cursor: pointer; font-size: 11px;
       display: flex; align-items: center; justify-content: center;
-      background: #e8f0fe;
-      color: #1a73e8;
-      transition: background 0.15s;
+      background: var(--blue-l); color: var(--blue);
+      transition: background 0.12s;
     }
     .node-btn.del { background: #fce8e6; color: #c5221f; }
     .node-btn:hover { filter: brightness(0.9); }
-    /* 空格子 */
-    .cell-empty { min-width: 170px; min-height: 80px; }
-    .add-node-btn {
-      width: 100%;
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      background: none;
-      color: #aaa;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 10px;
-      margin-top: 4px;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .add-node-btn:hover { border-color: #1a73e8; color: #1a73e8; }
 
-    /* ── AI 流程圖（原有功能完全保留） ── */
+    /* Add node button */
+    .add-node-btn {
+      width: calc(100% - 8px);
+      margin: 4px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: none;
+      color: #bbb;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 8px;
+      transition: border-color 0.15s, color 0.15s;
+      display: block;
+    }
+    .add-node-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── LOADING ───────────────────────────────────────── */
+    .loading-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
+      background: #f0f2f5;
+      z-index: 10;
+    }
+    .spin {
+      width: 32px; height: 32px;
+      border: 3px solid #ddd;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay p { color: var(--muted); font-size: 14px; }
+
+    /* ── AI CHAT WIDGET ────────────────────────────────── */
+    .chat-widget {
+      position: fixed; bottom: 20px; right: 20px;
+      width: 340px; max-height: 500px;
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+      display: flex; flex-direction: column;
+      overflow: hidden; z-index: 100;
+      transition: max-height 0.28s ease;
+    }
+    .chat-widget.collapsed { max-height: 52px; }
+    .widget-header {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+      color: #fff; padding: 13px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .widget-header .left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+    .widget-toggle { font-size: 14px; opacity: 0.8; }
+    .widget-messages {
+      flex: 1; overflow-y: auto; padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .widget-messages::-webkit-scrollbar { width: 4px; }
+    .widget-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+    .w-msg { display: flex; align-items: flex-end; gap: 6px; max-width: 90%; }
+    .w-msg.user   { align-self: flex-end; flex-direction: row-reverse; }
+    .w-msg.bot    { align-self: flex-start; }
+    .w-msg.notice { align-self: center; max-width: 100%; }
+    .w-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; background: #e3f2fd;
+    }
+    .w-msg.user .w-avatar { background: #e8f5e9; }
+    .w-bubble {
+      padding: 8px 12px; border-radius: 14px;
+      font-size: 13px; line-height: 1.5;
+      word-break: break-word; white-space: pre-wrap;
+    }
+    .w-msg.bot    .w-bubble { background: #f1f3f4; color: var(--text); border-bottom-left-radius: 4px; }
+    .w-msg.user   .w-bubble { background: var(--blue); color: #fff; border-bottom-right-radius: 4px; }
+    .w-msg.notice .w-bubble { background: #fff3e0; color: #e65100; font-size: 12px; border-radius: 8px; text-align: center; }
+    .typing-indicator { display: flex; gap: 4px; padding: 9px 12px; background: #f1f3f4; border-radius: 14px; border-bottom-left-radius: 4px; }
+    .typing-indicator span { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+    .widget-input {
+      padding: 8px 10px; border-top: 1px solid var(--border);
+      display: flex; gap: 6px; align-items: flex-end;
+      background: #fff; flex-shrink: 0;
+    }
+    .widget-input textarea {
+      flex: 1; resize: none;
+      border: 1.5px solid #dadce0; border-radius: 18px;
+      padding: 7px 12px; font-size: 13px; font-family: inherit;
+      outline: none; max-height: 72px; line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    .widget-input textarea:focus { border-color: var(--blue); }
+    .widget-input textarea:disabled { background: #f5f5f5; }
+    .w-send-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--blue); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .w-send-btn:hover    { background: var(--blue2); }
+    .w-send-btn:disabled { background: #dadce0; cursor: not-allowed; }
+    .w-send-btn svg { fill: #fff; width: 15px; height: 15px; }
+
+    /* ── MODAL ─────────────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.38);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px;
+      padding: 24px; width: 360px; max-width: 96vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      animation: modalIn 0.18s ease;
+    }
+    @keyframes modalIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+    .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .modal label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; margin-top: 12px; }
+    .modal input, .modal select, .modal textarea {
+      width: 100%; border: 1.5px solid #dadce0; border-radius: 8px;
+      padding: 7px 10px; font-size: 13px; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--blue); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel {
+      padding: 7px 16px; border-radius: 8px;
+      border: 1.5px solid #dadce0; background: #fff;
+      font-size: 13px; cursor: pointer; color: var(--muted);
+    }
+    .btn-cancel:hover { background: #f5f5f5; }
+    .btn-save {
+      padding: 7px 16px; border-radius: 8px;
+      border: none; background: var(--blue);
+      font-size: 13px; cursor: pointer; color: #fff; font-weight: 600;
+    }
+    .btn-save:hover { background: var(--blue2); }
+    .color-row { display: flex; gap: 8px; align-items: center; }
+    .color-row input[type="color"] { width: 40px; height: 32px; border: 1.5px solid #dadce0; border-radius: 6px; padding: 2px; cursor: pointer; }
+    .color-row input[type="text"] { flex: 1; }
+
+    /* ── TOAST ─────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 76px; left: 50%;
+      transform: translateX(-50%);
+      background: #323232; color: #fff;
+      padding: 9px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 300; pointer-events: none;
+      animation: toastIn 0.22s ease, toastOut 0.22s ease 2s forwards;
+    }
+    .toast.success { background: #1e8e3e; }
+    .toast.error   { background: #c5221f; }
+    @keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%)} }
+    @keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(8px)} }
+
+    /* flow-updated badge */
+    .flow-badge {
+      position: fixed; top: 70px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--blue); color: #fff;
+      padding: 7px 18px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+      box-shadow: 0 4px 12px rgba(26,115,232,0.3);
+      animation: toastIn 0.22s ease, toastOut 0.22s ease 2.5s forwards;
+      z-index: 150;
+    }
+
+    /* AI flow diagram (kept from original) */
     #flow-nodes {
-      position: relative;
-      min-height: 100%;
+      position: relative; min-height: 100%;
       padding: 40px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0;
     }
     .flow-node {
-      width: 220px;
-      background: #fff;
-      border: 2px solid #1a73e8;
-      border-radius: 12px;
-      padding: 14px 18px;
-      text-align: center;
+      width: 220px; background: #fff;
+      border: 2px solid var(--blue); border-radius: 12px;
+      padding: 14px 18px; text-align: center;
       box-shadow: 0 2px 10px rgba(26,115,232,0.12);
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
       animation: nodeIn 0.3s ease;
     }
-    @keyframes nodeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-    .flow-node .node-label { font-size: 15px; font-weight: 700; color: #1a73e8; margin-bottom: 6px; }
-    .flow-node .node-desc  { font-size: 13px; color: #555; line-height: 1.5; }
+    @keyframes nodeIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+    .flow-node .node-label { font-size: 15px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+    .flow-node .node-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
     .flow-arrow {
-      width: 2px; height: 36px;
-      background: #1a73e8;
+      width: 2px; height: 36px; background: var(--blue);
       position: relative; margin: 0 auto;
     }
     .flow-arrow::after {
@@ -232,799 +474,877 @@
       position: absolute; bottom: -1px; left: 50%;
       transform: translateX(-50%);
       border-left: 6px solid transparent; border-right: 6px solid transparent;
-      border-top: 8px solid #1a73e8;
+      border-top: 8px solid var(--blue);
     }
-    .flow-node[data-stage="0"] { border-color: #e91e63; }
-    .flow-node[data-stage="0"] .node-label { color: #e91e63; }
-    .flow-node[data-stage="1"] { border-color: #ff9800; }
-    .flow-node[data-stage="1"] .node-label { color: #ff9800; }
-    .flow-node[data-stage="2"] { border-color: #4caf50; }
-    .flow-node[data-stage="2"] .node-label { color: #4caf50; }
-    .flow-node[data-stage="3"] { border-color: #9c27b0; }
-    .flow-node[data-stage="3"] .node-label { color: #9c27b0; }
-    .flow-node[data-stage="4"] { border-color: #1a73e8; }
-    .flow-node[data-stage="4"] .node-label { color: #1a73e8; }
-    .flow-node[data-stage="5"] { border-color: #009688; }
-    .flow-node[data-stage="5"] .node-label { color: #009688; }
-    .flow-arrow[data-stage="0"] { background: #e91e63; }
-    .flow-arrow[data-stage="0"]::after { border-top-color: #e91e63; }
-    .flow-arrow[data-stage="1"] { background: #ff9800; }
-    .flow-arrow[data-stage="1"]::after { border-top-color: #ff9800; }
-    .flow-arrow[data-stage="2"] { background: #4caf50; }
-    .flow-arrow[data-stage="2"]::after { border-top-color: #4caf50; }
-    .flow-arrow[data-stage="3"] { background: #9c27b0; }
-    .flow-arrow[data-stage="3"]::after { border-top-color: #9c27b0; }
-    .flow-arrow[data-stage="4"] { background: #1a73e8; }
-    .flow-arrow[data-stage="4"]::after { border-top-color: #1a73e8; }
-
-    /* ── 右下角對話框（原有功能完全保留） ── */
-    .chat-widget {
-      position: fixed; bottom: 24px; right: 24px;
-      width: 360px; max-height: 520px;
-      background: #fff; border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      display: flex; flex-direction: column; overflow: hidden;
-      z-index: 100; transition: max-height 0.3s ease;
+    .empty-hint {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center; color: #bbb; pointer-events: none;
     }
-    .chat-widget.collapsed { max-height: 56px; }
-    .widget-header {
-      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
-      color: #fff; padding: 14px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; flex-shrink: 0;
-    }
-    .widget-header .left { display: flex; align-items: center; gap: 8px; }
-    .widget-header .left span { font-size: 14px; font-weight: 600; }
-    .widget-toggle { font-size: 18px; opacity: 0.8; }
-    .widget-messages {
-      flex: 1; overflow-y: auto; padding: 16px 14px;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .widget-messages::-webkit-scrollbar { width: 4px; }
-    .widget-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-    .w-message { display: flex; align-items: flex-end; gap: 6px; max-width: 90%; }
-    .w-message.user   { align-self: flex-end; flex-direction: row-reverse; }
-    .w-message.bot    { align-self: flex-start; }
-    .w-message.notice { align-self: center; max-width: 100%; }
-    .w-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; flex-shrink: 0; background: #e3f2fd;
-    }
-    .w-message.user .w-avatar { background: #e8f5e9; }
-    .w-bubble {
-      padding: 9px 13px; border-radius: 16px;
-      font-size: 13.5px; line-height: 1.55;
-      word-break: break-word; white-space: pre-wrap;
-    }
-    .w-message.bot    .w-bubble { background: #f1f3f4; color: #202124; border-bottom-left-radius: 4px; }
-    .w-message.user   .w-bubble { background: #1a73e8; color: #fff; border-bottom-right-radius: 4px; }
-    .w-message.notice .w-bubble { background: #fff3e0; color: #e65100; font-size: 12px; border-radius: 8px; text-align: center; }
-    .typing-indicator {
-      display: flex; gap: 4px; padding: 10px 14px;
-      background: #f1f3f4; border-radius: 16px; border-bottom-left-radius: 4px;
-    }
-    .typing-indicator span {
-      width: 6px; height: 6px; background: #aaa; border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
-    .widget-input {
-      padding: 10px 12px; border-top: 1px solid #e8eaed;
-      display: flex; gap: 8px; align-items: flex-end;
-      background: #fff; flex-shrink: 0;
-    }
-    .widget-input textarea {
-      flex: 1; resize: none;
-      border: 1.5px solid #dadce0; border-radius: 20px;
-      padding: 8px 14px; font-size: 13.5px; font-family: inherit;
-      outline: none; max-height: 80px; line-height: 1.5;
-      transition: border-color 0.2s;
-    }
-    .widget-input textarea:focus { border-color: #1a73e8; }
-    .widget-input textarea:disabled { background: #f5f5f5; }
-    .w-send-btn {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: #1a73e8; border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s; flex-shrink: 0;
-    }
-    .w-send-btn:hover { background: #1558b0; }
-    .w-send-btn:disabled { background: #dadce0; cursor: not-allowed; }
-    .w-send-btn svg { fill: #fff; width: 17px; height: 17px; }
-
-    /* ── Toast ── */
-    .toast {
-      position: fixed; bottom: 80px; left: 50%;
-      transform: translateX(-50%);
-      background: #323232; color: #fff;
-      padding: 10px 20px; border-radius: 8px;
-      font-size: 13px; font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 300; pointer-events: none;
-      animation: toastIn 0.25s ease, toastOut 0.25s ease 2s forwards;
-    }
-    .toast.success { background: #1e8e3e; }
-    .toast.error   { background: #c5221f; }
-    @keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-    @keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(10px)} }
-
-    /* ── 流程圖更新提示（原有） ── */
-    .flow-updated-badge {
-      position: fixed; top: 80px; left: 50%;
-      transform: translateX(-50%);
-      background: #1a73e8; color: #fff;
-      padding: 8px 20px; border-radius: 20px;
-      font-size: 13px; font-weight: 500;
-      box-shadow: 0 4px 12px rgba(26,115,232,0.3);
-      animation: badgeIn 0.3s ease, badgeOut 0.3s ease 2.5s forwards;
-      z-index: 200;
-    }
-    @keyframes badgeIn  { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-    @keyframes badgeOut { to{opacity:0;transform:translateX(-50%) translateY(-10px)} }
-
-    /* ── 節點編輯 Modal ── */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 400;
-      align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      background: #fff; border-radius: 12px;
-      padding: 24px; width: 360px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-    .modal-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #202124; }
-    .modal-box label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; margin-top: 12px; }
-    .modal-box input, .modal-box select {
-      width: 100%; border: 1.5px solid #dadce0; border-radius: 8px;
-      padding: 8px 10px; font-size: 13.5px; font-family: inherit; outline: none;
-    }
-    .modal-box input:focus, .modal-box select:focus { border-color: #1a73e8; }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-    .btn-cancel {
-      padding: 8px 16px; border-radius: 8px;
-      border: 1.5px solid #dadce0; background: #fff;
-      font-size: 13px; cursor: pointer; color: #555;
-    }
-    .btn-save {
-      padding: 8px 16px; border-radius: 8px;
-      border: none; background: #1a73e8;
-      font-size: 13px; cursor: pointer; color: #fff; font-weight: 600;
-    }
-    .btn-save:hover { background: #1558b0; }
-
-    #error-banner {
-      display: none;
-      background: #fce8e6; color: #c5221f;
-      padding: 8px 20px; font-size: 13px; text-align: center;
-    }
+    .empty-hint .icon { font-size: 44px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
-<!-- 頂部標題 -->
+<!-- ── TOP BAR ──────────────────────────────────────────── -->
 <div class="top-bar">
-  <div class="avatar">🗺️</div>
-  <div>
-    <h2>商旅旅程分析</h2>
-    <p><span class="status-dot"></span>AI 助理上線中</p>
+  <span class="logo">Flow<span>Map</span></span>
+  <div class="product-tabs" id="product-tabs">
+    <!-- 動態填入 -->
   </div>
-</div>
-<div id="error-banner"></div>
-
-<!-- 主區域 -->
-<div class="main-area">
-  <div id="flow-canvas">
-
-    <!-- 載入中提示 -->
-    <div class="loading-hint" id="loading-hint">
-      <div class="spin"></div>
-      <div>載入中…</div>
-    </div>
-
-    <!-- BBP 泳道圖（GAS 資料載入後顯示） -->
-    <div id="bbp-swimlane"></div>
-
-    <!-- AI 流程圖（原有） -->
-    <div id="flow-nodes">
-      <div class="empty-hint" id="empty-hint" style="display:none;">
-        <div class="icon">🗂️</div>
-        <p>在右下角輸入你的商旅流程<br>AI 將自動產生視覺化流程圖</p>
-      </div>
-    </div>
-
+  <div class="toolbar">
+    <span class="status-dot" id="status-dot" style="display:none;"></span>
+    <button class="tb-btn" id="btn-add-stage">＋ 新增階段</button>
+    <button class="tb-btn" id="btn-add-lane">＋ 新增角色</button>
+    <button class="tb-btn primary" id="btn-add-node">＋ 新增節點</button>
+    <button class="tb-btn" id="btn-changelog" title="變更記錄">📋</button>
   </div>
 </div>
 
-<!-- 右下角對話框（原有，完全不動） -->
+<!-- ── MAIN AREA ─────────────────────────────────────────── -->
+<div class="main" id="main">
+  <div class="loading-overlay" id="loading">
+    <div class="spin"></div>
+    <p>載入中…</p>
+  </div>
+  <div id="bbp-swimlane"></div>
+  <!-- AI flow diagram -->
+  <div id="flow-nodes" style="display:none;">
+    <div class="empty-hint" id="empty-hint">
+      <div class="icon">🗂️</div>
+      <p>在右下角輸入你的商旅流程<br>AI 將自動產生視覺化流程圖</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI CHAT WIDGET ────────────────────────────────────── -->
 <div class="chat-widget" id="chat-widget">
   <div class="widget-header" id="widget-header">
-    <div class="left">
-      <span>🤖</span>
-      <span>AI 客服助理</span>
-    </div>
+    <div class="left">🤖 <span>AI 客服助理</span></div>
     <span class="widget-toggle" id="widget-toggle">▼</span>
   </div>
   <div class="widget-messages" id="widget-messages"></div>
   <div class="widget-input">
-    <textarea
-      id="user-input"
-      rows="1"
-      placeholder="輸入訊息，按 Enter 傳送（Shift+Enter 換行）"
-      maxlength="2000"
-      disabled
-    ></textarea>
+    <textarea id="user-input" rows="1" placeholder="輸入訊息，Enter 傳送" maxlength="2000" disabled></textarea>
     <button class="w-send-btn" id="send-btn" disabled>
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
 </div>
 
-<!-- 節點編輯 Modal -->
-<div class="modal-overlay" id="node-modal">
-  <div class="modal-box">
+<!-- ── NODE MODAL ────────────────────────────────────────── -->
+<div class="overlay" id="node-modal">
+  <div class="modal">
     <h3 id="modal-title">編輯節點</h3>
-    <input type="hidden" id="modal-node-id" />
-    <label>節點名稱</label>
-    <input type="text" id="modal-label" placeholder="節點名稱" />
+    <input type="hidden" id="m-node-id" />
+    <label>節點名稱 *</label>
+    <input type="text" id="m-label" placeholder="節點名稱" />
     <label>副標題 / 備註</label>
-    <input type="text" id="modal-sub" placeholder="（可空白）" />
-    <label>所在階段（Phase ID）</label>
-    <input type="text" id="modal-phase" placeholder="例如 p1" />
-    <label>所在泳道（Lane ID）</label>
-    <input type="text" id="modal-lane" placeholder="例如 client" />
+    <input type="text" id="m-sub" placeholder="（可空白）" />
+    <label>所在階段</label>
+    <select id="m-phase"></select>
+    <label>所在角色（泳道）</label>
+    <select id="m-lane"></select>
     <label>節點類型</label>
-    <select id="modal-type">
-      <option value="default">default</option>
-      <option value="decision">decision</option>
-      <option value="start">start</option>
-      <option value="end">end</option>
+    <select id="m-type">
+      <option value="default">default（一般）</option>
+      <option value="decision">decision（判斷點）</option>
+      <option value="start">start（開始）</option>
+      <option value="end">end（結束）</option>
     </select>
     <div class="modal-actions">
-      <button class="btn-cancel" id="modal-cancel">取消</button>
-      <button class="btn-save"   id="modal-save">儲存</button>
+      <button class="btn-cancel" id="m-cancel">取消</button>
+      <button class="btn-save"   id="m-save">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STAGE MODAL ───────────────────────────────────────── -->
+<div class="overlay" id="stage-modal">
+  <div class="modal">
+    <h3 id="stage-modal-title">新增階段</h3>
+    <label>階段名稱 *</label>
+    <input type="text" id="s-label" placeholder="例如：付款" />
+    <label>欄寬（px，建議 160–300）</label>
+    <input type="number" id="s-width" value="200" min="120" max="400" />
+    <div class="modal-actions">
+      <button class="btn-cancel" id="s-cancel">取消</button>
+      <button class="btn-save"   id="s-save">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LANE MODAL ────────────────────────────────────────── -->
+<div class="overlay" id="lane-modal">
+  <div class="modal">
+    <h3 id="lane-modal-title">新增角色</h3>
+    <label>角色名稱 *</label>
+    <input type="text" id="l-label" placeholder="例如：財務" />
+    <label>代表色</label>
+    <div class="color-row">
+      <input type="color" id="l-color-picker" value="#1a73e8" />
+      <input type="text"  id="l-color" value="#1a73e8" placeholder="#rrggbb" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="l-cancel">取消</button>
+      <button class="btn-save"   id="l-save">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRODUCT MODAL ─────────────────────────────────────── -->
+<div class="overlay" id="prod-modal">
+  <div class="modal">
+    <h3>新增產品</h3>
+    <label>產品名稱（同時作為 Sheet tab 名稱）*</label>
+    <input type="text" id="p-name" placeholder="例如：CRM" />
+    <div class="modal-actions">
+      <button class="btn-cancel" id="p-cancel">取消</button>
+      <button class="btn-save"   id="p-save">建立</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHANGELOG MODAL ───────────────────────────────────── -->
+<div class="overlay" id="changelog-modal">
+  <div class="modal" style="width:520px;max-height:80vh;display:flex;flex-direction:column;">
+    <h3>變更記錄</h3>
+    <div id="changelog-list" style="flex:1;overflow-y:auto;margin-top:14px;display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn-cancel" id="cl-close">關閉</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ── GAS 網址（與原有相同） ──────────────────────────────────
-  var GAS_URL = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
+'use strict';
+// ── CONFIG ───────────────────────────────────────────────────
+var GAS_URL  = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
+var LS_USER  = '我';
+var CACHE_PFX = 'fm_';
 
-  // ── DEFAULT_DATA（BBP 備用資料，與 Google Sheet 結構一致） ──
-  var DEFAULT_DATA = {
-    productName: 'BBP',
+// ── STATE ────────────────────────────────────────────────────
+var state = {
+  currentProduct: null,
+  products: [],
+  data: null,          // { phases, lanes, nodes }
+  changes: [],         // local changelog
+  draggingNodeId: null
+};
+
+// ── DOM REFS ─────────────────────────────────────────────────
+var $ = function(id) { return document.getElementById(id); };
+var productTabsEl  = $('product-tabs');
+var swimlaneEl     = $('bbp-swimlane');
+var loadingEl      = $('loading');
+var statusDot      = $('status-dot');
+var flowNodesEl    = $('flow-nodes');
+var widgetEl       = $('chat-widget');
+var messagesEl     = $('widget-messages');
+var inputEl        = $('user-input');
+var sendBtn        = $('send-btn');
+
+var conversationId = null;
+var isWaiting      = false;
+
+// ── INIT ─────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  initProductTabs();
+  initEventListeners();
+  checkAIConfig();
+});
+
+function initProductTabs() {
+  showLoading(true);
+  fetch(GAS_URL + '?action=getProducts')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var products = (d.products && d.products.length) ? d.products : ['BBP'];
+      state.products = products;
+      renderProductTabs(products);
+      loadProduct(products[0]);
+    })
+    .catch(function() {
+      state.products = ['BBP'];
+      renderProductTabs(['BBP']);
+      loadProduct('BBP');
+    });
+}
+
+function renderProductTabs(products) {
+  productTabsEl.innerHTML = '';
+  products.forEach(function(name) {
+    var btn = document.createElement('button');
+    btn.className = 'prod-tab' + (name === state.currentProduct ? ' active' : '');
+    btn.textContent = name;
+    btn.addEventListener('click', function() { loadProduct(name); });
+    productTabsEl.appendChild(btn);
+  });
+  // + 新增產品
+  var addBtn = document.createElement('button');
+  addBtn.className = 'prod-tab add-tab';
+  addBtn.textContent = '＋ 新增產品';
+  addBtn.addEventListener('click', openProdModal);
+  productTabsEl.appendChild(addBtn);
+}
+
+function loadProduct(name) {
+  state.currentProduct = name;
+  // Update active tab UI
+  productTabsEl.querySelectorAll('.prod-tab:not(.add-tab)').forEach(function(btn) {
+    btn.classList.toggle('active', btn.textContent === name);
+  });
+
+  showLoading(true);
+  swimlaneEl.innerHTML = '';
+
+  // Try cache first
+  var cached = null;
+  try { var raw = localStorage.getItem(CACHE_PFX + name); if (raw) cached = JSON.parse(raw); } catch(e) {}
+
+  fetch(GAS_URL + '?action=getProduct&product=' + encodeURIComponent(name))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      showLoading(false);
+      if (d.error) {
+        renderSwimlane(cached || fallbackData(name));
+      } else {
+        state.data = d;
+        try { localStorage.setItem(CACHE_PFX + name, JSON.stringify(d)); } catch(e) {}
+        renderSwimlane(d);
+      }
+    })
+    .catch(function() {
+      showLoading(false);
+      renderSwimlane(cached || fallbackData(name));
+    });
+}
+
+function fallbackData(name) {
+  return {
+    productName: name,
     phases: [
-      { id: 'p1', label: '曝光',  width: 210, variant: '' },
-      { id: 'p2', label: '報名',  width: 190, variant: '' },
-      { id: 'p3', label: '參與',  width: 220, variant: '' },
-      { id: 'p4', label: '轉換',  width: 300, variant: '' },
-      { id: 'p5', label: '成交',  width: 300, variant: '' },
-      { id: 'p6', label: '維護',  width: 300, variant: '' }
+      { id:'p1', label:'曝光',  width:200 },
+      { id:'p2', label:'報名',  width:200 },
+      { id:'p3', label:'參與',  width:200 },
+      { id:'p4', label:'轉換',  width:240 },
+      { id:'p5', label:'成交',  width:240 }
     ],
     lanes: [
-      { id: 'client', label: '客戶',   color: '#6366F1', bg: '#EEF0FB', border: '#C5CAF0', textColor: '#3730A3' },
-      { id: 'd4',     label: 'D4 顧問', color: '#059669', bg: '#E6F7F2', border: '#9FD9C5', textColor: '#065F46' },
-      { id: 'd7',     label: 'D7 研發', color: '#E05A38', bg: '#FEF1EE', border: '#F5BBA8', textColor: '#9A2E14' },
-      { id: 'd2',     label: 'D2 業務', color: '#9333EA', bg: '#F6F0FD', border: '#DABFF5', textColor: '#5B1A9A' }
+      { id:'client', label:'客戶',    color:'#6366F1', bg:'#EEF0FB', border:'#C5CAF0', textColor:'#3730A3' },
+      { id:'d4',     label:'D4 顧問', color:'#059669', bg:'#E6F7F2', border:'#9FD9C5', textColor:'#065F46' },
+      { id:'d7',     label:'D7 研發', color:'#E05A38', bg:'#FEF1EE', border:'#F5BBA8', textColor:'#9A2E14' },
+      { id:'d2',     label:'D2 業務', color:'#9333EA', bg:'#F6F0FD', border:'#DABFF5', textColor:'#5B1A9A' }
     ],
-    nodes: [
-      { id: 'n1', phaseId: 'p1', laneId: 'client', label: '（待填）', sub: '', type: 'default' }
-    ]
+    nodes: []
   };
+}
 
-  // ── BBP 狀態 ────────────────────────────────────────────────
-  var bbpData    = null;    // 目前載入的泳道資料
-  var CACHE_KEY  = 'bbp_cache';
-  var LS_USER    = '我';
+// ── RENDER SWIMLANE ───────────────────────────────────────────
+function renderSwimlane(data) {
+  if (!data || !data.phases || !data.lanes) return;
+  state.data = data;
 
-  // ── DOM refs ──────────────────────────────────────────────
-  var conversationId = null;
-  var isWaiting      = false;
-  var widgetEl   = document.getElementById('chat-widget');
-  var headerEl   = document.getElementById('widget-header');
-  var toggleEl   = document.getElementById('widget-toggle');
-  var messagesEl = document.getElementById('widget-messages');
-  var inputEl    = document.getElementById('user-input');
-  var sendBtn    = document.getElementById('send-btn');
-  var flowNodes  = document.getElementById('flow-nodes');
-  var emptyHint  = document.getElementById('empty-hint');
-  var loadingEl  = document.getElementById('loading-hint');
-  var swimlaneEl = document.getElementById('bbp-swimlane');
-
-  // ── 折疊/展開對話框（原有） ──────────────────────────────────
-  headerEl.addEventListener('click', function() {
-    widgetEl.classList.toggle('collapsed');
-    toggleEl.textContent = widgetEl.classList.contains('collapsed') ? '▲' : '▼';
+  // nodeMap[phaseId][laneId] = [nodes]
+  var nodeMap = {};
+  (data.nodes || []).forEach(function(n) {
+    if (!nodeMap[n.phaseId]) nodeMap[n.phaseId] = {};
+    if (!nodeMap[n.phaseId][n.laneId]) nodeMap[n.phaseId][n.laneId] = [];
+    nodeMap[n.phaseId][n.laneId].push(n);
   });
 
-  // ════════════════════════════════════════════════════════════
-  // 初始化：先載入 BBP，再 check API
-  // ════════════════════════════════════════════════════════════
-  window.addEventListener('load', function() {
+  var table = document.createElement('table');
+  table.className = 'sw-table';
 
-    // 1. 顯示載入中
-    loadingEl.style.display = 'block';
+  // thead
+  var thead = document.createElement('thead');
+  var headRow = document.createElement('tr');
 
-    // 2. 讀取 localStorage cache（備用）
-    var cached = null;
-    try {
-      var raw = localStorage.getItem(CACHE_KEY);
-      if (raw) cached = JSON.parse(raw);
-    } catch(e) {}
+  var corner = document.createElement('th');
+  corner.className = 'corner';
+  headRow.appendChild(corner);
 
-    // 3. 呼叫 getBBP
-    fetch(GAS_URL + '?action=getBBP')
-      .then(function(res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(function(data) {
-        loadingEl.style.display = 'none';
-        if (data.error) {
-          console.warn('getBBP error:', data.error);
-          renderBBP(cached || DEFAULT_DATA);
-        } else {
-          bbpData = data;
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) {}
-          renderBBP(data);
-        }
-      })
-      .catch(function(err) {
-        loadingEl.style.display = 'none';
-        console.warn('getBBP fetch failed:', err);
-        renderBBP(cached || DEFAULT_DATA);
-      });
+  data.phases.forEach(function(ph) {
+    var th = document.createElement('th');
+    th.style.minWidth = (ph.width || 180) + 'px';
 
-    // 4. 原有 check API（獨立執行，不影響泳道圖）
-    gasRequest({ action: 'check' })
-      .then(function(result) {
-        if (result.ok) {
-          inputEl.disabled = false;
-          sendBtn.disabled = false;
-          appendMessage('bot', '你好！請描述你的商旅流程，我會幫你轉成視覺化流程圖 😊');
-        } else {
-          appendMessage('notice', result.message || '設定異常');
-        }
-      })
-      .catch(function(err) {
-        appendMessage('notice', '⚠️ 無法連接到 GAS：' + err.message);
-      });
-  });
+    var label = document.createElement('span');
+    label.textContent = ph.label;
+    th.appendChild(label);
 
-  // ════════════════════════════════════════════════════════════
-  // 渲染 BBP 泳道圖
-  // ════════════════════════════════════════════════════════════
-  function renderBBP(data) {
-    if (!data || !data.phases || !data.lanes) return;
-    bbpData = data;
-
-    var phases = data.phases;
-    var lanes  = data.lanes;
-    var nodes  = data.nodes || [];
-
-    // 建立 nodeMap[phaseId][laneId] = [node, ...]
-    var nodeMap = {};
-    nodes.forEach(function(n) {
-      if (!nodeMap[n.phaseId]) nodeMap[n.phaseId] = {};
-      if (!nodeMap[n.phaseId][n.laneId]) nodeMap[n.phaseId][n.laneId] = [];
-      nodeMap[n.phaseId][n.laneId].push(n);
-    });
-
-    var table = document.createElement('table');
-    table.className = 'swimlane-table';
-
-    // ── Phase 標頭列 ──
-    var headRow = document.createElement('tr');
-    headRow.className = 'phase-header-row';
-
-    var corner = document.createElement('th');
-    corner.className = 'corner-cell';
-    corner.textContent = '';
-    headRow.appendChild(corner);
-
-    phases.forEach(function(ph) {
-      var th = document.createElement('th');
-      th.textContent = ph.label;
-      if (ph.width) th.style.minWidth = ph.width + 'px';
-      headRow.appendChild(th);
-    });
-    table.appendChild(headRow);
-
-    // ── Lane 列 ──
-    lanes.forEach(function(lane) {
-      var tr = document.createElement('tr');
-      tr.className = 'lane-row';
-
-      // Lane 標籤
-      var tdLabel = document.createElement('td');
-      tdLabel.className = 'lane-label-cell';
-      tdLabel.textContent = lane.label;
-      tdLabel.style.background  = lane.bg    || '#f5f5f5';
-      tdLabel.style.color       = lane.color || '#333';
-      tdLabel.style.borderColor = lane.border || '#ccc';
-      tr.appendChild(tdLabel);
-
-      // 每個 Phase 格子
-      phases.forEach(function(ph) {
-        var td = document.createElement('td');
-        td.style.background = lane.bg || '#fff';
-
-        var cellNodes = (nodeMap[ph.id] && nodeMap[ph.id][lane.id]) || [];
-
-        cellNodes.forEach(function(node) {
-          td.appendChild(buildNodeCard(node, lane));
-        });
-
-        // 新增按鈕
-        var addBtn = document.createElement('button');
-        addBtn.className = 'add-node-btn';
-        addBtn.title = '新增節點';
-        addBtn.textContent = '+';
-        addBtn.addEventListener('click', function() {
-          openModal(null, ph.id, lane.id);
-        });
-        td.appendChild(addBtn);
-
-        tr.appendChild(td);
-      });
-
-      table.appendChild(tr);
-    });
-
-    swimlaneEl.innerHTML = '';
-    swimlaneEl.appendChild(table);
-    swimlaneEl.style.display = 'block';
-  }
-
-  // 建立節點卡片 DOM
-  function buildNodeCard(node, lane) {
-    var card = document.createElement('div');
-    card.className = 'bbp-node';
-    card.dataset.id = node.id;
-    card.style.borderColor = lane ? (lane.color || '#1a73e8') : '#1a73e8';
-
-    var labelEl = document.createElement('div');
-    labelEl.className = 'node-label';
-    labelEl.textContent = node.label || '（無標題）';
-
+    // Delete phase button
     var actions = document.createElement('div');
-    actions.className = 'node-actions';
-
-    var editBtn = document.createElement('button');
-    editBtn.className = 'node-btn';
-    editBtn.title = '編輯';
-    editBtn.textContent = '✏️';
-    editBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openModal(node, node.phaseId, node.laneId);
-    });
-
+    actions.className = 'ph-actions';
     var delBtn = document.createElement('button');
-    delBtn.className = 'node-btn del';
-    delBtn.title = '刪除';
-    delBtn.textContent = '🗑';
+    delBtn.className = 'ph-del-btn';
+    delBtn.title = '刪除此階段';
+    delBtn.textContent = '✕';
     delBtn.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (confirm('確定要刪除節點「' + node.label + '」？')) {
-        handleDeleteNode(node.id);
+      if (confirm('確定刪除階段「' + ph.label + '」及其所有節點？')) {
+        handleDeleteStage(ph.id);
       }
     });
-
-    actions.appendChild(editBtn);
     actions.appendChild(delBtn);
-    card.appendChild(actions);
-    card.appendChild(labelEl);
+    th.appendChild(actions);
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
 
-    if (node.sub) {
-      var subEl = document.createElement('div');
-      subEl.className = 'node-sub';
-      subEl.textContent = node.sub;
-      card.appendChild(subEl);
-    }
+  // tbody
+  var tbody = document.createElement('tbody');
+  data.lanes.forEach(function(lane) {
+    var tr = document.createElement('tr');
 
-    return card;
-  }
+    // Lane label cell
+    var tdLabel = document.createElement('td');
+    tdLabel.className = 'lane-label';
+    tdLabel.style.background  = lane.bg    || '#f5f5f5';
+    tdLabel.style.color       = lane.color || '#333';
+    tdLabel.style.borderColor = lane.border || '#ccc';
+    tdLabel.textContent = lane.label;
 
-  // ════════════════════════════════════════════════════════════
-  // Modal 開啟 / 關閉
-  // ════════════════════════════════════════════════════════════
-  var modalEl      = document.getElementById('node-modal');
-  var modalTitle   = document.getElementById('modal-title');
-  var modalNodeId  = document.getElementById('modal-node-id');
-  var modalLabel   = document.getElementById('modal-label');
-  var modalSub     = document.getElementById('modal-sub');
-  var modalPhase   = document.getElementById('modal-phase');
-  var modalLane    = document.getElementById('modal-lane');
-  var modalType    = document.getElementById('modal-type');
-  var modalCancel  = document.getElementById('modal-cancel');
-  var modalSaveBtn = document.getElementById('modal-save');
+    var laneActions = document.createElement('div');
+    laneActions.className = 'lane-actions';
+    var lDelBtn = document.createElement('button');
+    lDelBtn.className = 'lane-del-btn';
+    lDelBtn.title = '刪除此角色';
+    lDelBtn.textContent = '✕';
+    lDelBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (confirm('確定刪除角色「' + lane.label + '」及其所有節點？')) {
+        handleDeleteLane(lane.id);
+      }
+    });
+    laneActions.appendChild(lDelBtn);
+    tdLabel.appendChild(laneActions);
+    tr.appendChild(tdLabel);
 
-  // 預填 Phase / Lane 下拉（每次開啟時動態填入）
-  function openModal(node, defaultPhase, defaultLane) {
-    modalTitle.textContent = node ? '編輯節點' : '新增節點';
-    modalNodeId.value = node ? (node.id || '') : '';
-    modalLabel.value  = node ? (node.label  || '') : '';
-    modalSub.value    = node ? (node.sub    || '') : '';
-    modalPhase.value  = node ? (node.phaseId || defaultPhase || '') : (defaultPhase || '');
-    modalLane.value   = node ? (node.laneId  || defaultLane  || '') : (defaultLane  || '');
-    modalType.value   = node ? (node.type    || 'default') : 'default';
-    modalEl.classList.add('open');
-    modalLabel.focus();
-  }
+    // Phase cells
+    data.phases.forEach(function(ph) {
+      var td = document.createElement('td');
+      td.className = 'sw-cell';
+      td.style.background = lane.bg || '#fff';
+      td.dataset.phaseId = ph.id;
+      td.dataset.laneId  = lane.id;
 
-  modalCancel.addEventListener('click', function() { modalEl.classList.remove('open'); });
-  modalEl.addEventListener('click', function(e) {
-    if (e.target === modalEl) modalEl.classList.remove('open');
+      // drag-over events
+      td.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        td.classList.add('drag-over');
+      });
+      td.addEventListener('dragleave', function() {
+        td.classList.remove('drag-over');
+      });
+      td.addEventListener('drop', function(e) {
+        e.preventDefault();
+        td.classList.remove('drag-over');
+        if (state.draggingNodeId) {
+          handleMoveNode(state.draggingNodeId, ph.id, lane.id);
+        }
+      });
+
+      // Existing nodes
+      var cellNodes = (nodeMap[ph.id] && nodeMap[ph.id][lane.id]) || [];
+      cellNodes.forEach(function(node) {
+        td.appendChild(buildNodeCard(node, lane));
+      });
+
+      // Add node button
+      var addBtn = document.createElement('button');
+      addBtn.className = 'add-node-btn';
+      addBtn.textContent = '+';
+      addBtn.title = '新增節點';
+      addBtn.addEventListener('click', function() {
+        openNodeModal(null, ph.id, lane.id);
+      });
+      td.appendChild(addBtn);
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  swimlaneEl.innerHTML = '';
+  swimlaneEl.appendChild(table);
+}
+
+// ── NODE CARD ──────────────────────────────────────────────
+function buildNodeCard(node, lane) {
+  var card = document.createElement('div');
+  card.className = 'bbp-node' + (node.type === 'decision' ? ' decision' : '');
+  card.dataset.id = node.id;
+  card.style.borderColor = lane ? (lane.color || '#1a73e8') : '#1a73e8';
+  card.draggable = true;
+
+  // Drag events
+  card.addEventListener('dragstart', function() {
+    state.draggingNodeId = node.id;
+    setTimeout(function() { card.classList.add('dragging'); }, 0);
+  });
+  card.addEventListener('dragend', function() {
+    state.draggingNodeId = null;
+    card.classList.remove('dragging');
   });
 
-  modalSaveBtn.addEventListener('click', function() {
-    var label = modalLabel.value.trim();
-    if (!label) { modalLabel.focus(); return; }
+  // Actions
+  var actions = document.createElement('div');
+  actions.className = 'node-actions';
 
-    var nodeId = modalNodeId.value.trim() || ('n_' + Date.now());
-    var updatedNode = {
-      id:      nodeId,
-      phaseId: modalPhase.value.trim(),
-      laneId:  modalLane.value.trim(),
-      label:   label,
-      sub:     modalSub.value.trim(),
-      type:    modalType.value
-    };
-
-    modalEl.classList.remove('open');
-    handleSaveNode(updatedNode);
+  var editBtn = document.createElement('button');
+  editBtn.className = 'node-btn';
+  editBtn.title = '編輯';
+  editBtn.textContent = '✏️';
+  editBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    openNodeModal(node, node.phaseId, node.laneId);
   });
 
-  // ════════════════════════════════════════════════════════════
-  // handleSaveNode：更新 state + POST 到 GAS
-  // ════════════════════════════════════════════════════════════
-  function handleSaveNode(updatedNode) {
-    if (!bbpData) return;
-
-    // 更新本地 state
-    var nodes   = bbpData.nodes || [];
-    var idx     = nodes.findIndex(function(n) { return n.id === updatedNode.id; });
-    if (idx >= 0) {
-      nodes[idx] = updatedNode;
-    } else {
-      nodes.push(updatedNode);
+  var delBtn = document.createElement('button');
+  delBtn.className = 'node-btn del';
+  delBtn.title = '刪除';
+  delBtn.textContent = '🗑';
+  delBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (confirm('確定刪除節點「' + node.label + '」？')) {
+      handleDeleteNode(node.id);
     }
-    bbpData.nodes = nodes;
+  });
 
-    // 更新 localStorage cache
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(bbpData)); } catch(e) {}
+  actions.appendChild(editBtn);
+  actions.appendChild(delBtn);
+  card.appendChild(actions);
 
-    // 立即重新渲染
-    renderBBP(bbpData);
+  var labelEl = document.createElement('div');
+  labelEl.className = 'node-label';
+  labelEl.textContent = node.label || '（無標題）';
+  card.appendChild(labelEl);
 
-    // POST 到 GAS
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action:  'saveNode',
-        product: 'BBP',
-        node:    updatedNode,
-        user:    LS_USER
-      })
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(result) {
-      if (result.success) {
-        showToast('已儲存', 'success');
+  if (node.sub) {
+    var subEl = document.createElement('div');
+    subEl.className = 'node-sub';
+    subEl.textContent = node.sub;
+    card.appendChild(subEl);
+  }
+
+  return card;
+}
+
+// ── HANDLERS ──────────────────────────────────────────────
+function handleSaveNode(updatedNode) {
+  var d = state.data;
+  if (!d) return;
+  var idx = d.nodes.findIndex(function(n) { return n.id === updatedNode.id; });
+  if (idx >= 0) d.nodes[idx] = updatedNode; else d.nodes.push(updatedNode);
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'saveNode', product: state.currentProduct, node: updatedNode, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '已儲存' : ('儲存失敗：' + r.error), r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('儲存失敗，請重試', 'error'); });
+}
+
+function handleDeleteNode(nodeId) {
+  var d = state.data;
+  if (!d) return;
+  d.nodes = d.nodes.filter(function(n) { return n.id !== nodeId; });
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'deleteNode', product: state.currentProduct, node: {id: nodeId}, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '已刪除' : ('刪除失敗：' + r.error), r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('刪除失敗，請重試', 'error'); });
+}
+
+function handleMoveNode(nodeId, newPhaseId, newLaneId) {
+  var d = state.data;
+  if (!d) return;
+  var node = d.nodes.find(function(n) { return n.id === nodeId; });
+  if (!node) return;
+  if (node.phaseId === newPhaseId && node.laneId === newLaneId) return; // no-op
+  node.phaseId = newPhaseId;
+  node.laneId  = newLaneId;
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+  showToast('移動中…');
+
+  gasPost({ action:'saveNode', product: state.currentProduct, node: node, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '已儲存移動' : '移動失敗', r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('移動失敗，請重試', 'error'); });
+}
+
+function handleAddStage(label, width) {
+  var d = state.data;
+  if (!d) return;
+  var id = 'p_' + Date.now();
+  d.phases.push({ id: id, label: label, width: width || 200 });
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'addStage', product: state.currentProduct, stage: {id:id, label:label, width:width}, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '階段已新增' : '新增失敗', r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('新增失敗', 'error'); });
+}
+
+function handleDeleteStage(stageId) {
+  var d = state.data;
+  if (!d) return;
+  d.phases = d.phases.filter(function(p) { return p.id !== stageId; });
+  d.nodes  = d.nodes.filter(function(n)  { return n.phaseId !== stageId; });
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'deleteStage', product: state.currentProduct, stageId: stageId, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '階段已刪除' : '刪除失敗', r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('刪除失敗', 'error'); });
+}
+
+function handleAddLane(laneData) {
+  var d = state.data;
+  if (!d) return;
+  var color = laneData.color || '#888888';
+  // auto-generate bg/border/textColor from color
+  var lane = {
+    id:        'lane_' + Date.now(),
+    label:     laneData.label,
+    color:     color,
+    bg:        hexToAlpha(color, 0.08),
+    border:    hexToAlpha(color, 0.3),
+    textColor: color
+  };
+  d.lanes.push(lane);
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'addLane', product: state.currentProduct, lane: lane, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '角色已新增' : '新增失敗', r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('新增失敗', 'error'); });
+}
+
+function handleDeleteLane(laneId) {
+  var d = state.data;
+  if (!d) return;
+  d.lanes = d.lanes.filter(function(l) { return l.id !== laneId; });
+  d.nodes = d.nodes.filter(function(n) { return n.laneId !== laneId; });
+  try { localStorage.setItem(CACHE_PFX + state.currentProduct, JSON.stringify(d)); } catch(e) {}
+  renderSwimlane(d);
+
+  gasPost({ action:'deleteLane', product: state.currentProduct, laneId: laneId, user: LS_USER })
+    .then(function(r) { showToast(r.success ? '角色已刪除' : '刪除失敗', r.success ? 'success' : 'error'); })
+    .catch(function() { showToast('刪除失敗', 'error'); });
+}
+
+function handleAddProduct(name) {
+  if (!name) return;
+  showLoading(true);
+  gasPost({ action:'addProduct', productName: name, user: LS_USER })
+    .then(function(r) {
+      showLoading(false);
+      if (r.success) {
+        state.products.push(name);
+        renderProductTabs(state.products);
+        loadProduct(name);
+        showToast('產品「' + name + '」已建立', 'success');
       } else {
-        showToast('儲存失敗，請重試', 'error');
-        console.error('saveNode error:', result.error);
+        showToast(r.error || '建立失敗', 'error');
       }
     })
-    .catch(function(err) {
-      showToast('儲存失敗，請重試', 'error');
-      console.error('saveNode fetch error:', err);
+    .catch(function() {
+      showLoading(false);
+      showToast('建立失敗，請重試', 'error');
     });
+}
+
+// ── MODALS ─────────────────────────────────────────────────
+// Node modal
+function openNodeModal(node, defaultPhase, defaultLane) {
+  $('modal-title').textContent = node ? '編輯節點' : '新增節點';
+  $('m-node-id').value = node ? (node.id || '') : '';
+  $('m-label').value   = node ? (node.label  || '') : '';
+  $('m-sub').value     = node ? (node.sub    || '') : '';
+  $('m-type').value    = node ? (node.type   || 'default') : 'default';
+
+  // Populate phase/lane selects
+  var d = state.data;
+  var phSel = $('m-phase');
+  var lnSel = $('m-lane');
+  phSel.innerHTML = '';
+  lnSel.innerHTML = '';
+  (d ? d.phases : []).forEach(function(ph) {
+    var opt = document.createElement('option');
+    opt.value = ph.id; opt.textContent = ph.label;
+    if ((node ? node.phaseId : defaultPhase) === ph.id) opt.selected = true;
+    phSel.appendChild(opt);
+  });
+  (d ? d.lanes : []).forEach(function(ln) {
+    var opt = document.createElement('option');
+    opt.value = ln.id; opt.textContent = ln.label;
+    if ((node ? node.laneId : defaultLane) === ln.id) opt.selected = true;
+    lnSel.appendChild(opt);
+  });
+
+  $('node-modal').classList.add('open');
+  $('m-label').focus();
+}
+
+$('m-cancel').addEventListener('click', function() { $('node-modal').classList.remove('open'); });
+$('node-modal').addEventListener('click', function(e) { if (e.target === $('node-modal')) $('node-modal').classList.remove('open'); });
+$('m-save').addEventListener('click', function() {
+  var label = $('m-label').value.trim();
+  if (!label) { $('m-label').focus(); showToast('請填寫節點名稱', 'error'); return; }
+  var nodeId = $('m-node-id').value.trim() || ('n_' + Date.now());
+  handleSaveNode({
+    id:      nodeId,
+    phaseId: $('m-phase').value,
+    laneId:  $('m-lane').value,
+    label:   label,
+    sub:     $('m-sub').value.trim(),
+    type:    $('m-type').value
+  });
+  $('node-modal').classList.remove('open');
+});
+
+// Stage modal
+$('btn-add-stage').addEventListener('click', function() {
+  $('s-label').value = '';
+  $('s-width').value = 200;
+  $('stage-modal').classList.add('open');
+  $('s-label').focus();
+});
+$('s-cancel').addEventListener('click', function() { $('stage-modal').classList.remove('open'); });
+$('stage-modal').addEventListener('click', function(e) { if (e.target === $('stage-modal')) $('stage-modal').classList.remove('open'); });
+$('s-save').addEventListener('click', function() {
+  var label = $('s-label').value.trim();
+  if (!label) { $('s-label').focus(); showToast('請填寫階段名稱', 'error'); return; }
+  handleAddStage(label, parseInt($('s-width').value) || 200);
+  $('stage-modal').classList.remove('open');
+});
+
+// Lane modal
+$('btn-add-lane').addEventListener('click', function() {
+  $('l-label').value = '';
+  $('l-color').value = '#1a73e8';
+  $('l-color-picker').value = '#1a73e8';
+  $('lane-modal').classList.add('open');
+  $('l-label').focus();
+});
+$('l-cancel').addEventListener('click', function() { $('lane-modal').classList.remove('open'); });
+$('lane-modal').addEventListener('click', function(e) { if (e.target === $('lane-modal')) $('lane-modal').classList.remove('open'); });
+$('l-color-picker').addEventListener('input', function() { $('l-color').value = this.value; });
+$('l-color').addEventListener('input', function() {
+  if (/^#[0-9a-fA-F]{6}$/.test(this.value)) $('l-color-picker').value = this.value;
+});
+$('l-save').addEventListener('click', function() {
+  var label = $('l-label').value.trim();
+  if (!label) { $('l-label').focus(); showToast('請填寫角色名稱', 'error'); return; }
+  handleAddLane({ label: label, color: $('l-color').value });
+  $('lane-modal').classList.remove('open');
+});
+
+// Add node toolbar button
+$('btn-add-node').addEventListener('click', function() {
+  openNodeModal(null,
+    state.data && state.data.phases[0] ? state.data.phases[0].id : '',
+    state.data && state.data.lanes[0]  ? state.data.lanes[0].id  : ''
+  );
+});
+
+// Product modal
+function openProdModal() {
+  $('p-name').value = '';
+  $('prod-modal').classList.add('open');
+  $('p-name').focus();
+}
+$('p-cancel').addEventListener('click', function() { $('prod-modal').classList.remove('open'); });
+$('prod-modal').addEventListener('click', function(e) { if (e.target === $('prod-modal')) $('prod-modal').classList.remove('open'); });
+$('p-save').addEventListener('click', function() {
+  var name = $('p-name').value.trim();
+  if (!name) { $('p-name').focus(); return; }
+  $('prod-modal').classList.remove('open');
+  handleAddProduct(name);
+});
+
+// Changelog modal
+$('btn-changelog').addEventListener('click', function() {
+  var list = $('changelog-list');
+  list.innerHTML = '';
+  state.changes.slice().reverse().forEach(function(c) {
+    var item = document.createElement('div');
+    item.style.cssText = 'background:#f8f9fa;border-radius:6px;padding:8px 12px;font-size:12px;color:#444;';
+    item.innerHTML = '<strong>' + esc(c.action) + '</strong> — ' + esc(c.label) + '<br><span style="color:#999;">' + esc(c.time) + '</span>';
+    list.appendChild(item);
+  });
+  if (!state.changes.length) {
+    list.innerHTML = '<p style="color:#bbb;text-align:center;padding:20px;">尚無變更記錄</p>';
   }
+  $('changelog-modal').classList.add('open');
+});
+$('cl-close').addEventListener('click', function() { $('changelog-modal').classList.remove('open'); });
+$('changelog-modal').addEventListener('click', function(e) { if (e.target === $('changelog-modal')) $('changelog-modal').classList.remove('open'); });
 
-  // ════════════════════════════════════════════════════════════
-  // handleDeleteNode：更新 state + POST 到 GAS
-  // ════════════════════════════════════════════════════════════
-  function handleDeleteNode(nodeId) {
-    if (!bbpData) return;
+// ── AI CHAT (original, fully preserved) ───────────────────
+function initEventListeners() {
+  $('widget-header').addEventListener('click', function() {
+    widgetEl.classList.toggle('collapsed');
+    $('widget-toggle').textContent = widgetEl.classList.contains('collapsed') ? '▲' : '▼';
+  });
 
-    // 更新本地 state
-    bbpData.nodes = (bbpData.nodes || []).filter(function(n) { return n.id !== nodeId; });
-
-    // 更新 localStorage cache
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(bbpData)); } catch(e) {}
-
-    // 立即重新渲染
-    renderBBP(bbpData);
-
-    // POST 到 GAS
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action:  'deleteNode',
-        product: 'BBP',
-        node:    { id: nodeId },
-        user:    LS_USER
-      })
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(result) {
-      if (result.success) {
-        showToast('已刪除', 'success');
-      } else {
-        showToast('刪除失敗，請重試', 'error');
-        console.error('deleteNode error:', result.error);
-      }
-    })
-    .catch(function(err) {
-      showToast('刪除失敗，請重試', 'error');
-      console.error('deleteNode fetch error:', err);
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // Toast 通知
-  // ════════════════════════════════════════════════════════════
-  function showToast(msg, type) {
-    var el = document.createElement('div');
-    el.className = 'toast ' + (type || '');
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 2500);
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // 以下為原有功能，完全不修改
-  // ════════════════════════════════════════════════════════════
-
-  // Auto-resize textarea
   inputEl.addEventListener('input', function() {
     this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+    this.style.height = Math.min(this.scrollHeight, 72) + 'px';
   });
   inputEl.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   });
   sendBtn.addEventListener('click', handleSend);
+}
 
-  function handleSend() {
-    var text = inputEl.value.trim();
-    if (!text || isWaiting) return;
-    appendMessage('user', text);
-    inputEl.value = '';
-    inputEl.style.height = 'auto';
-    isWaiting = true;
-    inputEl.disabled = true;
-    sendBtn.disabled = true;
-    var typingEl = showTyping();
-    var params = { action: 'chat', message: text };
-    if (conversationId) params.conversationId = conversationId;
-    gasRequest(params)
-      .then(function(result) {
-        removeTyping(typingEl);
-        isWaiting = false;
+function checkAIConfig() {
+  gasGet({ action: 'check' })
+    .then(function(r) {
+      if (r.ok) {
         inputEl.disabled = false;
         sendBtn.disabled = false;
-        inputEl.focus();
-        if (result.error) {
-          appendMessage('notice', '⚠️ ' + result.error);
-        } else {
-          if (result.conversationId) conversationId = result.conversationId;
-          var displayReply = stripJsonBlock(result.reply || '（AI 未回覆）');
-          appendMessage('bot', displayReply);
-          if (result.extractedJson) {
-            renderFlowDiagram(result.extractedJson);
-            showFlowBadge('✅ 流程圖已更新！');
-          }
-        }
-      })
-      .catch(function(err) {
-        removeTyping(typingEl);
-        isWaiting = false;
-        inputEl.disabled = false;
-        sendBtn.disabled = false;
-        appendMessage('notice', '⚠️ 連線失敗：' + err.message);
-      });
-  }
-
-  function stripJsonBlock(text) {
-    return text
-      .replace(/```json[\s\S]*?```/gi, '')
-      .replace(/\{[\s\S]*"nodes"[\s\S]*\}/g, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  }
-
-  function renderFlowDiagram(flowJson) {
-    var nodes = flowJson.nodes;
-    if (!nodes || nodes.length === 0) return;
-    flowNodes.innerHTML = '';
-    emptyHint.style.display = 'none';
-    nodes.sort(function(a, b) {
-      return (a.position && a.position.y || 0) - (b.position && b.position.y || 0);
-    });
-    nodes.forEach(function(node, idx) {
-      if (idx > 0) {
-        var arrow = document.createElement('div');
-        arrow.className = 'flow-arrow';
-        arrow.setAttribute('data-stage', idx - 1);
-        flowNodes.appendChild(arrow);
+        statusDot.style.display = 'inline-block';
+        appendMessage('bot', '你好！請描述你的商旅流程，我會幫你轉成視覺化流程圖 😊');
+      } else {
+        appendMessage('notice', r.message || '設定異常');
       }
-      var card = document.createElement('div');
-      card.className = 'flow-node';
-      card.setAttribute('data-stage', idx);
-      var label = (node.data && node.data.label) || node.id || '節點';
-      var desc  = (node.data && node.data.description) || '';
-      card.innerHTML =
-        '<div class="node-label">' + escapeHtml(label) + '</div>' +
-        (desc ? '<div class="node-desc">' + escapeHtml(desc) + '</div>' : '');
-      flowNodes.appendChild(card);
+    })
+    .catch(function(err) { appendMessage('notice', '⚠️ 無法連接：' + err.message); });
+}
+
+function handleSend() {
+  var text = inputEl.value.trim();
+  if (!text || isWaiting) return;
+  appendMessage('user', text);
+  inputEl.value = ''; inputEl.style.height = 'auto';
+  isWaiting = true; inputEl.disabled = true; sendBtn.disabled = true;
+  var typingEl = showTyping();
+  var params = { action: 'chat', message: text };
+  if (conversationId) params.conversationId = conversationId;
+  gasGet(params)
+    .then(function(r) {
+      removeTyping(typingEl);
+      isWaiting = false; inputEl.disabled = false; sendBtn.disabled = false; inputEl.focus();
+      if (r.error) {
+        appendMessage('notice', '⚠️ ' + r.error);
+      } else {
+        if (r.conversationId) conversationId = r.conversationId;
+        appendMessage('bot', stripJsonBlock(r.reply || '（AI 未回覆）'));
+        if (r.extractedJson) {
+          renderFlowDiagram(r.extractedJson);
+          showBadge('✅ 流程圖已更新！');
+        }
+      }
+    })
+    .catch(function(err) {
+      removeTyping(typingEl);
+      isWaiting = false; inputEl.disabled = false; sendBtn.disabled = false;
+      appendMessage('notice', '⚠️ 連線失敗：' + err.message);
     });
-  }
+}
 
-  function showFlowBadge(msg) {
-    var badge = document.createElement('div');
-    badge.className = 'flow-updated-badge';
-    badge.textContent = msg;
-    document.body.appendChild(badge);
-    setTimeout(function() { if (badge.parentNode) badge.parentNode.removeChild(badge); }, 3000);
-  }
+function stripJsonBlock(text) {
+  return text.replace(/```json[\s\S]*?```/gi, '').replace(/\{[\s\S]*"nodes"[\s\S]*\}/g, '').replace(/\n{3,}/g, '\n\n').trim();
+}
 
-  function gasRequest(params) {
-    var url = GAS_URL + '?' + Object.keys(params)
-      .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
-      .join('&');
-    return fetch(url).then(function(res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    });
-  }
-
-  function appendMessage(role, text) {
-    var msgEl = document.createElement('div');
-    msgEl.className = 'w-message ' + role;
-    if (role === 'notice') {
-      msgEl.innerHTML = '<div class="w-bubble">' + escapeHtml(text) + '</div>';
-    } else {
-      var emoji = role === 'user' ? '🧑' : '🤖';
-      msgEl.innerHTML =
-        '<div class="w-avatar">' + emoji + '</div>' +
-        '<div class="w-bubble">' + escapeHtml(text) + '</div>';
+function renderFlowDiagram(flowJson) {
+  var nodes = flowJson.nodes;
+  if (!nodes || !nodes.length) return;
+  flowNodesEl.style.display = 'flex';
+  flowNodesEl.innerHTML = '';
+  nodes.sort(function(a,b) { return ((a.position&&a.position.y)||0)-((b.position&&b.position.y)||0); });
+  nodes.forEach(function(node, idx) {
+    if (idx > 0) {
+      var arr = document.createElement('div');
+      arr.className = 'flow-arrow';
+      flowNodesEl.appendChild(arr);
     }
-    messagesEl.appendChild(msgEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
+    var card = document.createElement('div');
+    card.className = 'flow-node';
+    var label = (node.data && node.data.label) || node.id || '節點';
+    var desc  = (node.data && node.data.description) || '';
+    card.innerHTML = '<div class="node-label">' + esc(label) + '</div>' + (desc ? '<div class="node-desc">' + esc(desc) + '</div>' : '');
+    flowNodesEl.appendChild(card);
+  });
+}
 
-  function showTyping() {
-    var wrapEl = document.createElement('div');
-    wrapEl.className = 'w-message bot';
-    wrapEl.innerHTML =
-      '<div class="w-avatar">🤖</div>' +
-      '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-    messagesEl.appendChild(wrapEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return wrapEl;
-  }
+// ── UTILS ─────────────────────────────────────────────────
+function gasGet(params) {
+  var url = GAS_URL + '?' + Object.keys(params).map(function(k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  return fetch(url).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
 
-  function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+function gasPost(body) {
+  return fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function showLoading(show) { loadingEl.style.display = show ? 'flex' : 'none'; }
+
+function showToast(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  // track change
+  if (type === 'success') {
+    state.changes.push({ action: msg, label: state.currentProduct || '', time: new Date().toLocaleString() });
+    if (state.changes.length > 100) state.changes.shift();
   }
+  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 2500);
+}
+
+function showBadge(msg) {
+  var el = document.createElement('div');
+  el.className = 'flow-badge';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+}
+
+function appendMessage(role, text) {
+  var msgEl = document.createElement('div');
+  msgEl.className = 'w-msg ' + role;
+  if (role === 'notice') {
+    msgEl.innerHTML = '<div class="w-bubble">' + esc(text) + '</div>';
+  } else {
+    var emoji = role === 'user' ? '🧑' : '🤖';
+    msgEl.innerHTML = '<div class="w-avatar">' + emoji + '</div><div class="w-bubble">' + esc(text) + '</div>';
+  }
+  messagesEl.appendChild(msgEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showTyping() {
+  var w = document.createElement('div');
+  w.className = 'w-msg bot';
+  w.innerHTML = '<div class="w-avatar">🤖</div><div class="typing-indicator"><span></span><span></span><span></span></div>';
+  messagesEl.appendChild(w);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return w;
+}
+function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// hex #rrggbb → rgba(r,g,b,a) string
+function hexToAlpha(hex, a) {
+  var r = parseInt(hex.slice(1,3),16);
+  var g = parseInt(hex.slice(3,5),16);
+  var b = parseInt(hex.slice(5,7),16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
 </script>
 </body>
 </html>
