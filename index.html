@@ -276,7 +276,7 @@ async function gasPost(body) {
 
 /* ─── 顏色工具 ─── */
 function getLaneStyle(lane) {
-  return { backgroundColor: lane.bg + "55", borderColor: lane.border };
+  return { backgroundColor: "#fff", borderColor: lane.border };
 }
 function getHeaderStyle(lane) {
   return { backgroundColor: lane.bg, borderColor: lane.border, color: lane.textColor };
@@ -288,7 +288,7 @@ function getNodeStyle(node, lane) {
   if (node.type === "success") return {
     backgroundColor: "#059669", color: "#fff", borderColor: "#047857"
   };
-  return { backgroundColor: lane.color, color: "#fff", borderColor: lane.color };
+  return { backgroundColor: lane.bg, color: lane.textColor, borderColor: lane.border, borderLeft: "4px solid " + lane.color };
 }
 
 /* ─── NodeCard ─── */
