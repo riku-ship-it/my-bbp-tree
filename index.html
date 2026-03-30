@@ -284,6 +284,9 @@ function getHeaderStyle(lane) {
   return { backgroundColor: lane.bg, borderColor: lane.border, color: lane.textColor };
 }
 function getNodeStyle(node, lane) {
+  if (node.bg) {
+    return { backgroundColor: node.bg, color: node.textColor || lane.textColor, borderColor: node.bg, borderLeft: "4px solid " + (node.textColor || lane.color) };
+  }
   if (node.type === "gate") return {
     backgroundColor: "#FEF3C7", color: "#78350F", borderColor: "#F59E0B", borderRadius: "50px"
   };
@@ -333,7 +336,8 @@ function SwimlaneTable({ data, selectedId, onSelect, onAddPhase, onAddLane, onAd
     <div className="swimlane-wrap">
       <div className="phase-row">
         {phases.map(ph => (
-          <div key={ph.id} className={`phase-cell${ph.variant?" variant-"+ph.variant:""}`} style={{width:ph.width}}
+          <div key={ph.id} className={`phase-cell${ph.variant&&!ph.bg?" variant-"+ph.variant:""}`}
+            style={{width:ph.width, ...(ph.bg?{background:ph.bg,color:ph.textColor||"inherit",borderColor:ph.bg}:{})}}
             onClick={()=>onEditPhase&&onEditPhase(ph.id)} title="點擊編輯階段">
             {ph.label}
           </div>
@@ -370,9 +374,9 @@ function SwimlaneTable({ data, selectedId, onSelect, onAddPhase, onAddLane, onAd
 
 /* ─── RightPanel ─── */
 function RightPanel({ node, data, onSave, onDelete, onClose, isSaving }) {
-  const [form, setForm] = useState({ label:"", sub:"", laneId:"", phaseId:"", type:"default" });
+  const [form, setForm] = useState({ label:"", sub:"", laneId:"", phaseId:"", type:"default", bg:"", textColor:"" });
   useEffect(() => {
-    if (node) setForm({ label:node.label, sub:node.sub||"", laneId:node.laneId, phaseId:node.phaseId, type:node.type||"default" });
+    if (node) setForm({ label:node.label, sub:node.sub||"", laneId:node.laneId, phaseId:node.phaseId, type:node.type||"default", bg:node.bg||"", textColor:node.textColor||"" });
   }, [node]);
   if (!node) return null;
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
@@ -397,6 +401,18 @@ function RightPanel({ node, data, onSave, onDelete, onClose, isSaving }) {
           <option value="gate">判斷點（圓角）</option>
           <option value="success">成功節點（綠色）</option>
         </select></div>
+      <div className="field-group"><label>背景色（留空繼承角色顏色）</label>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="color" value={form.bg||"#ffffff"} onChange={e=>set("bg",e.target.value)} style={{width:40,height:32,padding:2,cursor:"pointer"}} />
+          <input value={form.bg||""} placeholder="留空則繼承角色顏色" onChange={e=>set("bg",e.target.value)} style={{flex:1,padding:"6px 8px",border:"1px solid var(--border-strong)",borderRadius:7,fontSize:13,fontFamily:"inherit"}} />
+          {form.bg && <button type="button" onClick={()=>set("bg","")} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+        </div></div>
+      <div className="field-group"><label>文字色（留空繼承角色顏色）</label>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="color" value={form.textColor||"#333333"} onChange={e=>set("textColor",e.target.value)} style={{width:40,height:32,padding:2,cursor:"pointer"}} />
+          <input value={form.textColor||""} placeholder="留空則繼承角色顏色" onChange={e=>set("textColor",e.target.value)} style={{flex:1,padding:"6px 8px",border:"1px solid var(--border-strong)",borderRadius:7,fontSize:13,fontFamily:"inherit"}} />
+          {form.textColor && <button type="button" onClick={()=>set("textColor","")} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+        </div></div>
       <div className="rp-actions">
         <button className="btn-danger" disabled={isSaving} onClick={()=>onDelete(node.id)}>刪除</button>
         <button className="btn-sm btn-primary" style={{flex:1}} disabled={isSaving} onClick={()=>onSave(node.id,form)}>
@@ -573,13 +589,15 @@ function App() {
   }
 
   // ── 新增階段 ──
-  function openAddPhase() { setModalForm({label:"",width:200,variant:""}); setModal("phase"); }
+  function openAddPhase() { setModalForm({label:"",width:200,variant:"",bg:"",textColor:""}); setModal("phase"); }
   async function confirmAddPhase() {
     if (!modalForm.label) { toast("請輸入階段名稱",true); return; }
     setModalLoading(true);
     const id = 'p_' + Date.now();
     const newPhase = { id, label:modalForm.label, width:parseInt(modalForm.width)||200 };
     if (modalForm.variant) newPhase.variant = modalForm.variant;
+    if (modalForm.bg) newPhase.bg = modalForm.bg;
+    if (modalForm.textColor) newPhase.textColor = modalForm.textColor;
     setData(d=>({...d, phases:[...d.phases, newPhase]}));
     addLog("add","新增",`新增階段「<strong>${modalForm.label}</strong>」`);
     toast(`已新增階段「${modalForm.label}」`);
@@ -621,7 +639,7 @@ function App() {
   function openEditPhase(phaseId) {
     const ph = data.phases.find(p => p.id === phaseId);
     if (!ph) return;
-    setModalForm({ id: phaseId, label: ph.label, width: ph.width, variant: ph.variant || "" });
+    setModalForm({ id: phaseId, label: ph.label, width: ph.width, variant: ph.variant || "", bg: ph.bg || "", textColor: ph.textColor || "" });
     setModal("editPhase");
   }
   async function confirmEditPhase() {
@@ -629,6 +647,8 @@ function App() {
     setModalLoading(true);
     const updated = { id: modalForm.id, label: modalForm.label, width: parseInt(modalForm.width) || 200 };
     if (modalForm.variant) updated.variant = modalForm.variant;
+    if (modalForm.bg) updated.bg = modalForm.bg;
+    if (modalForm.textColor) updated.textColor = modalForm.textColor;
     setData(d => ({ ...d, phases: d.phases.map(p => p.id === updated.id ? updated : p) }));
     addLog("edit", "編輯", `編輯階段「<strong>${modalForm.label}</strong>」`);
     toast(`已儲存階段「${modalForm.label}」`);
@@ -696,11 +716,11 @@ function App() {
 
   // ── 新增節點 ──
   function openAddNode() {
-    setModalForm({label:"",sub:"",laneId:data.lanes[0]?.id||"",phaseId:data.phases[0]?.id||"",type:"default"});
+    setModalForm({label:"",sub:"",laneId:data.lanes[0]?.id||"",phaseId:data.phases[0]?.id||"",type:"default",bg:"",textColor:""});
     setModal("node");
   }
   function openAddNodeInCell(phaseId, laneId) {
-    setModalForm({label:"",sub:"",laneId,phaseId,type:"default"});
+    setModalForm({label:"",sub:"",laneId,phaseId,type:"default",bg:"",textColor:""});
     setModal("node");
   }
   async function confirmAddNode() {
@@ -1028,13 +1048,25 @@ function App() {
             <input placeholder="例：⑥ 深度整合期" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
           <div className="field-group"><label>欄寬（px）</label>
             <input type="number" value={modalForm.width||200} onChange={e=>setModalForm(f=>({...f,width:e.target.value}))} /></div>
-          <div className="field-group"><label>樣式（選填）</label>
+          <div className="field-group"><label>樣式（選填，自訂顏色時忽略）</label>
             <select value={modalForm.variant||""} onChange={e=>setModalForm(f=>({...f,variant:e.target.value}))}>
               <option value="">預設</option>
               <option value="positive">正向（綠色）</option>
               <option value="negative">負向（紅色）</option>
               <option value="warning">警告（黃色）</option>
             </select></div>
+          <div className="field-group"><label>背景色（選填，留空用樣式預設）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.bg||"#ffffff"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.bg||""} placeholder="留空則使用樣式預設" onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} />
+              {modalForm.bg && <button type="button" onClick={()=>setModalForm(f=>({...f,bg:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
+          <div className="field-group"><label>文字色（選填）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.textColor||"#333333"} onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.textColor||""} placeholder="留空則使用樣式預設" onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{flex:1}} />
+              {modalForm.textColor && <button type="button" onClick={()=>setModalForm(f=>({...f,textColor:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
         </Modal>
       )}
 
@@ -1059,13 +1091,25 @@ function App() {
             <input placeholder="例：⑥ 深度整合期" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
           <div className="field-group"><label>欄寬（px）</label>
             <input type="number" value={modalForm.width||200} onChange={e=>setModalForm(f=>({...f,width:e.target.value}))} /></div>
-          <div className="field-group"><label>樣式</label>
+          <div className="field-group"><label>樣式（自訂顏色時忽略）</label>
             <select value={modalForm.variant||""} onChange={e=>setModalForm(f=>({...f,variant:e.target.value}))}>
               <option value="">預設</option>
               <option value="positive">正向（綠色）</option>
               <option value="negative">負向（紅色）</option>
               <option value="warning">警告（黃色）</option>
             </select></div>
+          <div className="field-group"><label>背景色（留空用樣式預設）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.bg||"#ffffff"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.bg||""} placeholder="留空則使用樣式預設" onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} />
+              {modalForm.bg && <button type="button" onClick={()=>setModalForm(f=>({...f,bg:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
+          <div className="field-group"><label>文字色（留空用樣式預設）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.textColor||"#333333"} onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.textColor||""} placeholder="留空則使用樣式預設" onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{flex:1}} />
+              {modalForm.textColor && <button type="button" onClick={()=>setModalForm(f=>({...f,textColor:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
         </Modal>
       )}
 
@@ -1110,6 +1154,18 @@ function App() {
               <option value="gate">判斷點（圓角）</option>
               <option value="success">成功節點（綠色）</option>
             </select></div>
+          <div className="field-group"><label>背景色（選填，留空繼承角色顏色）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.bg||"#ffffff"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.bg||""} placeholder="留空則繼承角色顏色" onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} />
+              {modalForm.bg && <button type="button" onClick={()=>setModalForm(f=>({...f,bg:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
+          <div className="field-group"><label>文字色（選填）</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input type="color" value={modalForm.textColor||"#333333"} onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
+              <input value={modalForm.textColor||""} placeholder="留空則繼承角色顏色" onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{flex:1}} />
+              {modalForm.textColor && <button type="button" onClick={()=>setModalForm(f=>({...f,textColor:""}))} style={{border:"none",background:"none",cursor:"pointer",color:"var(--text-3)",fontSize:16}}>✕</button>}
+            </div></div>
         </Modal>
       )}
 
