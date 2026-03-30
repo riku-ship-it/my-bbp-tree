@@ -6,7 +6,6 @@
   <title>商旅旅程分析</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
       background: #f0f2f5;
@@ -15,7 +14,6 @@
       display: flex;
       flex-direction: column;
     }
-
     /* ── 頂部標題列 ── */
     .top-bar {
       background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
@@ -44,22 +42,40 @@
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* ── 主區域：流程圖 ── */
+    /* ── 主區域 ── */
     .main-area {
       flex: 1;
       position: relative;
       overflow: hidden;
       background: #f8f9fa;
     }
-
-    /* 流程圖畫布 */
     #flow-canvas {
       width: 100%; height: 100%;
       position: relative;
       overflow: auto;
     }
 
-    /* 空白提示 */
+    /* ── 載入中 ── */
+    .loading-hint {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #888;
+      font-size: 15px;
+    }
+    .loading-hint .spin {
+      display: inline-block;
+      width: 32px; height: 32px;
+      border: 3px solid #ddd;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 空白提示（AI 流程圖用） ── */
     .empty-hint {
       position: absolute;
       top: 50%; left: 50%;
@@ -71,7 +87,114 @@
     .empty-hint .icon { font-size: 48px; margin-bottom: 12px; }
     .empty-hint p { font-size: 15px; }
 
-    /* 流程圖節點容器 */
+    /* ── BBP 泳道圖 ── */
+    #bbp-swimlane {
+      display: none;
+      min-width: max-content;
+      padding: 24px;
+    }
+    /* 整體表格 */
+    .swimlane-table {
+      border-collapse: collapse;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    /* Phase 標頭列 */
+    .phase-header-row th {
+      background: #1a73e8;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px 16px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.25);
+      min-width: 170px;
+      white-space: nowrap;
+    }
+    .phase-header-row th.corner-cell {
+      background: #0d47a1;
+      min-width: 90px;
+    }
+    /* Lane 行 */
+    .lane-row td {
+      vertical-align: top;
+      border: 1px solid #e0e0e0;
+      min-height: 90px;
+      padding: 8px;
+    }
+    .lane-label-cell {
+      font-weight: 700;
+      font-size: 13px;
+      text-align: center;
+      vertical-align: middle !important;
+      white-space: nowrap;
+      padding: 12px 10px !important;
+      border-right: 2px solid #ccc !important;
+    }
+    /* Node 卡片 */
+    .bbp-node {
+      background: #fff;
+      border: 2px solid #1a73e8;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: box-shadow 0.15s, transform 0.15s;
+      position: relative;
+    }
+    .bbp-node:hover {
+      box-shadow: 0 3px 10px rgba(26,115,232,0.25);
+      transform: translateY(-1px);
+    }
+    .bbp-node .node-label {
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 3px;
+    }
+    .bbp-node .node-sub {
+      color: #666;
+      font-size: 11px;
+    }
+    .bbp-node .node-actions {
+      display: none;
+      position: absolute;
+      top: 4px; right: 4px;
+      gap: 3px;
+    }
+    .bbp-node:hover .node-actions { display: flex; }
+    .node-btn {
+      width: 22px; height: 22px;
+      border: none; border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: #e8f0fe;
+      color: #1a73e8;
+      transition: background 0.15s;
+    }
+    .node-btn.del { background: #fce8e6; color: #c5221f; }
+    .node-btn:hover { filter: brightness(0.9); }
+    /* 空格子 */
+    .cell-empty { min-width: 170px; min-height: 80px; }
+    .add-node-btn {
+      width: 100%;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      background: none;
+      color: #aaa;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 10px;
+      margin-top: 4px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .add-node-btn:hover { border-color: #1a73e8; color: #1a73e8; }
+
+    /* ── AI 流程圖（原有功能完全保留） ── */
     #flow-nodes {
       position: relative;
       min-height: 100%;
@@ -81,8 +204,6 @@
       align-items: center;
       gap: 0;
     }
-
-    /* 節點卡片 */
     .flow-node {
       width: 220px;
       background: #fff;
@@ -99,32 +220,20 @@
       from { opacity: 0; transform: scale(0.9); }
       to   { opacity: 1; transform: scale(1); }
     }
-    .flow-node .node-label {
-      font-size: 15px; font-weight: 700;
-      color: #1a73e8; margin-bottom: 6px;
-    }
-    .flow-node .node-desc {
-      font-size: 13px; color: #555; line-height: 1.5;
-    }
-
-    /* 節點之間的箭頭線 */
+    .flow-node .node-label { font-size: 15px; font-weight: 700; color: #1a73e8; margin-bottom: 6px; }
+    .flow-node .node-desc  { font-size: 13px; color: #555; line-height: 1.5; }
     .flow-arrow {
       width: 2px; height: 36px;
       background: #1a73e8;
-      position: relative;
-      margin: 0 auto;
+      position: relative; margin: 0 auto;
     }
     .flow-arrow::after {
       content: '';
-      position: absolute;
-      bottom: -1px; left: 50%;
+      position: absolute; bottom: -1px; left: 50%;
       transform: translateX(-50%);
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
+      border-left: 6px solid transparent; border-right: 6px solid transparent;
       border-top: 8px solid #1a73e8;
     }
-
-    /* 節點顏色（依階段） */
     .flow-node[data-stage="0"] { border-color: #e91e63; }
     .flow-node[data-stage="0"] .node-label { color: #e91e63; }
     .flow-node[data-stage="1"] { border-color: #ff9800; }
@@ -137,7 +246,6 @@
     .flow-node[data-stage="4"] .node-label { color: #1a73e8; }
     .flow-node[data-stage="5"] { border-color: #009688; }
     .flow-node[data-stage="5"] .node-label { color: #009688; }
-
     .flow-arrow[data-stage="0"] { background: #e91e63; }
     .flow-arrow[data-stage="0"]::after { border-top-color: #e91e63; }
     .flow-arrow[data-stage="1"] { background: #ff9800; }
@@ -149,73 +257,49 @@
     .flow-arrow[data-stage="4"] { background: #1a73e8; }
     .flow-arrow[data-stage="4"]::after { border-top-color: #1a73e8; }
 
-    /* ── 右下角對話框 ── */
+    /* ── 右下角對話框（原有功能完全保留） ── */
     .chat-widget {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      width: 360px;
-      max-height: 520px;
-      background: #fff;
-      border-radius: 16px;
+      position: fixed; bottom: 24px; right: 24px;
+      width: 360px; max-height: 520px;
+      background: #fff; border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 100;
-      transition: max-height 0.3s ease;
+      display: flex; flex-direction: column; overflow: hidden;
+      z-index: 100; transition: max-height 0.3s ease;
     }
     .chat-widget.collapsed { max-height: 56px; }
-
     .widget-header {
       background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
-      color: #fff;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      flex-shrink: 0;
+      color: #fff; padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; flex-shrink: 0;
     }
     .widget-header .left { display: flex; align-items: center; gap: 8px; }
     .widget-header .left span { font-size: 14px; font-weight: 600; }
     .widget-toggle { font-size: 18px; opacity: 0.8; }
-
     .widget-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex: 1; overflow-y: auto; padding: 16px 14px;
+      display: flex; flex-direction: column; gap: 12px;
     }
     .widget-messages::-webkit-scrollbar { width: 4px; }
     .widget-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-
     .w-message { display: flex; align-items: flex-end; gap: 6px; max-width: 90%; }
     .w-message.user   { align-self: flex-end; flex-direction: row-reverse; }
     .w-message.bot    { align-self: flex-start; }
     .w-message.notice { align-self: center; max-width: 100%; }
-
     .w-avatar {
       width: 26px; height: 26px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; flex-shrink: 0;
-      background: #e3f2fd;
+      font-size: 13px; flex-shrink: 0; background: #e3f2fd;
     }
     .w-message.user .w-avatar { background: #e8f5e9; }
-
     .w-bubble {
-      padding: 9px 13px;
-      border-radius: 16px;
-      font-size: 13.5px;
-      line-height: 1.55;
-      word-break: break-word;
-      white-space: pre-wrap;
+      padding: 9px 13px; border-radius: 16px;
+      font-size: 13.5px; line-height: 1.55;
+      word-break: break-word; white-space: pre-wrap;
     }
     .w-message.bot    .w-bubble { background: #f1f3f4; color: #202124; border-bottom-left-radius: 4px; }
     .w-message.user   .w-bubble { background: #1a73e8; color: #fff; border-bottom-right-radius: 4px; }
     .w-message.notice .w-bubble { background: #fff3e0; color: #e65100; font-size: 12px; border-radius: 8px; text-align: center; }
-
     .typing-indicator {
       display: flex; gap: 4px; padding: 10px 14px;
       background: #f1f3f4; border-radius: 16px; border-bottom-left-radius: 4px;
@@ -227,10 +311,8 @@
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
-
     .widget-input {
-      padding: 10px 12px;
-      border-top: 1px solid #e8eaed;
+      padding: 10px 12px; border-top: 1px solid #e8eaed;
       display: flex; gap: 8px; align-items: flex-end;
       background: #fff; flex-shrink: 0;
     }
@@ -243,7 +325,6 @@
     }
     .widget-input textarea:focus { border-color: #1a73e8; }
     .widget-input textarea:disabled { background: #f5f5f5; }
-
     .w-send-btn {
       width: 38px; height: 38px; border-radius: 50%;
       background: #1a73e8; border: none; cursor: pointer;
@@ -254,10 +335,25 @@
     .w-send-btn:disabled { background: #dadce0; cursor: not-allowed; }
     .w-send-btn svg { fill: #fff; width: 17px; height: 17px; }
 
-    /* 流程圖更新提示 */
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      background: #323232; color: #fff;
+      padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 300; pointer-events: none;
+      animation: toastIn 0.25s ease, toastOut 0.25s ease 2s forwards;
+    }
+    .toast.success { background: #1e8e3e; }
+    .toast.error   { background: #c5221f; }
+    @keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    @keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(10px)} }
+
+    /* ── 流程圖更新提示（原有） ── */
     .flow-updated-badge {
-      position: fixed;
-      top: 80px; left: 50%;
+      position: fixed; top: 80px; left: 50%;
       transform: translateX(-50%);
       background: #1a73e8; color: #fff;
       padding: 8px 20px; border-radius: 20px;
@@ -268,6 +364,40 @@
     }
     @keyframes badgeIn  { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
     @keyframes badgeOut { to{opacity:0;transform:translateX(-50%) translateY(-10px)} }
+
+    /* ── 節點編輯 Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 400;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 12px;
+      padding: 24px; width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #202124; }
+    .modal-box label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; margin-top: 12px; }
+    .modal-box input, .modal-box select {
+      width: 100%; border: 1.5px solid #dadce0; border-radius: 8px;
+      padding: 8px 10px; font-size: 13.5px; font-family: inherit; outline: none;
+    }
+    .modal-box input:focus, .modal-box select:focus { border-color: #1a73e8; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel {
+      padding: 8px 16px; border-radius: 8px;
+      border: 1.5px solid #dadce0; background: #fff;
+      font-size: 13px; cursor: pointer; color: #555;
+    }
+    .btn-save {
+      padding: 8px 16px; border-radius: 8px;
+      border: none; background: #1a73e8;
+      font-size: 13px; cursor: pointer; color: #fff; font-weight: 600;
+    }
+    .btn-save:hover { background: #1558b0; }
 
     #error-banner {
       display: none;
@@ -286,22 +416,33 @@
     <p><span class="status-dot"></span>AI 助理上線中</p>
   </div>
 </div>
-
 <div id="error-banner"></div>
 
-<!-- 主區域：流程圖 -->
+<!-- 主區域 -->
 <div class="main-area">
   <div id="flow-canvas">
+
+    <!-- 載入中提示 -->
+    <div class="loading-hint" id="loading-hint">
+      <div class="spin"></div>
+      <div>載入中…</div>
+    </div>
+
+    <!-- BBP 泳道圖（GAS 資料載入後顯示） -->
+    <div id="bbp-swimlane"></div>
+
+    <!-- AI 流程圖（原有） -->
     <div id="flow-nodes">
-      <div class="empty-hint" id="empty-hint">
+      <div class="empty-hint" id="empty-hint" style="display:none;">
         <div class="icon">🗂️</div>
         <p>在右下角輸入你的商旅流程<br>AI 將自動產生視覺化流程圖</p>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- 右下角對話框 -->
+<!-- 右下角對話框（原有，完全不動） -->
 <div class="chat-widget" id="chat-widget">
   <div class="widget-header" id="widget-header">
     <div class="left">
@@ -310,9 +451,7 @@
     </div>
     <span class="widget-toggle" id="widget-toggle">▼</span>
   </div>
-
   <div class="widget-messages" id="widget-messages"></div>
-
   <div class="widget-input">
     <textarea
       id="user-input"
@@ -327,14 +466,67 @@
   </div>
 </div>
 
-<script>
-  // ── 填入你的 GAS 網址 ────────────────────────────────────
-  var GAS_URL = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
-  // ────────────────────────────────────────────────────────
+<!-- 節點編輯 Modal -->
+<div class="modal-overlay" id="node-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">編輯節點</h3>
+    <input type="hidden" id="modal-node-id" />
+    <label>節點名稱</label>
+    <input type="text" id="modal-label" placeholder="節點名稱" />
+    <label>副標題 / 備註</label>
+    <input type="text" id="modal-sub" placeholder="（可空白）" />
+    <label>所在階段（Phase ID）</label>
+    <input type="text" id="modal-phase" placeholder="例如 p1" />
+    <label>所在泳道（Lane ID）</label>
+    <input type="text" id="modal-lane" placeholder="例如 client" />
+    <label>節點類型</label>
+    <select id="modal-type">
+      <option value="default">default</option>
+      <option value="decision">decision</option>
+      <option value="start">start</option>
+      <option value="end">end</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">取消</button>
+      <button class="btn-save"   id="modal-save">儲存</button>
+    </div>
+  </div>
+</div>
 
+<script>
+  // ── GAS 網址（與原有相同） ──────────────────────────────────
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbwnRuyEVd2lIPn3l7vbKOXJonkaA1_AHAbSU7LMRk8gojfxttex8OjTcxDBQ7-dFss-lw/exec';
+
+  // ── DEFAULT_DATA（BBP 備用資料，與 Google Sheet 結構一致） ──
+  var DEFAULT_DATA = {
+    productName: 'BBP',
+    phases: [
+      { id: 'p1', label: '曝光',  width: 210, variant: '' },
+      { id: 'p2', label: '報名',  width: 190, variant: '' },
+      { id: 'p3', label: '參與',  width: 220, variant: '' },
+      { id: 'p4', label: '轉換',  width: 300, variant: '' },
+      { id: 'p5', label: '成交',  width: 300, variant: '' },
+      { id: 'p6', label: '維護',  width: 300, variant: '' }
+    ],
+    lanes: [
+      { id: 'client', label: '客戶',   color: '#6366F1', bg: '#EEF0FB', border: '#C5CAF0', textColor: '#3730A3' },
+      { id: 'd4',     label: 'D4 顧問', color: '#059669', bg: '#E6F7F2', border: '#9FD9C5', textColor: '#065F46' },
+      { id: 'd7',     label: 'D7 研發', color: '#E05A38', bg: '#FEF1EE', border: '#F5BBA8', textColor: '#9A2E14' },
+      { id: 'd2',     label: 'D2 業務', color: '#9333EA', bg: '#F6F0FD', border: '#DABFF5', textColor: '#5B1A9A' }
+    ],
+    nodes: [
+      { id: 'n1', phaseId: 'p1', laneId: 'client', label: '（待填）', sub: '', type: 'default' }
+    ]
+  };
+
+  // ── BBP 狀態 ────────────────────────────────────────────────
+  var bbpData    = null;    // 目前載入的泳道資料
+  var CACHE_KEY  = 'bbp_cache';
+  var LS_USER    = '我';
+
+  // ── DOM refs ──────────────────────────────────────────────
   var conversationId = null;
   var isWaiting      = false;
-
   var widgetEl   = document.getElementById('chat-widget');
   var headerEl   = document.getElementById('widget-header');
   var toggleEl   = document.getElementById('widget-toggle');
@@ -343,15 +535,54 @@
   var sendBtn    = document.getElementById('send-btn');
   var flowNodes  = document.getElementById('flow-nodes');
   var emptyHint  = document.getElementById('empty-hint');
+  var loadingEl  = document.getElementById('loading-hint');
+  var swimlaneEl = document.getElementById('bbp-swimlane');
 
-  // ── 折疊/展開對話框 ──────────────────────────────────────
+  // ── 折疊/展開對話框（原有） ──────────────────────────────────
   headerEl.addEventListener('click', function() {
     widgetEl.classList.toggle('collapsed');
     toggleEl.textContent = widgetEl.classList.contains('collapsed') ? '▲' : '▼';
   });
 
-  // ── 初始化 ───────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════
+  // 初始化：先載入 BBP，再 check API
+  // ════════════════════════════════════════════════════════════
   window.addEventListener('load', function() {
+
+    // 1. 顯示載入中
+    loadingEl.style.display = 'block';
+
+    // 2. 讀取 localStorage cache（備用）
+    var cached = null;
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (raw) cached = JSON.parse(raw);
+    } catch(e) {}
+
+    // 3. 呼叫 getBBP
+    fetch(GAS_URL + '?action=getBBP')
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        loadingEl.style.display = 'none';
+        if (data.error) {
+          console.warn('getBBP error:', data.error);
+          renderBBP(cached || DEFAULT_DATA);
+        } else {
+          bbpData = data;
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch(e) {}
+          renderBBP(data);
+        }
+      })
+      .catch(function(err) {
+        loadingEl.style.display = 'none';
+        console.warn('getBBP fetch failed:', err);
+        renderBBP(cached || DEFAULT_DATA);
+      });
+
+    // 4. 原有 check API（獨立執行，不影響泳道圖）
     gasRequest({ action: 'check' })
       .then(function(result) {
         if (result.ok) {
@@ -367,38 +598,319 @@
       });
   });
 
-  // ── Auto-resize textarea ──────────────────────────────────
+  // ════════════════════════════════════════════════════════════
+  // 渲染 BBP 泳道圖
+  // ════════════════════════════════════════════════════════════
+  function renderBBP(data) {
+    if (!data || !data.phases || !data.lanes) return;
+    bbpData = data;
+
+    var phases = data.phases;
+    var lanes  = data.lanes;
+    var nodes  = data.nodes || [];
+
+    // 建立 nodeMap[phaseId][laneId] = [node, ...]
+    var nodeMap = {};
+    nodes.forEach(function(n) {
+      if (!nodeMap[n.phaseId]) nodeMap[n.phaseId] = {};
+      if (!nodeMap[n.phaseId][n.laneId]) nodeMap[n.phaseId][n.laneId] = [];
+      nodeMap[n.phaseId][n.laneId].push(n);
+    });
+
+    var table = document.createElement('table');
+    table.className = 'swimlane-table';
+
+    // ── Phase 標頭列 ──
+    var headRow = document.createElement('tr');
+    headRow.className = 'phase-header-row';
+
+    var corner = document.createElement('th');
+    corner.className = 'corner-cell';
+    corner.textContent = '';
+    headRow.appendChild(corner);
+
+    phases.forEach(function(ph) {
+      var th = document.createElement('th');
+      th.textContent = ph.label;
+      if (ph.width) th.style.minWidth = ph.width + 'px';
+      headRow.appendChild(th);
+    });
+    table.appendChild(headRow);
+
+    // ── Lane 列 ──
+    lanes.forEach(function(lane) {
+      var tr = document.createElement('tr');
+      tr.className = 'lane-row';
+
+      // Lane 標籤
+      var tdLabel = document.createElement('td');
+      tdLabel.className = 'lane-label-cell';
+      tdLabel.textContent = lane.label;
+      tdLabel.style.background  = lane.bg    || '#f5f5f5';
+      tdLabel.style.color       = lane.color || '#333';
+      tdLabel.style.borderColor = lane.border || '#ccc';
+      tr.appendChild(tdLabel);
+
+      // 每個 Phase 格子
+      phases.forEach(function(ph) {
+        var td = document.createElement('td');
+        td.style.background = lane.bg || '#fff';
+
+        var cellNodes = (nodeMap[ph.id] && nodeMap[ph.id][lane.id]) || [];
+
+        cellNodes.forEach(function(node) {
+          td.appendChild(buildNodeCard(node, lane));
+        });
+
+        // 新增按鈕
+        var addBtn = document.createElement('button');
+        addBtn.className = 'add-node-btn';
+        addBtn.title = '新增節點';
+        addBtn.textContent = '+';
+        addBtn.addEventListener('click', function() {
+          openModal(null, ph.id, lane.id);
+        });
+        td.appendChild(addBtn);
+
+        tr.appendChild(td);
+      });
+
+      table.appendChild(tr);
+    });
+
+    swimlaneEl.innerHTML = '';
+    swimlaneEl.appendChild(table);
+    swimlaneEl.style.display = 'block';
+  }
+
+  // 建立節點卡片 DOM
+  function buildNodeCard(node, lane) {
+    var card = document.createElement('div');
+    card.className = 'bbp-node';
+    card.dataset.id = node.id;
+    card.style.borderColor = lane ? (lane.color || '#1a73e8') : '#1a73e8';
+
+    var labelEl = document.createElement('div');
+    labelEl.className = 'node-label';
+    labelEl.textContent = node.label || '（無標題）';
+
+    var actions = document.createElement('div');
+    actions.className = 'node-actions';
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'node-btn';
+    editBtn.title = '編輯';
+    editBtn.textContent = '✏️';
+    editBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openModal(node, node.phaseId, node.laneId);
+    });
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'node-btn del';
+    delBtn.title = '刪除';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (confirm('確定要刪除節點「' + node.label + '」？')) {
+        handleDeleteNode(node.id);
+      }
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(actions);
+    card.appendChild(labelEl);
+
+    if (node.sub) {
+      var subEl = document.createElement('div');
+      subEl.className = 'node-sub';
+      subEl.textContent = node.sub;
+      card.appendChild(subEl);
+    }
+
+    return card;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // Modal 開啟 / 關閉
+  // ════════════════════════════════════════════════════════════
+  var modalEl      = document.getElementById('node-modal');
+  var modalTitle   = document.getElementById('modal-title');
+  var modalNodeId  = document.getElementById('modal-node-id');
+  var modalLabel   = document.getElementById('modal-label');
+  var modalSub     = document.getElementById('modal-sub');
+  var modalPhase   = document.getElementById('modal-phase');
+  var modalLane    = document.getElementById('modal-lane');
+  var modalType    = document.getElementById('modal-type');
+  var modalCancel  = document.getElementById('modal-cancel');
+  var modalSaveBtn = document.getElementById('modal-save');
+
+  // 預填 Phase / Lane 下拉（每次開啟時動態填入）
+  function openModal(node, defaultPhase, defaultLane) {
+    modalTitle.textContent = node ? '編輯節點' : '新增節點';
+    modalNodeId.value = node ? (node.id || '') : '';
+    modalLabel.value  = node ? (node.label  || '') : '';
+    modalSub.value    = node ? (node.sub    || '') : '';
+    modalPhase.value  = node ? (node.phaseId || defaultPhase || '') : (defaultPhase || '');
+    modalLane.value   = node ? (node.laneId  || defaultLane  || '') : (defaultLane  || '');
+    modalType.value   = node ? (node.type    || 'default') : 'default';
+    modalEl.classList.add('open');
+    modalLabel.focus();
+  }
+
+  modalCancel.addEventListener('click', function() { modalEl.classList.remove('open'); });
+  modalEl.addEventListener('click', function(e) {
+    if (e.target === modalEl) modalEl.classList.remove('open');
+  });
+
+  modalSaveBtn.addEventListener('click', function() {
+    var label = modalLabel.value.trim();
+    if (!label) { modalLabel.focus(); return; }
+
+    var nodeId = modalNodeId.value.trim() || ('n_' + Date.now());
+    var updatedNode = {
+      id:      nodeId,
+      phaseId: modalPhase.value.trim(),
+      laneId:  modalLane.value.trim(),
+      label:   label,
+      sub:     modalSub.value.trim(),
+      type:    modalType.value
+    };
+
+    modalEl.classList.remove('open');
+    handleSaveNode(updatedNode);
+  });
+
+  // ════════════════════════════════════════════════════════════
+  // handleSaveNode：更新 state + POST 到 GAS
+  // ════════════════════════════════════════════════════════════
+  function handleSaveNode(updatedNode) {
+    if (!bbpData) return;
+
+    // 更新本地 state
+    var nodes   = bbpData.nodes || [];
+    var idx     = nodes.findIndex(function(n) { return n.id === updatedNode.id; });
+    if (idx >= 0) {
+      nodes[idx] = updatedNode;
+    } else {
+      nodes.push(updatedNode);
+    }
+    bbpData.nodes = nodes;
+
+    // 更新 localStorage cache
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(bbpData)); } catch(e) {}
+
+    // 立即重新渲染
+    renderBBP(bbpData);
+
+    // POST 到 GAS
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:  'saveNode',
+        product: 'BBP',
+        node:    updatedNode,
+        user:    LS_USER
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.success) {
+        showToast('已儲存', 'success');
+      } else {
+        showToast('儲存失敗，請重試', 'error');
+        console.error('saveNode error:', result.error);
+      }
+    })
+    .catch(function(err) {
+      showToast('儲存失敗，請重試', 'error');
+      console.error('saveNode fetch error:', err);
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // handleDeleteNode：更新 state + POST 到 GAS
+  // ════════════════════════════════════════════════════════════
+  function handleDeleteNode(nodeId) {
+    if (!bbpData) return;
+
+    // 更新本地 state
+    bbpData.nodes = (bbpData.nodes || []).filter(function(n) { return n.id !== nodeId; });
+
+    // 更新 localStorage cache
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(bbpData)); } catch(e) {}
+
+    // 立即重新渲染
+    renderBBP(bbpData);
+
+    // POST 到 GAS
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action:  'deleteNode',
+        product: 'BBP',
+        node:    { id: nodeId },
+        user:    LS_USER
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.success) {
+        showToast('已刪除', 'success');
+      } else {
+        showToast('刪除失敗，請重試', 'error');
+        console.error('deleteNode error:', result.error);
+      }
+    })
+    .catch(function(err) {
+      showToast('刪除失敗，請重試', 'error');
+      console.error('deleteNode fetch error:', err);
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // Toast 通知
+  // ════════════════════════════════════════════════════════════
+  function showToast(msg, type) {
+    var el = document.createElement('div');
+    el.className = 'toast ' + (type || '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 2500);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 以下為原有功能，完全不修改
+  // ════════════════════════════════════════════════════════════
+
+  // Auto-resize textarea
   inputEl.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 80) + 'px';
   });
-
   inputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   });
-
   sendBtn.addEventListener('click', handleSend);
 
-  // ── Handle Send ───────────────────────────────────────────
   function handleSend() {
     var text = inputEl.value.trim();
     if (!text || isWaiting) return;
-
     appendMessage('user', text);
     inputEl.value = '';
     inputEl.style.height = 'auto';
-
     isWaiting = true;
     inputEl.disabled = true;
     sendBtn.disabled = true;
-
     var typingEl = showTyping();
     var params = { action: 'chat', message: text };
     if (conversationId) params.conversationId = conversationId;
-
     gasRequest(params)
       .then(function(result) {
         removeTyping(typingEl);
@@ -406,17 +918,12 @@
         inputEl.disabled = false;
         sendBtn.disabled = false;
         inputEl.focus();
-
         if (result.error) {
           appendMessage('notice', '⚠️ ' + result.error);
         } else {
           if (result.conversationId) conversationId = result.conversationId;
-
-          // 只在對話框顯示純文字部分（去掉 JSON 區塊）
           var displayReply = stripJsonBlock(result.reply || '（AI 未回覆）');
           appendMessage('bot', displayReply);
-
-          // 如果有合法 JSON，渲染流程圖
           if (result.extractedJson) {
             renderFlowDiagram(result.extractedJson);
             showFlowBadge('✅ 流程圖已更新！');
@@ -432,66 +939,49 @@
       });
   }
 
-  // ── 移除回覆中的 JSON 區塊，只留對話文字 ────────────────
   function stripJsonBlock(text) {
     return text
-      .replace(/```json[\s\S]*?```/gi, '')  // 移除 ```json ... ```
-      .replace(/\{[\s\S]*"nodes"[\s\S]*\}/g, '')  // 移除裸 JSON
-      .replace(/\n{3,}/g, '\n\n')           // 合併多餘空行
+      .replace(/```json[\s\S]*?```/gi, '')
+      .replace(/\{[\s\S]*"nodes"[\s\S]*\}/g, '')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
   }
 
-  // ── 渲染流程圖 ────────────────────────────────────────────
   function renderFlowDiagram(flowJson) {
     var nodes = flowJson.nodes;
     if (!nodes || nodes.length === 0) return;
-
-    // 清空舊圖
     flowNodes.innerHTML = '';
     emptyHint.style.display = 'none';
-
-    // 依 y position 排序節點
     nodes.sort(function(a, b) {
       return (a.position && a.position.y || 0) - (b.position && b.position.y || 0);
     });
-
     nodes.forEach(function(node, idx) {
-      // 箭頭（第一個節點前不加）
       if (idx > 0) {
         var arrow = document.createElement('div');
         arrow.className = 'flow-arrow';
         arrow.setAttribute('data-stage', idx - 1);
         flowNodes.appendChild(arrow);
       }
-
-      // 節點卡片
       var card = document.createElement('div');
       card.className = 'flow-node';
       card.setAttribute('data-stage', idx);
-
       var label = (node.data && node.data.label) || node.id || '節點';
       var desc  = (node.data && node.data.description) || '';
-
       card.innerHTML =
         '<div class="node-label">' + escapeHtml(label) + '</div>' +
         (desc ? '<div class="node-desc">' + escapeHtml(desc) + '</div>' : '');
-
       flowNodes.appendChild(card);
     });
   }
 
-  // ── 顯示流程圖更新提示 ────────────────────────────────────
   function showFlowBadge(msg) {
     var badge = document.createElement('div');
     badge.className = 'flow-updated-badge';
     badge.textContent = msg;
     document.body.appendChild(badge);
-    setTimeout(function() {
-      if (badge.parentNode) badge.parentNode.removeChild(badge);
-    }, 3000);
+    setTimeout(function() { if (badge.parentNode) badge.parentNode.removeChild(badge); }, 3000);
   }
 
-  // ── GAS request ───────────────────────────────────────────
   function gasRequest(params) {
     var url = GAS_URL + '?' + Object.keys(params)
       .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
@@ -502,11 +992,9 @@
     });
   }
 
-  // ── 對話框訊息 ────────────────────────────────────────────
   function appendMessage(role, text) {
     var msgEl = document.createElement('div');
     msgEl.className = 'w-message ' + role;
-
     if (role === 'notice') {
       msgEl.innerHTML = '<div class="w-bubble">' + escapeHtml(text) + '</div>';
     } else {
@@ -529,13 +1017,14 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
     return wrapEl;
   }
+
   function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
-
 </body>
 </html>
