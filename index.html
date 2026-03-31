@@ -743,17 +743,17 @@ function App() {
   }
 
   // ── 新增產品 ──
-  function openAddProduct() { setModalForm({ productName:"" }); setModal("product"); }
+  function openAddProduct() { setModalForm({ productName:"", templateProduct: products[0]||"" }); setModal("product"); }
   async function confirmAddProduct() {
     if (!modalForm.productName) { toast("請輸入產品名稱",true); return; }
     setModalLoading(true);
     if (GAS_URL) {
       try {
-        const res = await gasPost({ action:'addProduct', productName:modalForm.productName, user:CURRENT_USER });
+        const res = await gasPost({ action:'addProduct', productName:modalForm.productName, templateProduct:modalForm.templateProduct||"", user:CURRENT_USER });
         if (res.error) { toast('新增失敗：' + res.error, true); setModalLoading(false); return; }
         setProducts(p=>[...p, modalForm.productName]);
         toast(`已新增產品「${modalForm.productName}」`);
-        addLog("add","新增",`新增產品「<strong>${modalForm.productName}</strong>」`);
+        addLog("add","新增",`新增產品「<strong>${modalForm.productName}</strong>」（範本：${modalForm.templateProduct||"無"}）`);
       } catch(e) { toast('連線錯誤：' + e.message, true); }
     } else {
       setProducts(p=>[...p, modalForm.productName]);
@@ -1168,9 +1168,13 @@ function App() {
       )}
 
       {modal==="product" && (
-        <Modal title="新增產品旅程" sub="將複製 BBP 的階段和角色結構作為範本" onClose={()=>setModal(null)} onConfirm={confirmAddProduct} confirmLabel="確認新增" loading={modalLoading}>
+        <Modal title="新增產品旅程" sub={modalForm.templateProduct ? `將複製「${modalForm.templateProduct}」的階段和角色結構作為範本` : "請選擇一個範本產品"} onClose={()=>setModal(null)} onConfirm={confirmAddProduct} confirmLabel="確認新增" loading={modalLoading}>
           <div className="field-group"><label>產品名稱</label>
             <input placeholder="例：CRM系統" value={modalForm.productName||""} onChange={e=>setModalForm(f=>({...f,productName:e.target.value}))} /></div>
+          <div className="field-group"><label>選擇範本產品</label>
+            <select value={modalForm.templateProduct||""} onChange={e=>setModalForm(f=>({...f,templateProduct:e.target.value}))}>
+              {products.map(p=><option key={p} value={p}>{p}</option>)}
+            </select></div>
         </Modal>
       )}
 
