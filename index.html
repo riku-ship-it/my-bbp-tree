@@ -54,6 +54,10 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .legend-row:last-child { margin-bottom: 0; }
 .legend-chip { width: 22px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 .legend-dash { width: 22px; height: 0; border-top: 2px dashed #94A3B8; flex-shrink: 0; }
+.sb-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sb-section-header .sb-label { margin-bottom: 0; }
+.sb-toggle { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 10px; padding: 1px 3px; border-radius: 3px; line-height: 1; transition: color .12s; }
+.sb-toggle:hover { color: var(--text); background: var(--bg); }
 
 /* MAIN CANVAS */
 .canvas-area { flex: 1; overflow: auto; padding: 20px; }
@@ -496,6 +500,8 @@ function App() {
   const [modalForm,    setModalForm]    = useState({});
   const [modalLoading, setModalLoading] = useState(false);
   const [zoom,         setZoom]         = useState(1);
+  const [sbCollapsed,  setSbCollapsed]  = useState({phases: false, lanes: false, legend: false});
+  const toggleSb = (key) => setSbCollapsed(s => ({...s, [key]: !s[key]}));
   const { msg:toastMsg, show:toastShow, isErr:toastErr, toast } = useToast();
   const textareaRef = useRef(null);
 
@@ -958,41 +964,55 @@ function App() {
         {/* SIDEBAR */}
         <div className="sidebar">
           <div className="sb-section">
-            <div className="sb-label">產品週期階段</div>
-            {data.phases.map(ph=>(
+            <div className="sb-section-header">
+              <div className="sb-label">產品週期階段</div>
+              <button className="sb-toggle" onClick={()=>toggleSb("phases")}>{sbCollapsed.phases?"▶":"▼"}</button>
+            </div>
+            {!sbCollapsed.phases && data.phases.map(ph=>(
               <div className="sb-item" key={ph.id} onClick={()=>openEditPhase(ph.id)} title="點擊編輯">
-                <span className="sb-dot" style={{background:ph.variant==="positive"?"#059669":ph.variant==="negative"?"#E05A38":ph.variant==="warning"?"#D97706":"#6366F1"}} />
+                <span className="sb-dot" style={{
+                  background: ph.bg||(ph.variant==="positive"?"#F0FDF4":ph.variant==="negative"?"#FFF5F5":ph.variant==="warning"?"#FFFBEB":"#E2E8F0"),
+                  border: "1px solid "+(ph.bg||(ph.variant==="positive"?"#BBF7D0":ph.variant==="negative"?"#FECACA":ph.variant==="warning"?"#FDE68A":"#CBD5E1"))
+                }} />
                 {ph.label}
               </div>
             ))}
           </div>
           <div className="sb-section">
-            <div className="sb-label">角色</div>
-            {data.lanes.map(lane=>(
+            <div className="sb-section-header">
+              <div className="sb-label">角色</div>
+              <button className="sb-toggle" onClick={()=>toggleSb("lanes")}>{sbCollapsed.lanes?"▶":"▼"}</button>
+            </div>
+            {!sbCollapsed.lanes && data.lanes.map(lane=>(
               <div className="sb-item" key={lane.id} onClick={()=>openEditLane(lane.id)} title="點擊編輯">
-                <span className="sb-dot" style={{background:lane.color}} />
+                <span className="sb-dot" style={{background: lane.bg, border: "1px solid "+lane.border}} />
                 {lane.label}
               </div>
             ))}
           </div>
           <div className="sb-section">
-            <div className="sb-label">圖例</div>
-            <div className="legend-box">
-              {data.lanes.map(lane=>(
-                <div className="legend-row" key={lane.id}>
-                  <div className="legend-chip" style={{background:lane.color}} />
-                  {lane.label}
-                </div>
-              ))}
-              <div className="legend-row">
-                <div className="legend-chip" style={{background:"#FEF3C7",border:"1px solid #F59E0B",borderRadius:"50px"}} />
-                判斷點
-              </div>
-              <div className="legend-row">
-                <div className="legend-dash" />
-                跨泳道
-              </div>
+            <div className="sb-section-header">
+              <div className="sb-label">圖例</div>
+              <button className="sb-toggle" onClick={()=>toggleSb("legend")}>{sbCollapsed.legend?"▶":"▼"}</button>
             </div>
+            {!sbCollapsed.legend && (
+              <div className="legend-box">
+                {data.lanes.map(lane=>(
+                  <div className="legend-row" key={lane.id}>
+                    <div className="legend-chip" style={{background: lane.bg, border: "1px solid "+lane.border}} />
+                    {lane.label}
+                  </div>
+                ))}
+                <div className="legend-row">
+                  <div className="legend-chip" style={{background:"#FEF3C7",border:"1px solid #F59E0B",borderRadius:"50px"}} />
+                  判斷點
+                </div>
+                <div className="legend-row">
+                  <div className="legend-dash" />
+                  跨泳道
+                </div>
+              </div>
+            )}
           </div>
           <div className="sb-section" style={{marginTop:"auto"}}>
             <button className="btn-sm" style={{width:"100%",fontSize:12,color:"var(--text-3)"}} onClick={resetData}>重置預設資料</button>
