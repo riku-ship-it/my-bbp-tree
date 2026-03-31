@@ -504,6 +504,7 @@ function App() {
   const toggleSb = (key) => setSbCollapsed(s => ({...s, [key]: !s[key]}));
   const { msg:toastMsg, show:toastShow, isErr:toastErr, toast } = useToast();
   const textareaRef = useRef(null);
+  const productCacheRef = useRef({});
 
   // ── 時間工具 ──
   function now() {
@@ -529,6 +530,7 @@ function App() {
           toast('載入失敗：' + dRes.error, true);
           setApiStatus('error');
         } else {
+          productCacheRef.current[activeProduct] = dRes;
           setData(dRes);
           setApiStatus('online');
         }
@@ -547,11 +549,22 @@ function App() {
     setActiveProduct(pid);
     setPanelOpen(false); setSelectedId(null);
     if (!GAS_URL) { setData({ ...DEFAULT_DATA, productName: pid }); return; }
+
+    // 有快取就立即顯示，背景靜默更新
+    if (productCacheRef.current[pid]) {
+      setData(productCacheRef.current[pid]);
+      gasGet({ action: 'getProduct', product: pid })
+        .then(res => { if (!res.error) { productCacheRef.current[pid] = res; setData(res); } })
+        .catch(() => {});
+      return;
+    }
+
+    // 第一次載入才顯示 overlay
     setPageLoading(true);
     try {
       const res = await gasGet({ action: 'getProduct', product: pid });
       if (res.error) { toast('載入失敗：' + res.error, true); }
-      else { setData(res); }
+      else { productCacheRef.current[pid] = res; setData(res); }
     } catch(e) { toast('連線錯誤', true); }
     setPageLoading(false);
   }
