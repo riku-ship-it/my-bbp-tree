@@ -495,6 +495,7 @@ function App() {
   const [modal,        setModal]        = useState(null);     // "phase"|"lane"|"node"|"product"
   const [modalForm,    setModalForm]    = useState({});
   const [modalLoading, setModalLoading] = useState(false);
+  const [zoom,         setZoom]         = useState(1);
   const { msg:toastMsg, show:toastShow, isErr:toastErr, toast } = useToast();
   const textareaRef = useRef(null);
 
@@ -933,6 +934,13 @@ function App() {
               <span style={{color:"var(--text-3)"}}>{apiStatusLabel[apiStatus]||''}</span>
             </div>
           )}
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"var(--bg-2)",borderRadius:6,padding:"2px 6px"}}>
+            <button className="btn-sm" onClick={()=>setZoom(z=>Math.max(0.4,+(z-0.1).toFixed(1)))} title="縮小" style={{padding:"2px 8px",fontSize:16,lineHeight:1}}>−</button>
+            <span style={{fontSize:12,color:"var(--text-2)",minWidth:36,textAlign:"center"}}>{Math.round(zoom*100)}%</span>
+            <button className="btn-sm" onClick={()=>setZoom(z=>Math.min(2,+(z+0.1).toFixed(1)))} title="放大" style={{padding:"2px 8px",fontSize:16,lineHeight:1}}>＋</button>
+            <button className="btn-sm" onClick={()=>setZoom(1)} title="重置" style={{padding:"2px 6px",fontSize:11}}>重置</button>
+          </div>
+          <div className="topbar-sep" />
           <button className="btn-sm" onClick={openAddPhase}>+ 新增階段</button>
           <button className="btn-sm" onClick={openAddLane}>+ 新增角色</button>
           <button className="btn-sm" onClick={openAddNode}>+ 新增節點</button>
@@ -994,9 +1002,11 @@ function App() {
         {/* CANVAS */}
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <div className="canvas-area">
-            <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode}
-              onAddPhase={openAddPhase} onAddLane={openAddLane} onAddNodeInCell={openAddNodeInCell}
-              onEditPhase={openEditPhase} onEditLane={openEditLane} />
+            <div style={{transform:`scale(${zoom})`,transformOrigin:"top left",width:`${100/zoom}%`}}>
+              <SwimlaneTable data={data} selectedId={selectedId} onSelect={handleSelectNode}
+                onAddPhase={openAddPhase} onAddLane={openAddLane} onAddNodeInCell={openAddNodeInCell}
+                onEditPhase={openEditPhase} onEditLane={openEditLane} />
+            </div>
           </div>
 
           {/* BOTTOM */}
@@ -1074,10 +1084,6 @@ function App() {
         <Modal title="新增角色泳道" sub="新角色將加到縱軸最下方" onClose={()=>setModal(null)} onConfirm={confirmAddLane} loading={modalLoading}>
           <div className="field-group"><label>角色名稱</label>
             <input placeholder="例：D1 行銷" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
-          <div className="field-group"><label>主色（節點顏色）</label>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="color" value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
-              <input value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{flex:1}} /></div></div>
           <div className="field-group"><label>背景色</label>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <input type="color" value={modalForm.bg||"#EEF0FB"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
@@ -1117,18 +1123,10 @@ function App() {
         <Modal title="編輯角色" sub="修改後將自動同步至後端試算表" onClose={()=>setModal(null)} onConfirm={confirmEditLane} confirmLabel="儲存變更" onDelete={confirmDeleteLane} deleteLabel="刪除角色" loading={modalLoading}>
           <div className="field-group"><label>角色名稱</label>
             <input placeholder="例：D1 行銷" value={modalForm.label||""} onChange={e=>setModalForm(f=>({...f,label:e.target.value}))} /></div>
-          <div className="field-group"><label>主色（節點顏色）</label>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="color" value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
-              <input value={modalForm.color||"#6366F1"} onChange={e=>setModalForm(f=>({...f,color:e.target.value}))} style={{flex:1}} /></div></div>
           <div className="field-group"><label>背景色</label>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <input type="color" value={modalForm.bg||"#EEF0FB"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
               <input value={modalForm.bg||"#EEF0FB"} onChange={e=>setModalForm(f=>({...f,bg:e.target.value}))} style={{flex:1}} /></div></div>
-          <div className="field-group"><label>邊框色</label>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="color" value={modalForm.border||"#C5CAF0"} onChange={e=>setModalForm(f=>({...f,border:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
-              <input value={modalForm.border||"#C5CAF0"} onChange={e=>setModalForm(f=>({...f,border:e.target.value}))} style={{flex:1}} /></div></div>
           <div className="field-group"><label>文字色</label>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <input type="color" value={modalForm.textColor||"#3730A3"} onChange={e=>setModalForm(f=>({...f,textColor:e.target.value}))} style={{width:40,height:36,padding:2,cursor:"pointer"}} />
