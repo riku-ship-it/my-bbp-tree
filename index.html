@@ -560,17 +560,24 @@ function App() {
     if (!GAS_URL) return;
     (async () => {
       try {
-        // 取產品列表
-        const pRes = await gasGet({ action: 'getProducts' });
+        // 取產品列表 + 分類資料（並行）
+        const [pRes, cRes] = await Promise.all([
+          gasGet({ action: 'getProducts' }),
+          gasGet({ action: 'getCategories' })
+        ]);
         if (pRes.products) setProducts(pRes.products);
+        if (cRes.categories) setCategories(cRes.categories);
+        if (cRes.productCategory) setProductCategory(cRes.productCategory);
 
         // 載入當前產品資料
-        const dRes = await gasGet({ action: 'getProduct', product: activeProduct });
+        const firstProduct = (pRes.products && pRes.products[0]) || activeProduct;
+        const dRes = await gasGet({ action: 'getProduct', product: firstProduct });
         if (dRes.error) {
           toast('載入失敗：' + dRes.error, true);
           setApiStatus('error');
         } else {
-          productCacheRef.current[activeProduct] = dRes;
+          productCacheRef.current[firstProduct] = dRes;
+          setActiveProduct(firstProduct);
           setData(dRes);
           setApiStatus('online');
         }
@@ -825,9 +832,17 @@ function App() {
 
   // ── 分類管理 ──
   function openAddCategory() { setModalForm({ categoryName: "" }); setModal("category"); }
-  function confirmAddCategory() {
+  async function confirmAddCategory() {
     if (!modalForm.categoryName) { toast("請輸入分類名稱", true); return; }
     const id = 'cat_' + Date.now();
+    if (GAS_URL) {
+      setModalLoading(true);
+      try {
+        const res = await gasPost({ action: 'addCategory', categoryId: id, categoryName: modalForm.categoryName, user: CURRENT_USER });
+        if (res.error) { toast('新增分類失敗：' + res.error, true); setModalLoading(false); return; }
+      } catch(e) { toast('連線錯誤：' + e.message, true); setModalLoading(false); return; }
+      setModalLoading(false);
+    }
     setCategories(c => [...c, { id, name: modalForm.categoryName }]);
     toast(`已新增分類「${modalForm.categoryName}」`);
     setModal(null);
@@ -841,14 +856,26 @@ function App() {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, productName });
   }
-  function assignToCategory(productName, catId) {
-    setProductCategory(pc => ({ ...pc, [productName]: catId }));
+  async function assignToCategory(productName, catId) {
     setContextMenu(null);
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action: 'assignProductToCategory', productId: productName, categoryId: catId, user: CURRENT_USER });
+        if (res.error) { toast('移動失敗：' + res.error, true); return; }
+      } catch(e) { toast('連線錯誤：' + e.message, true); return; }
+    }
+    setProductCategory(pc => ({ ...pc, [productName]: catId }));
     toast(`已移至分類`);
   }
-  function removeFromCategory(productName) {
-    setProductCategory(pc => { const n = {...pc}; delete n[productName]; return n; });
+  async function removeFromCategory(productName) {
     setContextMenu(null);
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action: 'removeProductFromCategory', productId: productName, user: CURRENT_USER });
+        if (res.error) { toast('移除失敗：' + res.error, true); return; }
+      } catch(e) { toast('連線錯誤：' + e.message, true); return; }
+    }
+    setProductCategory(pc => { const n = {...pc}; delete n[productName]; return n; });
     toast(`已從分類移除`);
   }
 
@@ -1309,7 +1336,7 @@ function App() {
       )}
 
       {modal==="category" && (
-        <Modal title="新增分類資料夾" sub="建立一個產品分類，可把多個產品放入同一個資料夾" onClose={()=>setModal(null)} onConfirm={confirmAddCategory} confirmLabel="確認新增">
+        <Modal title="新增分類資料夾" sub="建立一個產品分類，可把多個產品放入同一個資料夾" onClose={()=>setModal(null)} onConfirm={confirmAddCategory} confirmLabel="確認新增" loading={modalLoading}>
           <div className="field-group"><label>分類名稱</label>
             <input placeholder="例：BBP 產品線" value={modalForm.categoryName||""} onChange={e=>setModalForm(f=>({...f,categoryName:e.target.value}))} autoFocus /></div>
         </Modal>
