@@ -566,8 +566,16 @@ function App() {
           gasGet({ action: 'getCategories' })
         ]);
         if (pRes.products) setProducts(pRes.products);
-        if (cRes.categories) setCategories(cRes.categories);
-        if (cRes.productCategory) setProductCategory(cRes.productCategory);
+        if (cRes.categories) {
+          setCategories(cRes.categories);
+          const pcMap = {};
+          cRes.categories.forEach(cat => {
+            (cat.products || []).forEach(pid => {
+              pcMap[pid] = cat.id;
+            });
+          });
+          setProductCategory(pcMap);
+        }
 
         // 載入當前產品資料
         const firstProduct = (pRes.products && pRes.products[0]) || activeProduct;
