@@ -860,7 +860,7 @@ function App() {
     setContextMenu(null);
     if (GAS_URL) {
       try {
-        const res = await gasPost({ action: 'assignProductToCategory', productId: productName, categoryId: catId, user: CURRENT_USER });
+        const res = await gasPost({ action: 'assignProductToCategory', productName: productName, categoryId: catId, user: CURRENT_USER });
         if (res.error) { toast('移動失敗：' + res.error, true); return; }
       } catch(e) { toast('連線錯誤：' + e.message, true); return; }
     }
@@ -871,7 +871,7 @@ function App() {
     setContextMenu(null);
     if (GAS_URL) {
       try {
-        const res = await gasPost({ action: 'removeProductFromCategory', productId: productName, user: CURRENT_USER });
+        const res = await gasPost({ action: 'removeProductFromCategory', productName: productName, user: CURRENT_USER });
         if (res.error) { toast('移除失敗：' + res.error, true); return; }
       } catch(e) { toast('連線錯誤：' + e.message, true); return; }
     }
