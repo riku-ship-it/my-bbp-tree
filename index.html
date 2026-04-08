@@ -879,6 +879,61 @@ function App() {
     toast(`已從分類移除`);
   }
 
+  // ── 重新命名產品 ──
+  function openRenameProduct(productName) {
+    setContextMenu(null);
+    setModalForm({ oldProductName: productName, newProductName: productName });
+    setModal("renameProduct");
+  }
+  async function confirmRenameProduct() {
+    const oldName = modalForm.oldProductName;
+    const newName = (modalForm.newProductName || "").trim();
+    if (!newName) { toast("請輸入產品名稱", true); return; }
+    if (newName === oldName) { setModal(null); return; }
+    if (products.includes(newName)) { toast("已有相同名稱的產品", true); return; }
+    setModalLoading(true);
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action: 'renameProduct', oldName, newName, user: CURRENT_USER });
+        if (res.error) { toast('重新命名失敗：' + res.error, true); setModalLoading(false); return; }
+      } catch(e) { toast('連線錯誤：' + e.message, true); setModalLoading(false); return; }
+    }
+    setProducts(p => p.map(x => x === oldName ? newName : x));
+    setProductCategory(pc => {
+      if (!pc[oldName]) return pc;
+      const n = {...pc, [newName]: pc[oldName]};
+      delete n[oldName];
+      return n;
+    });
+    if (activeProduct === oldName) setActiveProduct(newName);
+    if (data.productName === oldName) setData(d => ({...d, productName: newName}));
+    toast(`已重新命名為「${newName}」`);
+    addLog("edit", "重新命名", `產品「<strong>${oldName}</strong>」已重新命名為「<strong>${newName}</strong>」`);
+    setModalLoading(false); setModal(null);
+  }
+
+  // ── 刪除產品 ──
+  async function deleteProduct(productName) {
+    setContextMenu(null);
+    if (!window.confirm(`確定要刪除產品「${productName}」嗎？此操作無法復原。`)) return;
+    if (GAS_URL) {
+      try {
+        const res = await gasPost({ action: 'deleteProduct', productName, user: CURRENT_USER });
+        if (res.error) { toast('刪除失敗：' + res.error, true); return; }
+      } catch(e) { toast('連線錯誤：' + e.message, true); return; }
+    }
+    const remaining = products.filter(p => p !== productName);
+    setProducts(remaining);
+    setProductCategory(pc => { const n = {...pc}; delete n[productName]; return n; });
+    if (activeProduct === productName) {
+      const next = remaining[0] || null;
+      setActiveProduct(next || "");
+      if (next) switchProduct(next); else setData(null);
+    }
+    toast(`已刪除產品「${productName}」`);
+    addLog("delete", "刪除", `刪除產品「<strong>${productName}</strong>」`);
+  }
+
   // ── AI 指令 ──
   async function handleAiSend() {
     const cmd = aiInput.trim();
@@ -1353,9 +1408,18 @@ function App() {
         </Modal>
       )}
 
+      {modal==="renameProduct" && (
+        <Modal title="重新命名產品" sub="修改後將自動同步至後端" onClose={()=>setModal(null)} onConfirm={confirmRenameProduct} confirmLabel="儲存" loading={modalLoading}>
+          <div className="field-group"><label>產品名稱</label>
+            <input placeholder="例：CRM系統" value={modalForm.newProductName||""} onChange={e=>setModalForm(f=>({...f,newProductName:e.target.value}))} autoFocus /></div>
+        </Modal>
+      )}
+
       {/* CONTEXT MENU */}
       {contextMenu && (
         <div className="context-menu" style={{top:contextMenu.y, left:contextMenu.x}}>
+          <button className="ctx-item" onClick={()=>openRenameProduct(contextMenu.productName)}>重新命名</button>
+          <div className="ctx-sep" />
           <div className="ctx-label">移至分類</div>
           {categories.length===0 && <div className="cat-empty">尚無分類，請先新增分類</div>}
           {categories.map(cat=>(
@@ -1369,6 +1433,8 @@ function App() {
               <button className="ctx-item danger" onClick={()=>removeFromCategory(contextMenu.productName)}>從分類移除</button>
             </>
           )}
+          <div className="ctx-sep" />
+          <button className="ctx-item danger" onClick={()=>deleteProduct(contextMenu.productName)}>刪除產品</button>
         </div>
       )}
 
