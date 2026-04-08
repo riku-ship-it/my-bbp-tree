@@ -31,6 +31,24 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .tab-btn { padding: 5px 13px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--text-2); font-family: 'Noto Sans TC', sans-serif; transition: all .15s; }
 .tab-btn:hover { background: var(--bg); color: var(--text); }
 .tab-btn.active { background: #1A1916; color: #fff; }
+/* Category folders */
+.category-folder { position: relative; }
+.category-btn { display: flex; align-items: center; gap: 4px; }
+.category-btn .cat-arrow { font-size: 9px; opacity: .55; transition: transform .15s; }
+.category-btn.open .cat-arrow { transform: rotate(180deg); }
+.category-dropdown { position: absolute; top: calc(100% + 4px); left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; z-index: 200; min-width: 160px; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+.cat-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border-radius: 5px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text); font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
+.cat-item:hover { background: var(--bg); }
+.cat-item.active { background: #1A1916; color: #fff; }
+.cat-item.add-in-cat { color: var(--text-3); border-top: 1px solid var(--border); margin-top: 2px; padding-top: 8px; }
+.cat-empty { padding: 6px 10px; font-size: 12px; color: var(--text-3); }
+/* Right-click context menu */
+.context-menu { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; z-index: 300; min-width: 160px; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.ctx-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border-radius: 5px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text); font-family: 'Noto Sans TC', sans-serif; }
+.ctx-item:hover { background: var(--bg); }
+.ctx-item.danger { color: #e53e3e; }
+.ctx-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+.ctx-label { padding: 4px 10px 2px; font-size: 11px; color: var(--text-3); font-weight: 500; letter-spacing: .03em; }
 .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .btn-sm { padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; color: var(--text); transition: background .12s; }
 .btn-sm:hover { background: var(--bg); }
@@ -493,6 +511,10 @@ function App() {
   const [data,         setData]         = useState(DEFAULT_DATA);
   const [products,     setProducts]     = useState(['BBP']);
   const [activeProduct,setActiveProduct]= useState('BBP');
+  const [categories,     setCategories]     = useState([]);
+  const [productCategory,setProductCategory]= useState({});
+  const [openCategoryId, setOpenCategoryId] = useState(null);
+  const [contextMenu,    setContextMenu]    = useState(null);
   const [apiStatus,    setApiStatus]    = useState(GAS_URL ? 'loading' : 'offline'); // online|offline|error|loading
   const [pageLoading,  setPageLoading]  = useState(!!GAS_URL);
   const [isSaving,     setIsSaving]     = useState(false);
@@ -512,6 +534,17 @@ function App() {
   const { msg:toastMsg, show:toastShow, isErr:toastErr, toast } = useToast();
   const textareaRef = useRef(null);
   const productCacheRef = useRef({});
+
+  // ── 分類 dropdown / context menu 外部點擊關閉 ──
+  useEffect(() => {
+    if (!openCategoryId && !contextMenu) return;
+    function handleOutside(e) {
+      if (!e.target.closest('.category-folder')) setOpenCategoryId(null);
+      if (!e.target.closest('.context-menu')) setContextMenu(null);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [openCategoryId, contextMenu]);
 
   // ── 時間工具 ──
   function now() {
@@ -778,14 +811,45 @@ function App() {
         const res = await gasPost({ action:'addProduct', productName:modalForm.productName, templateProduct:modalForm.templateProduct||"", user:CURRENT_USER });
         if (res.error) { toast('新增失敗：' + res.error, true); setModalLoading(false); return; }
         setProducts(p=>[...p, modalForm.productName]);
+        if (modalForm.categoryId) setProductCategory(pc=>({...pc,[modalForm.productName]:modalForm.categoryId}));
         toast(`已新增產品「${modalForm.productName}」`);
         addLog("add","新增",`新增產品「<strong>${modalForm.productName}</strong>」（範本：${modalForm.templateProduct||"無"}）`);
       } catch(e) { toast('連線錯誤：' + e.message, true); }
     } else {
       setProducts(p=>[...p, modalForm.productName]);
+      if (modalForm.categoryId) setProductCategory(pc=>({...pc,[modalForm.productName]:modalForm.categoryId}));
       toast(`已新增產品「${modalForm.productName}」（離線模式）`);
     }
     setModalLoading(false); setModal(null);
+  }
+
+  // ── 分類管理 ──
+  function openAddCategory() { setModalForm({ categoryName: "" }); setModal("category"); }
+  function confirmAddCategory() {
+    if (!modalForm.categoryName) { toast("請輸入分類名稱", true); return; }
+    const id = 'cat_' + Date.now();
+    setCategories(c => [...c, { id, name: modalForm.categoryName }]);
+    toast(`已新增分類「${modalForm.categoryName}」`);
+    setModal(null);
+  }
+  function openAddProductInCategory(catId) {
+    setOpenCategoryId(null);
+    setModalForm({ productName: "", templateProduct: products[0]||"", categoryId: catId });
+    setModal("product");
+  }
+  function handleProductRightClick(e, productName) {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, productName });
+  }
+  function assignToCategory(productName, catId) {
+    setProductCategory(pc => ({ ...pc, [productName]: catId }));
+    setContextMenu(null);
+    toast(`已移至分類`);
+  }
+  function removeFromCategory(productName) {
+    setProductCategory(pc => { const n = {...pc}; delete n[productName]; return n; });
+    setContextMenu(null);
+    toast(`已從分類移除`);
   }
 
   // ── AI 指令 ──
@@ -948,9 +1012,42 @@ function App() {
         <div className="topbar-logo">Flow<span>Map</span></div>
         <div className="topbar-sep" />
         <div className="product-tabs">
-          {products.map(pid => (
-            <button key={pid} className={`tab-btn${pid===activeProduct?" active":""}`} onClick={()=>switchProduct(pid)}>{pid}</button>
+          {/* 未分類產品 */}
+          {products.filter(p=>!productCategory[p]).map(pid => (
+            <button key={pid} className={`tab-btn${pid===activeProduct?" active":""}`}
+              onClick={()=>switchProduct(pid)}
+              onContextMenu={e=>handleProductRightClick(e,pid)}
+            >{pid}</button>
           ))}
+          {/* 分類資料夾 */}
+          {categories.map(cat => {
+            const catProds = products.filter(p=>productCategory[p]===cat.id);
+            const hasActive = catProds.includes(activeProduct);
+            const isOpen = openCategoryId===cat.id;
+            return (
+              <div key={cat.id} className="category-folder">
+                <button
+                  className={`tab-btn category-btn${hasActive?" active":""}${isOpen?" open":""}`}
+                  onClick={()=>setOpenCategoryId(isOpen?null:cat.id)}
+                >
+                  {cat.name}<span className="cat-arrow">▼</span>
+                </button>
+                {isOpen && (
+                  <div className="category-dropdown">
+                    {catProds.length===0 && <div className="cat-empty">尚無產品</div>}
+                    {catProds.map(pid=>(
+                      <button key={pid} className={`cat-item${pid===activeProduct?" active":""}`}
+                        onClick={()=>{switchProduct(pid);setOpenCategoryId(null);}}
+                        onContextMenu={e=>handleProductRightClick(e,pid)}
+                      >{pid}</button>
+                    ))}
+                    <button className="cat-item add-in-cat" onClick={()=>openAddProductInCategory(cat.id)}>+ 新增產品</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <button className="tab-btn" onClick={openAddCategory}>+ 新增分類</button>
           <button className="tab-btn" onClick={openAddProduct}>+ 新增產品</button>
         </div>
         <div className="topbar-actions">
@@ -1211,6 +1308,13 @@ function App() {
         </Modal>
       )}
 
+      {modal==="category" && (
+        <Modal title="新增分類資料夾" sub="建立一個產品分類，可把多個產品放入同一個資料夾" onClose={()=>setModal(null)} onConfirm={confirmAddCategory} confirmLabel="確認新增">
+          <div className="field-group"><label>分類名稱</label>
+            <input placeholder="例：BBP 產品線" value={modalForm.categoryName||""} onChange={e=>setModalForm(f=>({...f,categoryName:e.target.value}))} autoFocus /></div>
+        </Modal>
+      )}
+
       {modal==="product" && (
         <Modal title="新增產品旅程" sub={modalForm.templateProduct ? `將複製「${modalForm.templateProduct}」的階段和角色結構作為範本` : "請選擇一個範本產品"} onClose={()=>setModal(null)} onConfirm={confirmAddProduct} confirmLabel="確認新增" loading={modalLoading}>
           <div className="field-group"><label>產品名稱</label>
@@ -1220,6 +1324,25 @@ function App() {
               {products.map(p=><option key={p} value={p}>{p}</option>)}
             </select></div>
         </Modal>
+      )}
+
+      {/* CONTEXT MENU */}
+      {contextMenu && (
+        <div className="context-menu" style={{top:contextMenu.y, left:contextMenu.x}}>
+          <div className="ctx-label">移至分類</div>
+          {categories.length===0 && <div className="cat-empty">尚無分類，請先新增分類</div>}
+          {categories.map(cat=>(
+            <button key={cat.id} className="ctx-item"
+              onClick={()=>assignToCategory(contextMenu.productName, cat.id)}
+            >{cat.name}</button>
+          ))}
+          {productCategory[contextMenu.productName] && (
+            <>
+              <div className="ctx-sep" />
+              <button className="ctx-item danger" onClick={()=>removeFromCategory(contextMenu.productName)}>從分類移除</button>
+            </>
+          )}
+        </div>
       )}
 
       {/* TOAST */}
