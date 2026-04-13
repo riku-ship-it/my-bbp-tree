@@ -565,6 +565,32 @@ function useToast() {
   return { msg, show, isErr, toast };
 }
 
+/* ─── 套用 localStorage 儲存的排序 ─── */
+function applyStoredOrder(d, product) {
+  let result = d;
+  try {
+    const storedLanes = localStorage.getItem('flowmap_laneOrder_' + product);
+    if (storedLanes) {
+      const ids = JSON.parse(storedLanes);
+      const laneMap = Object.fromEntries(d.lanes.map(l => [l.id, l]));
+      const ordered = ids.filter(id => laneMap[id]).map(id => laneMap[id]);
+      const extra = d.lanes.filter(l => !ids.includes(l.id));
+      result = { ...result, lanes: [...ordered, ...extra] };
+    }
+  } catch(e) {}
+  try {
+    const storedPhases = localStorage.getItem('flowmap_phaseOrder_' + product);
+    if (storedPhases) {
+      const ids = JSON.parse(storedPhases);
+      const phaseMap = Object.fromEntries(d.phases.map(p => [p.id, p]));
+      const ordered = ids.filter(id => phaseMap[id]).map(id => phaseMap[id]);
+      const extra = d.phases.filter(p => !ids.includes(p.id));
+      result = { ...result, phases: [...ordered, ...extra] };
+    }
+  } catch(e) {}
+  return result;
+}
+
 /* ═══════════════════════════════════════════════════════════
    MAIN APP
 ═══════════════════════════════════════════════════════════ */
@@ -648,7 +674,7 @@ function App() {
         } else {
           productCacheRef.current[firstProduct] = dRes;
           setActiveProduct(firstProduct);
-          setData(dRes);
+          setData(applyStoredOrder(dRes, firstProduct));
           setApiStatus('online');
         }
       } catch (err) {
@@ -669,9 +695,9 @@ function App() {
 
     // 有快取就立即顯示，背景靜默更新
     if (productCacheRef.current[pid]) {
-      setData(productCacheRef.current[pid]);
+      setData(applyStoredOrder(productCacheRef.current[pid], pid));
       gasGet({ action: 'getProduct', product: pid })
-        .then(res => { if (!res.error) { productCacheRef.current[pid] = res; setData(res); } })
+        .then(res => { if (!res.error) { productCacheRef.current[pid] = res; setData(applyStoredOrder(res, pid)); } })
         .catch(() => {});
       return;
     }
@@ -681,7 +707,7 @@ function App() {
     try {
       const res = await gasGet({ action: 'getProduct', product: pid });
       if (res.error) { toast('載入失敗：' + res.error, true); }
-      else { productCacheRef.current[pid] = res; setData(res); }
+      else { productCacheRef.current[pid] = res; setData(applyStoredOrder(res, pid)); }
     } catch(e) { toast('連線錯誤', true); }
     setPageLoading(false);
   }
@@ -860,6 +886,7 @@ function App() {
       if (fromIdx === -1 || toIdx === -1) return d;
       const [moved] = lanes.splice(fromIdx, 1);
       lanes.splice(toIdx, 0, moved);
+      localStorage.setItem('flowmap_laneOrder_' + activeProduct, JSON.stringify(lanes.map(l => l.id)));
       return { ...d, lanes };
     });
     addLog("edit", "排序", `調整角色順序`);
@@ -875,6 +902,7 @@ function App() {
       if (fromIdx === -1 || toIdx === -1) return d;
       const [moved] = phases.splice(fromIdx, 1);
       phases.splice(toIdx, 0, moved);
+      localStorage.setItem('flowmap_phaseOrder_' + activeProduct, JSON.stringify(phases.map(p => p.id)));
       return { ...d, phases };
     });
     addLog("edit", "排序", `調整階段順序`);
