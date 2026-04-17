@@ -99,7 +99,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 
 /* Lane row */
 .lane-row { display: flex; }
-.lane-header { width: 88px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-top: none; border-right: none; padding: 10px 6px; text-align: center; line-height: 1.3; cursor: grab; user-select: none; }
+.lane-header { width: 88px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-top: none; border-right: none; padding: 10px 6px; text-align: center; line-height: 1.3; cursor: pointer; user-select: none; position: relative; gap: 2px; }
 .lane-header:hover { filter: brightness(0.93); }
 .lane-header:active { cursor: grabbing; }
 .lane-row.lane-drag-over { outline: 2px dashed #6366F1; outline-offset: -2px; background: rgba(99,102,241,0.04); }
@@ -233,6 +233,13 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .lane-row-last .lane-header { border-bottom-width: 1px; border-bottom-left-radius: 8px; }
 .lane-row-last .lane-cell { border-bottom-width: 1px; }
 .lane-row-last .lane-cell:last-child { border-bottom-right-radius: 8px; }
+
+/* LANE COLLAPSE */
+.lane-collapse-arrow { font-size: 8px; opacity: 0.4; line-height: 1; transition: transform .2s; }
+.lane-edit-btn { position: absolute; top: 3px; right: 3px; background: none; border: none; cursor: pointer; font-size: 11px; opacity: 0; color: inherit; transition: opacity .15s; padding: 1px 2px; border-radius: 3px; line-height: 1; font-family: inherit; }
+.lane-header:hover .lane-edit-btn { opacity: 0.55; }
+.lane-edit-btn:hover { opacity: 1 !important; background: rgba(0,0,0,.1); }
+.lane-cell-collapsed { min-height: 40px !important; height: 40px; }
 </style>
 </head>
 <body>
@@ -343,10 +350,17 @@ function NodeCard({ node, lane, selected, onClick }) {
 }
 
 /* ─── LaneCell ─── */
-function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast, onAddNode }) {
+function LaneCell({ laneId, phaseId, nodes, lanes, phase, selectedId, onSelect, isLast, onAddNode, collapsed }) {
   const lane      = lanes.find(l => l.id === laneId);
   const cellNodes = nodes.filter(n => n.laneId === laneId && n.phaseId === phaseId);
   const style     = { ...getLaneStyle(lane), width: phase.width, borderRightWidth: isLast ? "1px" : "0" };
+  if (collapsed) {
+    return (
+      <div className="lane-cell lane-cell-collapsed" style={style}>
+        {cellNodes.length > 0 && <span style={{fontSize:11,color:'var(--text-3)',opacity:0.7}}>{cellNodes.length}</span>}
+      </div>
+    );
+  }
   return (
     <div className="lane-cell" style={style}>
       {cellNodes.map((node, i) => (
@@ -367,6 +381,11 @@ function SwimlaneTable({ data, selectedId, onSelect, onAddPhase, onAddLane, onAd
   const dragPhaseRef = React.useRef(null);
   const [dragOverLaneId, setDragOverLaneId] = React.useState(null);
   const [dragOverPhaseId, setDragOverPhaseId] = React.useState(null);
+  const [collapsedLanes, setCollapsedLanes] = React.useState({});
+
+  function toggleLaneCollapse(laneId) {
+    setCollapsedLanes(prev => ({ ...prev, [laneId]: !prev[laneId] }));
+  }
 
   function handleLaneDragStart(e, laneId) {
     dragLaneRef.current = laneId;
@@ -446,11 +465,17 @@ function SwimlaneTable({ data, selectedId, onSelect, onAddPhase, onAddLane, onAd
               draggable
               onDragStart={e=>handleLaneDragStart(e, lane.id)}
               onDragEnd={handleLaneDragEnd}
-              onClick={()=>onEditLane&&onEditLane(lane.id)} title="拖曳可調整順序，點擊編輯角色">{lane.label}</div>
+              onClick={()=>toggleLaneCollapse(lane.id)}
+              title={collapsedLanes[lane.id] ? "點擊展開泳道" : "點擊收合泳道，拖曳調整順序"}>
+              <span className="lane-collapse-arrow" style={{transform: collapsedLanes[lane.id] ? 'rotate(-90deg)' : 'rotate(0deg)'}}>▼</span>
+              {lane.label}
+              {onEditLane && <button className="lane-edit-btn" onClick={e=>{e.stopPropagation();onEditLane(lane.id);}} title="編輯角色">✎</button>}
+            </div>
             {phases.map((ph, pi) => (
               <LaneCell key={ph.id} laneId={lane.id} phaseId={ph.id} nodes={nodes} lanes={lanes}
                 phase={ph} selectedId={selectedId} onSelect={onSelect} isLast={pi===phases.length-1}
-                onAddNode={() => onAddNodeInCell(ph.id, lane.id)} />
+                onAddNode={() => onAddNodeInCell(ph.id, lane.id)}
+                collapsed={!!collapsedLanes[lane.id]} />
             ))}
           </div>
         </React.Fragment>
